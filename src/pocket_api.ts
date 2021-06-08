@@ -91,7 +91,8 @@ export const getPocketItems = async (accessToken: AccessToken) => {
   const response = await doCORSProxiedRequest(GET_ITEMS_URL, {
     consumer_key: PLATFORM_CONSUMER_KEYS["mac"],
     access_token: accessToken,
-    count: new Number(10).toString(),
+    // count: new Number(10).toString(),
+    since: new Number(1623177913).toString(),
   });
 
   return response.json();
