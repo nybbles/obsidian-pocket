@@ -1,6 +1,6 @@
 import * as cors_proxy from "cors-anywhere";
 import { App, Modal, Notice, Plugin } from "obsidian";
-import { PocketItemStore, openPocketItemStore } from "./pocket_item_store";
+import { openPocketItemStore, PocketItemStore } from "./pocket_item_store";
 import { PocketSettingTab } from "./settings";
 
 interface PocketSyncSettings {
@@ -25,7 +25,6 @@ const setupCORSProxy = () => {
 export default class PocketSync extends Plugin {
   settings: PocketSyncSettings;
   itemStore: PocketItemStore;
-  itemStorePath: string;
 
   async onload() {
     console.log("loading plugin");
@@ -35,9 +34,7 @@ export default class PocketSync extends Plugin {
     setupCORSProxy();
 
     console.log("opening Pocket item store");
-    this.itemStorePath = `${this.manifest.dir}/.__pocket_item_store.db`;
-    console.log(this.itemStorePath);
-    this.itemStore = await openPocketItemStore(this.itemStorePath);
+    this.itemStore = await openPocketItemStore();
 
     this.addRibbonIcon("dice", "Sample Plugin", () => {
       new Notice("This is a notice!");

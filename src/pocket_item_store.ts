@@ -1,24 +1,17 @@
-import * as sqlite3 from "sqlite3";
-import * as sqlite from "sqlite";
+import { IDBPDatabase, openDB } from "idb";
 
 type PocketItemId = string;
 type PocketItem = void;
 
+const DATABASE_NAME = "pocket_item_db";
+
 export interface PocketItemStore {
-  // db: sqlite.Database;
+  db: IDBPDatabase;
 }
 
-export const openPocketItemStore = async (
-  filename: string
-): Promise<PocketItemStore> => {
-  console.log("WTF");
-  const db = await sqlite.open({
-    filename: filename,
-    driver: sqlite3.cached.Database,
-  });
-  console.log("FTW");
-  // return { db: db };
-  return {};
+export const openPocketItemStore = async (): Promise<PocketItemStore> => {
+  const db = await openDB(DATABASE_NAME);
+  return { db: db };
 };
 
 /*
