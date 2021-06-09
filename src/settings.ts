@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, Plugin } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
 import {
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
