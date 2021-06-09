@@ -1,4 +1,5 @@
 import * as qs from "qs";
+import { PocketGetItemsResponse } from "./pocket_api_types";
 
 export type RequestToken = string;
 export type AccessToken = string;
@@ -85,7 +86,9 @@ export const getAccessToken = async (): Promise<AccessTokenResponse> => {
   };
 };
 
-export const getPocketItems = async (accessToken: AccessToken) => {
+export const getPocketItems = async (
+  accessToken: AccessToken
+): Promise<PocketGetItemsResponse> => {
   const GET_ITEMS_URL = "https://getpocket.com/v3/get";
 
   const response = await doCORSProxiedRequest(GET_ITEMS_URL, {

@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import {
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
@@ -19,7 +19,7 @@ export const addAuthSetting = (containerEl: HTMLElement) =>
       button.onClick(setupAuth);
     });
 
-const addTestAuthSetting = (plugin: Plugin, containerEl: HTMLElement) =>
+const addTestAuthSetting = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
     .setName("Test Pocket get")
     .setDesc("Click here to check that Pocket works")
@@ -34,8 +34,12 @@ const addTestAuthSetting = (plugin: Plugin, containerEl: HTMLElement) =>
         console.log(
           `Fetching pocket items for username: ${accessInfo.username}`
         );
-        const pocketItems = await getPocketItems(accessInfo.accessToken);
-        console.log(pocketItems);
+        const getPocketItemsResponse = await getPocketItems(
+          accessInfo.accessToken
+        );
+        console.log(getPocketItemsResponse.list);
+
+        plugin.itemStore.mergeUpdates(getPocketItemsResponse.list);
       });
     });
 
