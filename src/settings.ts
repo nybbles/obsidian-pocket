@@ -29,17 +29,25 @@ const addTestAuthSetting = (plugin: PocketSync, containerEl: HTMLElement) =>
         const accessInfo = await loadPocketAccessInfo(plugin);
         if (!accessInfo) {
           console.log(`Not authenticated to Pocket, skipping`);
+          return;
         }
 
         console.log(
           `Fetching pocket items for username: ${accessInfo.username}`
         );
-        const getPocketItemsResponse = await getPocketItems(
-          accessInfo.accessToken
-        );
-        console.log(getPocketItemsResponse.list);
 
-        plugin.itemStore.mergeUpdates(getPocketItemsResponse.list);
+        const lastUpdateTimestamp =
+          await plugin.itemStore.getLastUpdateTimestamp();
+
+        const getPocketItemsResponse = await getPocketItems(
+          accessInfo.accessToken,
+          lastUpdateTimestamp
+        );
+
+        plugin.itemStore.mergeUpdates(
+          getPocketItemsResponse.timestamp,
+          getPocketItemsResponse.response.list
+        );
       });
     });
 

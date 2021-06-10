@@ -5,6 +5,8 @@ export type RequestToken = string;
 export type AccessToken = string;
 export type Username = string;
 
+export type UpdateTimestamp = number;
+
 export type AccessTokenResponse = {
   accessToken: AccessToken;
   username: Username;
@@ -86,17 +88,39 @@ export const getAccessToken = async (): Promise<AccessTokenResponse> => {
   };
 };
 
-export const getPocketItems = async (
-  accessToken: AccessToken
-): Promise<PocketGetItemsResponse> => {
-  const GET_ITEMS_URL = "https://getpocket.com/v3/get";
+export type TimestampedPocketGetItemsResponse = {
+  timestamp: UpdateTimestamp;
+  response: PocketGetItemsResponse;
+};
 
-  const response = await doCORSProxiedRequest(GET_ITEMS_URL, {
+export const getPocketItems = async (
+  accessToken: AccessToken,
+  lastUpdateTimestamp?: UpdateTimestamp
+): Promise<TimestampedPocketGetItemsResponse> => {
+  const GET_ITEMS_URL = "https://getpocket.com/v3/get";
+  const nextTimestamp = Date.now();
+
+  const requestOptions = {
     consumer_key: PLATFORM_CONSUMER_KEYS["mac"],
     access_token: accessToken,
-    // count: new Number(10).toString(),
-    since: new Number(1623177913).toString(),
-  });
+    since: !!lastUpdateTimestamp
+      ? new Number(lastUpdateTimestamp).toString()
+      : null,
+  };
 
-  return response.json();
+  if (!!lastUpdateTimestamp) {
+    const humanReadable = new Date(lastUpdateTimestamp * 1000).toLocaleString();
+    console.log(`Fetching with Pocket item updates since ${humanReadable}`);
+  } else {
+    console.log(`Fetching all Pocket items`);
+  }
+
+  const response = await doCORSProxiedRequest(GET_ITEMS_URL, requestOptions);
+
+  console.log(`Pocket items fetched.`);
+
+  return {
+    timestamp: nextTimestamp,
+    response: await response.json(),
+  };
 };
