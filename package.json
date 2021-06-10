@@ -24,13 +24,26 @@
     "obsidian": "^0.12.0",
     "rollup": "^2.32.1",
     "ts-jest": "^27.0.2",
+    "ts-node": "^10.0.0",
     "tslib": "^2.2.0",
     "typescript": "^4.2.4"
   },
   "dependencies": {
     "cors-anywhere": "^0.4.4",
-    "qs": "^6.10.1",
-    "sqlite": "^4.0.23",
-    "sqlite3": "^5.0.2"
+    "idb": "^6.1.2",
+    "qs": "^6.10.1"
+  },
+  "jest": {
+    "clearMocks": true,
+    "moduleNameMapper": {
+      "src/(.*)": "<rootDir>/src/$1"
+    },
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "moduleFileExtensions": [
+      "js",
+      "ts"
+    ]
   }
 }

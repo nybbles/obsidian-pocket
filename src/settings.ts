@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, Plugin } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import {
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
@@ -9,6 +9,7 @@ import PocketSync from "./main";
 import { getAccessToken, getPocketItems } from "./pocket_api";
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
+const SYNC_POCKET_CTA = "Sync Pocket items";
 
 export const addAuthSetting = (containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -19,23 +20,35 @@ export const addAuthSetting = (containerEl: HTMLElement) =>
       button.onClick(setupAuth);
     });
 
-const addTestAuthSetting = (plugin: Plugin, containerEl: HTMLElement) =>
+const addTestAuthSetting = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
-    .setName("Test Pocket get")
-    .setDesc("Click here to check that Pocket works")
+    .setName(SYNC_POCKET_CTA)
+    .setDesc("Updates the Pocket items in Obsidian from Pocket")
     .addButton((button) => {
-      button.setButtonText("Test Pocket get");
+      button.setButtonText(SYNC_POCKET_CTA);
       button.onClick(async () => {
         const accessInfo = await loadPocketAccessInfo(plugin);
         if (!accessInfo) {
           console.log(`Not authenticated to Pocket, skipping`);
+          return;
         }
 
         console.log(
           `Fetching pocket items for username: ${accessInfo.username}`
         );
-        const pocketItems = await getPocketItems(accessInfo.accessToken);
-        console.log(pocketItems);
+
+        const lastUpdateTimestamp =
+          await plugin.itemStore.getLastUpdateTimestamp();
+
+        const getPocketItemsResponse = await getPocketItems(
+          accessInfo.accessToken,
+          lastUpdateTimestamp
+        );
+
+        plugin.itemStore.mergeUpdates(
+          getPocketItemsResponse.timestamp,
+          getPocketItemsResponse.response.list
+        );
       });
     });
 
