@@ -9,6 +9,7 @@ import PocketSync from "./main";
 import { getAccessToken, getPocketItems } from "./pocket_api";
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
+const SYNC_POCKET_CTA = "Sync Pocket items";
 
 export const addAuthSetting = (containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -21,10 +22,10 @@ export const addAuthSetting = (containerEl: HTMLElement) =>
 
 const addTestAuthSetting = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
-    .setName("Test Pocket get")
-    .setDesc("Click here to check that Pocket works")
+    .setName(SYNC_POCKET_CTA)
+    .setDesc("Updates the Pocket items in Obsidian from Pocket")
     .addButton((button) => {
-      button.setButtonText("Test Pocket get");
+      button.setButtonText(SYNC_POCKET_CTA);
       button.onClick(async () => {
         const accessInfo = await loadPocketAccessInfo(plugin);
         if (!accessInfo) {
