@@ -40,25 +40,9 @@ export default class PocketSync extends Plugin {
       new Notice("This is a notice!");
     });
 
-    this.addStatusBarItem().setText("Status Bar Text");
+    this.addCommands();
 
-    this.addCommand({
-      id: "open-sample-modal",
-      name: "Open Sample Modal",
-      // callback: () => {
-      // 	console.log('Simple Callback');
-      // },
-      checkCallback: (checking: boolean) => {
-        let leaf = this.app.workspace.activeLeaf;
-        if (leaf) {
-          if (!checking) {
-            new SampleModal(this.app).open();
-          }
-          return true;
-        }
-        return false;
-      },
-    });
+    this.addStatusBarItem().setText("Status Bar Text");
 
     this.addSettingTab(new PocketSettingTab(this.app, this));
 
@@ -86,6 +70,30 @@ export default class PocketSync extends Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
   }
+
+  openPocketList = async () => {
+    new SampleModal(this.app).open();
+  };
+
+  addCommands = () => {
+    this.addCommand({
+      id: "open-pocket-list",
+      name: "Open Pocket list",
+      // callback: () => {
+      // 	console.log('Simple Callback');
+      // },
+      checkCallback: (checking: boolean) => {
+        let leaf = this.app.workspace.activeLeaf;
+        if (leaf) {
+          if (!checking) {
+            this.openPocketList();
+          }
+          return true;
+        }
+        return false;
+      },
+    });
+  };
 }
 
 class SampleModal extends Modal {
