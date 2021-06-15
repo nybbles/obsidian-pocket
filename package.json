@@ -19,6 +19,8 @@
     "@types/jest": "^26.0.23",
     "@types/node": "^14.14.37",
     "@types/qs": "^6.9.6",
+    "@types/react": "^17.0.11",
+    "@types/react-dom": "^17.0.7",
     "@types/sqlite3": "^3.1.7",
     "jest": "^27.0.4",
     "obsidian": "^0.12.0",
@@ -31,7 +33,9 @@
   "dependencies": {
     "cors-anywhere": "^0.4.4",
     "idb": "^6.1.2",
-    "qs": "^6.10.1"
+    "qs": "^6.10.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   },
   "jest": {
     "clearMocks": true,

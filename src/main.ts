@@ -1,6 +1,8 @@
 import * as cors_proxy from "cors-anywhere";
 import { App, Modal, Notice, Plugin } from "obsidian";
+import ReactDOM from "react-dom";
 import { openPocketItemStore, PocketItemStore } from "./pocket_item_store";
+import { createReactApp } from "./ReactApp";
 import { PocketSettingTab } from "./settings";
 
 interface PocketSyncSettings {
@@ -25,6 +27,7 @@ const setupCORSProxy = () => {
 export default class PocketSync extends Plugin {
   settings: PocketSyncSettings;
   itemStore: PocketItemStore;
+  appEl: HTMLDivElement;
 
   async onload() {
     console.log("loading plugin");
@@ -57,7 +60,19 @@ export default class PocketSync extends Plugin {
     this.registerInterval(
       window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
     );
+
+    this.mount();
   }
+
+  // Mount React app
+  mount = () => {
+    console.log("mounting React components");
+    ReactDOM.render(
+      createReactApp(),
+      this.appEl ?? (this.appEl = document.body.createDiv())
+    );
+    console.log("done mounting React components");
+  };
 
   onunload() {
     console.log("unloading plugin");
