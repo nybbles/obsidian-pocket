@@ -1,6 +1,7 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import React from "react";
 import PocketSync from "./main";
+import { PocketItemList } from "./react/PocketItemList";
 
 export const POCKET_ITEM_LIST_VIEW_TYPE = "pocket_item_list";
 
@@ -28,8 +29,6 @@ export class PocketItemListView extends ItemView {
   }
 
   getPortal() {
-    // TODO: Implement this
-    console.log("FOO");
-    return <>Foo</>;
+    return <PocketItemList itemStore={this.plugin.itemStore} />;
   }
 }
