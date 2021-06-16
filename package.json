@@ -33,6 +33,7 @@
   "dependencies": {
     "cors-anywhere": "^0.4.4",
     "idb": "^6.1.2",
+    "immutability-helper": "^3.1.1",
     "qs": "^6.10.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"

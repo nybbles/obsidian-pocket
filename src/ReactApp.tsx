@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
 import { createPortal } from "react-dom";
 import { PocketItemListView } from "./PocketItemListView";
+import { ViewManager } from "./ViewManager";
 
-export const createReactApp = () => <ReactApp />;
+export const createReactApp = (viewManager: ViewManager) => (
+  <ReactApp viewManager={viewManager} />
+);
 
-type ViewProps = {
+export type ViewProps = {
   view: PocketItemListView;
 };
 
-class View extends React.Component<ViewProps> {
+export class View extends React.Component<ViewProps> {
   constructor(props: ViewProps) {
     super(props);
   }
@@ -18,9 +21,16 @@ class View extends React.Component<ViewProps> {
   }
 }
 
-export const ReactApp = () => {
-  // TODO: Need to expose setViews somehow
-  const [views, setViews] = useState<PocketItemListView[]>([]);
-  const portals = views.map((view) => <View view={view} />);
+export type ReactAppProps = {
+  viewManager: ViewManager;
+};
+
+export const ReactApp = ({ viewManager }: ReactAppProps) => {
+  const [views, _setViews] = viewManager.useState();
+  const portals = [];
+  for (const view of Array.from(views.values())) {
+    portals.push(<View key={view.id} view={view} />);
+  }
+
   return <>{...portals}</>;
 };

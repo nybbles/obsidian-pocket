@@ -1,27 +1,35 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import React from "react";
+import PocketSync from "./main";
 
 export const POCKET_ITEM_LIST_VIEW_TYPE = "pocket_item_list";
 
 export class PocketItemListView extends ItemView {
-  constructor(leaf: WorkspaceLeaf) {
+  plugin: PocketSync;
+  id: string = (this.leaf as any).id;
+
+  constructor(leaf: WorkspaceLeaf, plugin: PocketSync) {
     // TODO: Get the username in here
     super(leaf);
+    this.plugin = plugin;
+    this.plugin.viewManager.addView(this.id, this);
   }
 
-  getViewType = (): string => {
+  getViewType(): string {
     return POCKET_ITEM_LIST_VIEW_TYPE;
-  };
-  getDisplayText = (): string => {
+  }
+  getDisplayText(): string {
     return "Pocket username goes here";
-  };
+  }
 
-  onClose = async () => {
-    // TODO: Remove view
-  };
+  async onClose() {
+    console.log("onClose");
+    this.plugin.viewManager.removeView(this.id);
+  }
 
-  getPortal = () => {
+  getPortal() {
     // TODO: Implement this
-    return <></>;
-  };
+    console.log("FOO");
+    return <>Foo</>;
+  }
 }
