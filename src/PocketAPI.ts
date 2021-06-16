@@ -1,5 +1,5 @@
 import * as qs from "qs";
-import { PocketGetItemsResponse } from "./pocket_api_types";
+import { PocketGetItemsResponse } from "./PocketAPITypes";
 
 export type RequestToken = string;
 export type AccessToken = string;

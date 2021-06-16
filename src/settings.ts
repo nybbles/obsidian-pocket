@@ -4,9 +4,9 @@ import {
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
   setupAuth,
   storePocketAccessInfo,
-} from "./auth";
+} from "./PocketAuth";
 import PocketSync from "./main";
-import { getAccessToken, getPocketItems } from "./pocket_api";
+import { getAccessToken, getPocketItems } from "./PocketAPI";
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";

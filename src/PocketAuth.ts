@@ -4,7 +4,7 @@ import {
   buildAuthorizationURL,
   getRequestToken,
   RequestToken,
-} from "./pocket_api";
+} from "./PocketAPI";
 
 export type AccessInfo = AccessTokenResponse;
 

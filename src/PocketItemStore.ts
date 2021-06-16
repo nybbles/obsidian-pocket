@@ -1,12 +1,12 @@
 import { IDBPDatabase, openDB } from "idb";
-import { UpdateTimestamp } from "./pocket_api";
+import { UpdateTimestamp } from "./PocketAPI";
 import {
   isDeletedPocketItem,
   isSavedPocketItem,
   PocketItemId,
   PocketItemRecord,
   SavedPocketItem,
-} from "./pocket_api_types";
+} from "./PocketAPITypes";
 
 const DATABASE_NAME = "pocket_db";
 const ITEM_STORE_NAME = "items";

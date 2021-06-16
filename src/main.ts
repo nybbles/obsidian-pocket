@@ -5,9 +5,9 @@ import {
   PocketItemListView,
   POCKET_ITEM_LIST_VIEW_TYPE,
 } from "./PocketItemListView";
-import { openPocketItemStore, PocketItemStore } from "./pocket_item_store";
+import { openPocketItemStore, PocketItemStore } from "./PocketItemStore";
 import { createReactApp } from "./ReactApp";
-import { PocketSettingTab } from "./settings";
+import { PocketSettingTab } from "./Settings";
 import { ViewManager } from "./ViewManager";
 
 interface PocketSyncSettings {
