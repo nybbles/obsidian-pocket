@@ -93,6 +93,7 @@ export default class PocketSync extends Plugin {
 
     this.viewManager.clearViews();
     this.viewManager = null;
+
     if (this.appEl) {
       ReactDOM.unmountComponentAtNode(this.appEl);
       this.appEl.detach();
@@ -117,18 +118,8 @@ export default class PocketSync extends Plugin {
     this.addCommand({
       id: "open-pocket-list",
       name: "Open Pocket list",
-      // callback: () => {
-      // 	console.log('Simple Callback');
-      // },
-      checkCallback: (checking: boolean) => {
-        let leaf = this.app.workspace.activeLeaf;
-        if (leaf) {
-          if (!checking) {
-            this.openPocketList();
-          }
-          return true;
-        }
-        return false;
+      callback: () => {
+        this.openPocketList();
       },
     });
   };
