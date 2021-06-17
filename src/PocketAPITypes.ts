@@ -21,6 +21,7 @@ export interface SavedPocketItem extends BasePocketItem {
   status: PocketItemStatus.Unread | PocketItemStatus.Archived;
   resolved_title: string;
   resolved_url: string;
+  excerpt: string;
 }
 
 export type PocketItem = SavedPocketItem | DeletedPocketItem;

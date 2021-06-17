@@ -40,7 +40,9 @@ export const PocketItemList = ({ itemStore }: PocketItemListProps) => {
     return (
       <ul>
         {items.map((item) => (
-          <PocketItem key={item.item_id} item={item} />
+          <li key={item.item_id}>
+            <PocketItem item={item} />
+          </li>
         ))}
       </ul>
     );

@@ -2,6 +2,10 @@ import typescript from "@rollup/plugin-typescript";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
+import babel from "@rollup/plugin-babel";
+import postcss from "rollup-plugin-postcss";
+import postcssNested from "postcss-nested";
+import del from "rollup-plugin-delete";
 
 const isProd = process.env.BUILD === "production";
 
@@ -23,11 +27,26 @@ export default {
   },
   external: ["obsidian"],
   plugins: [
-    typescript(),
-    nodeResolve({ browser: true }),
     commonjs({
       include: "node_modules/**",
     }),
+    babel({
+      babelHelpers: "bundled",
+      extensions: [".tsx", ".ts"],
+      plugins: ["astroturf/plugin"],
+    }),
+    postcss({
+      extract: "styles.css",
+      modules: true,
+      plugins: [postcssNested],
+    }),
+    typescript(),
+    nodeResolve({ browser: true }),
     json(),
+    del({
+      targets: ["**/*.module.css"],
+      hook: "buildEnd",
+      runOnce: true,
+    }),
   ],
 };
