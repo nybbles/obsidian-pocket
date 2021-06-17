@@ -34,6 +34,8 @@ export class PocketItemStore {
   ): Promise<void> => {
     const updates = [];
 
+    // TODO: Should all of this be happening in a transaction?
+    console.log("Applying updates");
     for (const key in items) {
       const item = items[key];
       if (isDeletedPocketItem(item)) {
@@ -45,27 +47,24 @@ export class PocketItemStore {
       }
     }
 
-    // get Unix timestamp and write it
-    this.setLastUpdateTimestamp(lastUpdateTimestamp);
-
-    // Wait on all changes, then trigger registered onChange handlers
+    // Wait on all changes, update timestamp, then trigger registered onChange handlers
     await Promise.all(updates);
+    console.log("Updates applied");
+    this.setLastUpdateTimestamp(lastUpdateTimestamp);
+    console.log("Running onChange handlers");
     await this.handleOnChange();
   };
 
-  addItem = async (
-    item: SavedPocketItem,
-    triggerOnChangeHandlers = true
-  ): Promise<void> => {
-    this.db.add(ITEM_STORE_NAME, item);
+  addItem = async (item: SavedPocketItem, triggerOnChangeHandlers = true) => {
+    await this.db.add(ITEM_STORE_NAME, item);
     triggerOnChangeHandlers && (await this.handleOnChange());
   };
 
   putItem = async (
     item: SavedPocketItem,
     triggerOnChangeHandlers?: boolean
-  ): Promise<void> => {
-    this.db.put(ITEM_STORE_NAME, item);
+  ) => {
+    await this.db.put(ITEM_STORE_NAME, item);
     triggerOnChangeHandlers && (await this.handleOnChange());
   };
 
@@ -77,11 +76,15 @@ export class PocketItemStore {
     return this.db.getAll(ITEM_STORE_NAME);
   };
 
+  getAllItemsBySortId = async (): Promise<SavedPocketItem[]> => {
+    return this.db.getAllFromIndex(ITEM_STORE_NAME, "sort_id");
+  };
+
   deleteItem = async (
     itemId: PocketItemId,
     triggerOnChangeHandlers?: boolean
-  ): Promise<void> => {
-    this.db.delete(ITEM_STORE_NAME, itemId);
+  ) => {
+    await this.db.delete(ITEM_STORE_NAME, itemId);
     triggerOnChangeHandlers && (await this.handleOnChange());
   };
 
@@ -94,7 +97,13 @@ export class PocketItemStore {
     timestamp: UpdateTimestamp,
     triggerOnChangeHandlers?: boolean
   ): Promise<void> => {
-    this.db.put(METADATA_STORE_NAME, timestamp, LAST_UPDATED_TIMESTAMP_KEY);
+    console.log("Updating update timestamp");
+    await this.db.put(
+      METADATA_STORE_NAME,
+      timestamp,
+      LAST_UPDATED_TIMESTAMP_KEY
+    );
+    triggerOnChangeHandlers && (await this.handleOnChange());
   };
 
   getLastUpdateTimestamp = async (): Promise<UpdateTimestamp | null> => {
@@ -120,13 +129,25 @@ export class PocketItemStore {
 }
 
 export const openPocketItemStore = async (): Promise<PocketItemStore> => {
-  const db = await openDB(DATABASE_NAME, 1, {
-    upgrade: (db) => {
-      const _itemStore = db.createObjectStore(ITEM_STORE_NAME, {
-        keyPath: "item_id",
-      });
+  const dbVersion = 2;
+  const db = await openDB(DATABASE_NAME, dbVersion, {
+    upgrade: (db, oldVersion, newVersion, tx) => {
+      if (oldVersion !== newVersion) {
+        console.log(
+          `Upgrading pocket item store to version ${newVersion} from version ${oldVersion}`
+        );
+      }
 
-      const _metadataStore = db.createObjectStore(METADATA_STORE_NAME);
+      switch (oldVersion) {
+        case 0:
+          db.createObjectStore(ITEM_STORE_NAME, {
+            keyPath: "item_id",
+          });
+          db.createObjectStore(METADATA_STORE_NAME);
+        case 1:
+          const itemStore = tx.objectStore(ITEM_STORE_NAME);
+          itemStore.createIndex("sort_id", "sort_id", { unique: false });
+      }
     },
   });
   return new PocketItemStore(db);

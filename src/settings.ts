@@ -45,7 +45,13 @@ const addTestAuthSetting = (plugin: PocketSync, containerEl: HTMLElement) =>
           lastUpdateTimestamp
         );
 
-        plugin.itemStore.mergeUpdates(
+        console.log(
+          `Fetched ${
+            Object.keys(getPocketItemsResponse.response.list).length
+          } updates`
+        );
+
+        await plugin.itemStore.mergeUpdates(
           getPocketItemsResponse.timestamp,
           getPocketItemsResponse.response.list
         );
