@@ -42,7 +42,14 @@ export const PocketItem = ({ item }: PocketItemProps) => {
   };
 
   return (
-    <div className={styles.item} onDoubleClick={navigateToPocketURL}>
+    <div
+      className={styles.item}
+      onClick={(event) => {
+        if (event.metaKey) {
+          navigateToPocketURL();
+        }
+      }}
+    >
       <span className={styles.itemTitle}>{displayText}</span>
       {item.excerpt && (
         <span className={styles.itemExcerpt}>{item.excerpt}</span>
