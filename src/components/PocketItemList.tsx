@@ -1,8 +1,18 @@
+import { stylesheet } from "astroturf";
 import React, { useEffect, useState } from "react";
 import { SavedPocketItem } from "src/PocketAPITypes";
 import { PocketItemStore } from "src/PocketItemStore";
-
 import { PocketItem } from "./PocketItem";
+
+const styles = stylesheet`
+  .list {
+    list-style-type: none;
+  }
+
+  .item {
+    margin: 8px;
+  }
+`;
 
 export type PocketItemListProps = {
   itemStore: PocketItemStore;
@@ -38,9 +48,9 @@ export const PocketItemList = ({ itemStore }: PocketItemListProps) => {
     return <>No items synced!</>;
   } else {
     return (
-      <ul>
+      <ul className={styles.list}>
         {items.map((item) => (
-          <li key={item.item_id}>
+          <li key={item.item_id} className={styles.item}>
             <PocketItem item={item} />
           </li>
         ))}

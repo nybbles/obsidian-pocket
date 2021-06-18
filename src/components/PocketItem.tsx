@@ -7,6 +7,24 @@ const styles = stylesheet`
     color: black;
     border: 1px solid black;
     display: block;
+
+    padding: 4px 8px;
+  }
+  .item > span {
+    display: block;
+  }
+
+  .itemTitle {
+    font-weight: 600;
+    flex-grow: 1;
+    width: 100%;
+  }
+
+  .itemExcerpt {
+    font-weight: 300;
+    line-height: 1.5;
+    flex-grow: 1;
+    width: 100%;
   }
 `;
 
@@ -19,8 +37,10 @@ export const PocketItem = ({ item }: PocketItemProps) => {
     item.resolved_title.length !== 0 ? item.resolved_title : item.resolved_url;
   return (
     <div className={styles.item}>
-      <span>{displayText}</span>
-      {item.excerpt && <span>{item.excerpt}</span>}
+      <span className={styles.itemTitle}>{displayText}</span>
+      {item.excerpt && (
+        <span className={styles.itemExcerpt}>{item.excerpt}</span>
+      )}
     </div>
   );
 };
