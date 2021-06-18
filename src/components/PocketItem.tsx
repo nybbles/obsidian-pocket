@@ -1,5 +1,6 @@
 import { stylesheet } from "astroturf";
 import React from "react";
+import { openBrowserWindow } from "src/utils";
 import { SavedPocketItem } from "../PocketAPITypes";
 
 const styles = stylesheet`
@@ -35,8 +36,13 @@ export type PocketItemProps = {
 export const PocketItem = ({ item }: PocketItemProps) => {
   const displayText =
     item.resolved_title.length !== 0 ? item.resolved_title : item.resolved_url;
+
+  const navigateToPocketURL = () => {
+    openBrowserWindow(item.resolved_url);
+  };
+
   return (
-    <div className={styles.item}>
+    <div className={styles.item} onDoubleClick={navigateToPocketURL}>
       <span className={styles.itemTitle}>{displayText}</span>
       {item.excerpt && (
         <span className={styles.itemExcerpt}>{item.excerpt}</span>

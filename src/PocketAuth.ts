@@ -5,6 +5,7 @@ import {
   getRequestToken,
   RequestToken,
 } from "./PocketAPI";
+import { openBrowserWindow } from "./utils";
 
 export type AccessInfo = AccessTokenResponse;
 
@@ -37,8 +38,6 @@ export const loadPocketAccessInfo = async (
 
   return JSON.parse(await plugin.app.vault.adapter.read(storedPath));
 };
-
-const openBrowserWindow = (url: string) => window.location.assign(url);
 
 const redirectUserToPocketAuth = async (requestToken: RequestToken) =>
   openBrowserWindow(buildAuthorizationURL(requestToken, AUTH_REDIRECT_URI));
