@@ -98,7 +98,7 @@ export const getPocketItems = async (
   lastUpdateTimestamp?: UpdateTimestamp
 ): Promise<TimestampedPocketGetItemsResponse> => {
   const GET_ITEMS_URL = "https://getpocket.com/v3/get";
-  const nextTimestamp = Date.now();
+  const nextTimestamp = Math.floor(Date.now() / 1000);
 
   const requestOptions = {
     consumer_key: PLATFORM_CONSUMER_KEYS["mac"],
