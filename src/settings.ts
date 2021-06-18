@@ -72,6 +72,8 @@ export class PocketSettingTab extends PluginSettingTab {
       async (params) => {
         const accessInfo = await getAccessToken();
         storePocketAccessInfo(this.plugin, accessInfo);
+        this.plugin.pocketAuthenticated = true;
+        this.plugin.pocketUsername = accessInfo.username;
       }
     );
 

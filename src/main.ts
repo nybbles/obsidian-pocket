@@ -1,6 +1,8 @@
 import * as cors_proxy from "cors-anywhere";
 import { App, Modal, Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
+import { Username as PocketUsername } from "./PocketAPI";
+import { loadPocketAccessInfo } from "./PocketAuth";
 import {
   PocketItemListView,
   POCKET_ITEM_LIST_VIEW_TYPE,
@@ -34,6 +36,8 @@ export default class PocketSync extends Plugin {
   itemStore: PocketItemStore;
   appEl: HTMLDivElement;
   viewManager: ViewManager;
+  pocketUsername: PocketUsername | null;
+  pocketAuthenticated: boolean;
 
   async onload() {
     console.log("loading plugin");
@@ -68,6 +72,14 @@ export default class PocketSync extends Plugin {
     this.registerInterval(
       window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
     );
+
+    const accessInfo = await loadPocketAccessInfo(this);
+    if (!accessInfo) {
+      console.log(`Not authenticated to Pocket`);
+    }
+
+    this.pocketAuthenticated = !!accessInfo;
+    this.pocketUsername = accessInfo?.username;
 
     // Set up React-based Pocket item list view
     this.viewManager = new ViewManager();
