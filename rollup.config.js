@@ -43,10 +43,5 @@ export default {
     typescript(),
     nodeResolve({ browser: true }),
     json(),
-    del({
-      targets: ["**/*.module.css"],
-      hook: "buildEnd",
-      runOnce: true,
-    }),
   ],
 };
