@@ -4,9 +4,9 @@ import {
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
   setupAuth,
   storePocketAccessInfo,
-} from "./auth";
+} from "./PocketAuth";
 import PocketSync from "./main";
-import { getAccessToken, getPocketItems } from "./pocket_api";
+import { getAccessToken, getPocketItems } from "./PocketAPI";
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
@@ -45,7 +45,13 @@ const addTestAuthSetting = (plugin: PocketSync, containerEl: HTMLElement) =>
           lastUpdateTimestamp
         );
 
-        plugin.itemStore.mergeUpdates(
+        console.log(
+          `Fetched ${
+            Object.keys(getPocketItemsResponse.response.list).length
+          } updates`
+        );
+
+        await plugin.itemStore.mergeUpdates(
           getPocketItemsResponse.timestamp,
           getPocketItemsResponse.response.list
         );
@@ -66,6 +72,8 @@ export class PocketSettingTab extends PluginSettingTab {
       async (params) => {
         const accessInfo = await getAccessToken();
         storePocketAccessInfo(this.plugin, accessInfo);
+        this.plugin.pocketAuthenticated = true;
+        this.plugin.pocketUsername = accessInfo.username;
       }
     );
 

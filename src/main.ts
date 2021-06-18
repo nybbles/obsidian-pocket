@@ -1,7 +1,16 @@
 import * as cors_proxy from "cors-anywhere";
 import { App, Modal, Notice, Plugin } from "obsidian";
-import { openPocketItemStore, PocketItemStore } from "./pocket_item_store";
-import { PocketSettingTab } from "./settings";
+import ReactDOM from "react-dom";
+import { Username as PocketUsername } from "./PocketAPI";
+import { loadPocketAccessInfo } from "./PocketAuth";
+import {
+  PocketItemListView,
+  POCKET_ITEM_LIST_VIEW_TYPE,
+} from "./PocketItemListView";
+import { openPocketItemStore, PocketItemStore } from "./PocketItemStore";
+import { createReactApp } from "./ReactApp";
+import { PocketSettingTab } from "./Settings";
+import { ViewManager } from "./ViewManager";
 
 interface PocketSyncSettings {
   mySetting: string;
@@ -25,14 +34,20 @@ const setupCORSProxy = () => {
 export default class PocketSync extends Plugin {
   settings: PocketSyncSettings;
   itemStore: PocketItemStore;
+  appEl: HTMLDivElement;
+  viewManager: ViewManager;
+  pocketUsername: PocketUsername | null;
+  pocketAuthenticated: boolean;
 
   async onload() {
     console.log("loading plugin");
     await this.loadSettings();
 
+    // Set up CORS proxy for Pocket API calls
     console.log("setting up CORS proxy");
     setupCORSProxy();
 
+    // Set up Pocket item store
     console.log("opening Pocket item store");
     this.itemStore = await openPocketItemStore();
 
@@ -40,25 +55,9 @@ export default class PocketSync extends Plugin {
       new Notice("This is a notice!");
     });
 
-    this.addStatusBarItem().setText("Status Bar Text");
+    this.addCommands();
 
-    this.addCommand({
-      id: "open-sample-modal",
-      name: "Open Sample Modal",
-      // callback: () => {
-      // 	console.log('Simple Callback');
-      // },
-      checkCallback: (checking: boolean) => {
-        let leaf = this.app.workspace.activeLeaf;
-        if (leaf) {
-          if (!checking) {
-            new SampleModal(this.app).open();
-          }
-          return true;
-        }
-        return false;
-      },
-    });
+    this.addStatusBarItem().setText("Status Bar Text");
 
     this.addSettingTab(new PocketSettingTab(this.app, this));
 
@@ -73,10 +72,44 @@ export default class PocketSync extends Plugin {
     this.registerInterval(
       window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
     );
+
+    const accessInfo = await loadPocketAccessInfo(this);
+    if (!accessInfo) {
+      console.log(`Not authenticated to Pocket`);
+    }
+
+    this.pocketAuthenticated = !!accessInfo;
+    this.pocketUsername = accessInfo?.username;
+
+    // Set up React-based Pocket item list view
+    this.viewManager = new ViewManager();
+    this.mount();
+    this.registerView(
+      POCKET_ITEM_LIST_VIEW_TYPE,
+      (leaf) => new PocketItemListView(leaf, this)
+    );
   }
+
+  // Mount React app
+  mount = () => {
+    console.log("mounting React components");
+    ReactDOM.render(
+      createReactApp(this.viewManager),
+      this.appEl ?? (this.appEl = document.body.createDiv())
+    );
+    console.log("done mounting React components");
+  };
 
   onunload() {
     console.log("unloading plugin");
+
+    this.viewManager.clearViews();
+    this.viewManager = null;
+
+    if (this.appEl) {
+      ReactDOM.unmountComponentAtNode(this.appEl);
+      this.appEl.detach();
+    }
   }
 
   async loadSettings() {
@@ -86,6 +119,22 @@ export default class PocketSync extends Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
   }
+
+  openPocketList = async () => {
+    await this.app.workspace.activeLeaf.setViewState({
+      type: POCKET_ITEM_LIST_VIEW_TYPE,
+    });
+  };
+
+  addCommands = () => {
+    this.addCommand({
+      id: "open-pocket-list",
+      name: "Open Pocket list",
+      callback: () => {
+        this.openPocketList();
+      },
+    });
+  };
 }
 
 class SampleModal extends Modal {
