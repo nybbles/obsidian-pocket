@@ -29,6 +29,10 @@ const styles = stylesheet`
   }
 `;
 
+const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
+
+const toNoteLink = (displayText: string) => `[[${sanitizeTitle(displayText)}]]`;
+
 export type PocketItemProps = {
   item: SavedPocketItem;
 };
@@ -50,7 +54,7 @@ export const PocketItem = ({ item }: PocketItemProps) => {
         }
       }}
     >
-      <span className={styles.itemTitle}>{displayText}</span>
+      <span className={styles.itemTitle}>{toNoteLink(displayText)}</span>
       {item.excerpt && (
         <span className={styles.itemExcerpt}>{item.excerpt}</span>
       )}
