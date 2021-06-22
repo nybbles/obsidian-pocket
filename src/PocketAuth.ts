@@ -39,6 +39,11 @@ export const loadPocketAccessInfo = async (
   return JSON.parse(await plugin.app.vault.adapter.read(storedPath));
 };
 
+export const clearPocketAccessInfo = async (plugin: Plugin): Promise<void> => {
+  const storedPath = accessInfoPath(plugin);
+  await plugin.app.vault.adapter.remove(storedPath);
+};
+
 const redirectUserToPocketAuth = async (requestToken: RequestToken) =>
   openBrowserWindow(buildAuthorizationURL(requestToken, AUTH_REDIRECT_URI));
 
