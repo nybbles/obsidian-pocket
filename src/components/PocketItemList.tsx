@@ -1,7 +1,9 @@
 import { stylesheet } from "astroturf";
+import { MetadataCache, Workspace } from "obsidian";
 import React, { useEffect, useState } from "react";
 import { SavedPocketItem } from "src/PocketAPITypes";
 import { PocketItemStore } from "src/PocketItemStore";
+import { doesLinkpathExist, openLinktext } from "src/utils";
 import { PocketItem } from "./PocketItem";
 
 const styles = stylesheet`
@@ -16,9 +18,15 @@ const styles = stylesheet`
 
 export type PocketItemListProps = {
   itemStore: PocketItemStore;
+  metadataCache: MetadataCache;
+  workspace: Workspace;
 };
 
-export const PocketItemList = ({ itemStore }: PocketItemListProps) => {
+export const PocketItemList = ({
+  itemStore,
+  metadataCache,
+  workspace,
+}: PocketItemListProps) => {
   const [items, setItems] = useState<SavedPocketItem[]>([]);
 
   useEffect(() => {
@@ -51,7 +59,11 @@ export const PocketItemList = ({ itemStore }: PocketItemListProps) => {
       <ul className={styles.list}>
         {items.map((item) => (
           <li key={item.item_id} className={styles.item}>
-            <PocketItem item={item} />
+            <PocketItem
+              item={item}
+              openLinktext={openLinktext(workspace)}
+              doesLinkpathExist={doesLinkpathExist(metadataCache)}
+            />
           </li>
         ))}
       </ul>
