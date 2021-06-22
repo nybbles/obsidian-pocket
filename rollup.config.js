@@ -5,7 +5,6 @@ import json from "@rollup/plugin-json";
 import babel from "@rollup/plugin-babel";
 import postcss from "rollup-plugin-postcss";
 import postcssNested from "postcss-nested";
-import del from "rollup-plugin-delete";
 
 const isProd = process.env.BUILD === "production";
 
