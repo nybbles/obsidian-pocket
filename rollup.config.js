@@ -43,4 +43,9 @@ export default {
     nodeResolve({ browser: true }),
     json(),
   ],
+  watch: {
+    chokidar: {
+      usePolling: true,
+    },
+  },
 };
