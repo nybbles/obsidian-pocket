@@ -11,7 +11,7 @@ import { getAccessToken, getPocketItems } from "./PocketAPI";
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
 
-export const addAuthSetting = (containerEl: HTMLElement) =>
+const addAuthButton = (containerEl: HTMLElement) =>
   new Setting(containerEl)
     .setName("Pocket authorization")
     .setDesc(CONNECT_POCKET_CTA)
@@ -20,7 +20,7 @@ export const addAuthSetting = (containerEl: HTMLElement) =>
       button.onClick(setupAuth);
     });
 
-const addTestAuthSetting = (plugin: PocketSync, containerEl: HTMLElement) =>
+const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
     .setName(SYNC_POCKET_CTA)
     .setDesc("Updates the Pocket items in Obsidian from Pocket")
@@ -79,7 +79,7 @@ export class PocketSettingTab extends PluginSettingTab {
 
     let { containerEl } = this;
     containerEl.empty();
-    addAuthSetting(containerEl);
-    addTestAuthSetting(this.plugin, containerEl);
+    addAuthButton(containerEl);
+    addSyncButton(this.plugin, containerEl);
   }
 }
