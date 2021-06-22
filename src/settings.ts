@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import {
   clearPocketAccessInfo,
   loadPocketAccessInfo,
@@ -31,7 +31,7 @@ const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       button.onClick(async () => {
         const accessInfo = await loadPocketAccessInfo(plugin);
         if (!accessInfo) {
-          console.log(`Not authenticated to Pocket, skipping`);
+          new Notice("Not logged into Pocket, skipping sync");
           return;
         }
 
