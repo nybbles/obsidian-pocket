@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import {
+  clearPocketAccessInfo,
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
   setupAuth,
@@ -10,6 +11,7 @@ import { getAccessToken, getPocketItems } from "./PocketAPI";
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
+const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 
 const addAuthButton = (containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -58,6 +60,22 @@ const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       });
     });
 
+const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
+  new Setting(containerEl)
+    .setName(LOG_OUT_OF_POCKET_CTA)
+    .setDesc("Disconnects Obsidian from Pocket")
+    .addButton((button) => {
+      button.setButtonText(LOG_OUT_OF_POCKET_CTA);
+      button.onClick(async () => {
+        console.log("Disconnecting from Pocket by clearing Pocket access info");
+        clearPocketAccessInfo(plugin);
+      });
+
+      plugin.pocketAuthenticated = false;
+      plugin.pocketUsername = null;
+    });
+};
+
 export class PocketSettingTab extends PluginSettingTab {
   plugin: PocketSync;
 
@@ -81,5 +99,6 @@ export class PocketSettingTab extends PluginSettingTab {
     containerEl.empty();
     addAuthButton(containerEl);
     addSyncButton(this.plugin, containerEl);
+    addLogoutButton(this.plugin, containerEl);
   }
 }
