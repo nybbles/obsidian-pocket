@@ -1,5 +1,6 @@
 import { stylesheet } from "astroturf";
 import React from "react";
+import { DoesLinkpathExistFn, OpenLinktextFn } from "src/Types";
 import { openBrowserWindow } from "src/utils";
 import { SavedPocketItem } from "../PocketAPITypes";
 
@@ -29,11 +30,47 @@ const styles = stylesheet`
   }
 `;
 
-export type PocketItemProps = {
-  item: SavedPocketItem;
+const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
+
+type NoteLinkProps = {
+  displayText: string;
+  openLinktext: OpenLinktextFn;
+  doesLinkpathExist: DoesLinkpathExistFn;
 };
 
-export const PocketItem = ({ item }: PocketItemProps) => {
+const PocketItemNoteLink = ({
+  displayText,
+  openLinktext,
+  doesLinkpathExist,
+}: NoteLinkProps) => {
+  const sanitizedTitle = sanitizeTitle(displayText);
+  const linkpathExists = doesLinkpathExist(sanitizedTitle);
+
+  return (
+    <a
+      href={sanitizedTitle}
+      data-href={sanitizedTitle}
+      className={`internal-link ${linkpathExists ? "" : "is-unresolved"}`}
+      target="blank"
+      rel="noopener"
+      onClick={() => openLinktext(sanitizedTitle)}
+    >
+      {sanitizedTitle}
+    </a>
+  );
+};
+
+export type PocketItemProps = {
+  item: SavedPocketItem;
+  openLinktext: OpenLinktextFn;
+  doesLinkpathExist: DoesLinkpathExistFn;
+};
+
+export const PocketItem = ({
+  item,
+  openLinktext,
+  doesLinkpathExist,
+}: PocketItemProps) => {
   const displayText =
     item.resolved_title.length !== 0 ? item.resolved_title : item.resolved_url;
 
@@ -50,7 +87,13 @@ export const PocketItem = ({ item }: PocketItemProps) => {
         }
       }}
     >
-      <span className={styles.itemTitle}>{displayText}</span>
+      <span className={styles.itemTitle}>
+        <PocketItemNoteLink
+          displayText={displayText}
+          openLinktext={openLinktext}
+          doesLinkpathExist={doesLinkpathExist}
+        />
+      </span>
       {item.excerpt && (
         <span className={styles.itemExcerpt}>{item.excerpt}</span>
       )}
