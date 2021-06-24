@@ -29,19 +29,27 @@ export const storePocketAccessInfo = async (
 export const loadPocketAccessInfo = async (
   plugin: Plugin
 ): Promise<AccessInfo | null> => {
-  const storedPath = accessInfoPath(plugin);
-  const accessInfoExists = await plugin.app.vault.adapter.exists(storedPath);
+  const accessInfoExists = await pocketAccessInfoExists(plugin);
 
   if (!accessInfoExists) {
     return null;
   }
 
+  const storedPath = accessInfoPath(plugin);
   return JSON.parse(await plugin.app.vault.adapter.read(storedPath));
 };
 
 export const clearPocketAccessInfo = async (plugin: Plugin): Promise<void> => {
   const storedPath = accessInfoPath(plugin);
   await plugin.app.vault.adapter.remove(storedPath);
+};
+
+export const pocketAccessInfoExists = async (
+  plugin: Plugin
+): Promise<boolean> => {
+  const storedPath = accessInfoPath(plugin);
+  const accessInfoExists = await plugin.app.vault.adapter.exists(storedPath);
+  return accessInfoExists;
 };
 
 const redirectUserToPocketAuth = async (requestToken: RequestToken) =>

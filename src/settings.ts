@@ -1,13 +1,14 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import PocketSync from "./main";
+import { getAccessToken, getPocketItems } from "./PocketAPI";
 import {
   clearPocketAccessInfo,
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
+  pocketAccessInfoExists,
   setupAuth,
   storePocketAccessInfo,
 } from "./PocketAuth";
-import PocketSync from "./main";
-import { getAccessToken, getPocketItems } from "./PocketAPI";
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
@@ -67,8 +68,14 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
     .addButton((button) => {
       button.setButtonText(LOG_OUT_OF_POCKET_CTA);
       button.onClick(async () => {
-        console.log("Disconnecting from Pocket by clearing Pocket access info");
-        clearPocketAccessInfo(plugin);
+        if (await pocketAccessInfoExists(plugin)) {
+          console.log(
+            "Disconnecting from Pocket by clearing Pocket access info"
+          );
+          clearPocketAccessInfo(plugin);
+        } else {
+          new Notice("Already logged out of Pocket, skipping");
+        }
       });
 
       plugin.pocketAuthenticated = false;
