@@ -38,6 +38,7 @@ export class ViewManager {
     console.log(`views: ${Array.from(this.views.keys())}`);
   }
   clearViews(): void {
+    console.log(`Clearing views`);
     this.views = update(this.views, { $set: new Map() });
     this.setState(this.views);
   }
