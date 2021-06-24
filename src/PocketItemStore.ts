@@ -126,6 +126,11 @@ export class PocketItemStore {
     );
     await Promise.all(cbExecs);
   };
+
+  clearDatabase = async () => {
+    await this.db.clear(ITEM_STORE_NAME);
+    await this.db.clear(METADATA_STORE_NAME);
+  };
 }
 
 export const openPocketItemStore = async (): Promise<PocketItemStore> => {

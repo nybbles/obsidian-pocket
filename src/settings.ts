@@ -13,6 +13,7 @@ import {
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
+const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
 
 const addAuthButton = (containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -83,6 +84,22 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
     });
 };
 
+const addClearLocalPocketDataButton = (
+  plugin: PocketSync,
+  containerEl: HTMLElement
+) => {
+  new Setting(containerEl)
+    .setName(CLEAR_LOCAL_POCKET_DATA_CTA)
+    .setDesc("Clears Pocket data stored locally by Pocket-obsidian plugin")
+    .addButton((button) => {
+      button.setButtonText(CLEAR_LOCAL_POCKET_DATA_CTA);
+      button.onClick(async () => {
+        await plugin.itemStore.clearDatabase();
+        new Notice("Cleared locally-stored Pocket data");
+      });
+    });
+};
+
 export class PocketSettingTab extends PluginSettingTab {
   plugin: PocketSync;
 
@@ -107,5 +124,6 @@ export class PocketSettingTab extends PluginSettingTab {
     addAuthButton(containerEl);
     addSyncButton(this.plugin, containerEl);
     addLogoutButton(this.plugin, containerEl);
+    addClearLocalPocketDataButton(this.plugin, containerEl);
   }
 }
