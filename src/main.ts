@@ -1,8 +1,12 @@
 import * as cors_proxy from "cors-anywhere";
 import { App, Modal, Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
-import { Username as PocketUsername } from "./PocketAPI";
-import { loadPocketAccessInfo } from "./PocketAuth";
+import { getAccessToken, Username as PocketUsername } from "./PocketAPI";
+import {
+  loadPocketAccessInfo,
+  OBSIDIAN_AUTH_PROTOCOL_ACTION,
+  storePocketAccessInfo,
+} from "./PocketAuth";
 import {
   PocketItemListView,
   POCKET_ITEM_LIST_VIEW_TYPE,
@@ -77,6 +81,16 @@ export default class PocketSync extends Plugin {
     if (!accessInfo) {
       console.log(`Not authenticated to Pocket`);
     }
+
+    this.registerObsidianProtocolHandler(
+      OBSIDIAN_AUTH_PROTOCOL_ACTION,
+      async (params) => {
+        const accessInfo = await getAccessToken();
+        storePocketAccessInfo(this, accessInfo);
+        this.pocketAuthenticated = true;
+        this.pocketUsername = accessInfo.username;
+      }
+    );
 
     this.pocketAuthenticated = !!accessInfo;
     this.pocketUsername = accessInfo?.username;

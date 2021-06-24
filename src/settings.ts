@@ -1,13 +1,11 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import PocketSync from "./main";
-import { getAccessToken, getPocketItems } from "./PocketAPI";
+import { getPocketItems } from "./PocketAPI";
 import {
   clearPocketAccessInfo,
   loadPocketAccessInfo,
-  OBSIDIAN_AUTH_PROTOCOL_ACTION,
   pocketAccessInfoExists,
   setupAuth,
-  storePocketAccessInfo,
 } from "./PocketAuth";
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
@@ -109,16 +107,6 @@ export class PocketSettingTab extends PluginSettingTab {
   }
 
   display(): void {
-    this.plugin.registerObsidianProtocolHandler(
-      OBSIDIAN_AUTH_PROTOCOL_ACTION,
-      async (params) => {
-        const accessInfo = await getAccessToken();
-        storePocketAccessInfo(this.plugin, accessInfo);
-        this.plugin.pocketAuthenticated = true;
-        this.plugin.pocketUsername = accessInfo.username;
-      }
-    );
-
     let { containerEl } = this;
     containerEl.empty();
     addAuthButton(containerEl);
