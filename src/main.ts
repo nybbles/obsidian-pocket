@@ -1,5 +1,5 @@
 import * as cors_proxy from "cors-anywhere";
-import { App, Modal, Notice, Plugin } from "obsidian";
+import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
 import { getAccessToken, Username as PocketUsername } from "./PocketAPI";
 import {
@@ -66,9 +66,14 @@ export default class PocketSync extends Plugin {
       OBSIDIAN_AUTH_PROTOCOL_ACTION,
       async (params) => {
         const accessInfo = await getAccessToken();
+        if (!accessInfo.username) {
+          throw new Error("Unexpected null username from Pocket auth");
+        }
+
         storePocketAccessInfo(this, accessInfo);
         this.pocketAuthenticated = true;
         this.pocketUsername = accessInfo.username;
+        new Notice(`Logged in to Pocket as ${this.pocketUsername}`);
       }
     );
 
