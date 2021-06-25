@@ -20,15 +20,19 @@ import { createReactApp } from "./ReactApp";
 import { PocketSettingTab } from "./Settings";
 import { ViewManager } from "./ViewManager";
 
-const setupCORSProxy = () => {
-  // TODO: This code does not handle the setting where the CORS proxy has
-  // already been set up.
-
+const setupCORSProxy = (): any => {
   const host = "0.0.0.0";
   const port = 9090;
-  cors_proxy.createServer({}).listen(port, host, () => {
+  const corsProxy = cors_proxy.createServer({}).listen(port, host, () => {
     console.log("Running CORS Anywhere on " + host + ":" + port);
   });
+  return corsProxy;
+};
+
+// See https://www.npmjs.com/package/http-proxy#shutdown
+const shutdownCORSProxy = (corsProxy: any) => {
+  console.log("Shutting down CORS Anywhere");
+  corsProxy.close();
 };
 
 export default class PocketSync extends Plugin {
@@ -37,13 +41,14 @@ export default class PocketSync extends Plugin {
   viewManager: ViewManager;
   pocketUsername: PocketUsername | null;
   pocketAuthenticated: boolean;
+  corsProxy: any; // need to do this because cors-anywhere has no typedefs
 
   async onload() {
     console.log("loading plugin");
 
     // Set up CORS proxy for Pocket API calls
     console.log("setting up CORS proxy");
-    setupCORSProxy();
+    this.corsProxy = setupCORSProxy();
 
     // Set up Pocket item store
     console.log("opening Pocket item store");
@@ -104,6 +109,9 @@ export default class PocketSync extends Plugin {
     console.log("closing Pocket item store");
     await closePocketItemStore(this.itemStore);
     this.itemStore = null;
+
+    shutdownCORSProxy(this.corsProxy);
+    this.corsProxy = null;
   }
 
   killAllViews = () => {
