@@ -10,15 +10,7 @@ export class PocketItemListView extends ItemView {
   id: string = (this.leaf as any).id;
 
   constructor(leaf: WorkspaceLeaf, plugin: PocketSync) {
-    // TODO: Get the username in here
     super(leaf);
-
-    if (!plugin.pocketAuthenticated) {
-      throw new Error(
-        "Tried to display PocketItemListView when not Pocket-authenticated"
-      );
-    }
-
     this.plugin = plugin;
     this.plugin.viewManager.addView(this.id, this);
   }
@@ -26,8 +18,9 @@ export class PocketItemListView extends ItemView {
   getViewType(): string {
     return POCKET_ITEM_LIST_VIEW_TYPE;
   }
+
   getDisplayText(): string {
-    return `Pocket list for ${this.plugin.pocketUsername}`;
+    return `Pocket list`;
   }
 
   async onClose() {

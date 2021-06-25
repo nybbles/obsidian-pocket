@@ -1,17 +1,17 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import PocketSync from "./main";
+import { getPocketItems } from "./PocketAPI";
 import {
   clearPocketAccessInfo,
   loadPocketAccessInfo,
-  OBSIDIAN_AUTH_PROTOCOL_ACTION,
+  pocketAccessInfoExists,
   setupAuth,
-  storePocketAccessInfo,
 } from "./PocketAuth";
-import PocketSync from "./main";
-import { getAccessToken, getPocketItems } from "./PocketAPI";
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
+const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
 
 const addAuthButton = (containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -31,7 +31,7 @@ const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       button.onClick(async () => {
         const accessInfo = await loadPocketAccessInfo(plugin);
         if (!accessInfo) {
-          console.log(`Not authenticated to Pocket, skipping`);
+          new Notice("Not logged into Pocket, skipping sync");
           return;
         }
 
@@ -67,12 +67,34 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
     .addButton((button) => {
       button.setButtonText(LOG_OUT_OF_POCKET_CTA);
       button.onClick(async () => {
-        console.log("Disconnecting from Pocket by clearing Pocket access info");
-        clearPocketAccessInfo(plugin);
+        if (await pocketAccessInfoExists(plugin)) {
+          console.log(
+            "Disconnecting from Pocket by clearing Pocket access info"
+          );
+          clearPocketAccessInfo(plugin);
+        } else {
+          new Notice("Already logged out of Pocket, skipping");
+        }
       });
 
       plugin.pocketAuthenticated = false;
       plugin.pocketUsername = null;
+    });
+};
+
+const addClearLocalPocketDataButton = (
+  plugin: PocketSync,
+  containerEl: HTMLElement
+) => {
+  new Setting(containerEl)
+    .setName(CLEAR_LOCAL_POCKET_DATA_CTA)
+    .setDesc("Clears Pocket data stored locally by Pocket-obsidian plugin")
+    .addButton((button) => {
+      button.setButtonText(CLEAR_LOCAL_POCKET_DATA_CTA);
+      button.onClick(async () => {
+        await plugin.itemStore.clearDatabase();
+        new Notice("Cleared locally-stored Pocket data");
+      });
     });
 };
 
@@ -85,20 +107,11 @@ export class PocketSettingTab extends PluginSettingTab {
   }
 
   display(): void {
-    this.plugin.registerObsidianProtocolHandler(
-      OBSIDIAN_AUTH_PROTOCOL_ACTION,
-      async (params) => {
-        const accessInfo = await getAccessToken();
-        storePocketAccessInfo(this.plugin, accessInfo);
-        this.plugin.pocketAuthenticated = true;
-        this.plugin.pocketUsername = accessInfo.username;
-      }
-    );
-
     let { containerEl } = this;
     containerEl.empty();
     addAuthButton(containerEl);
     addSyncButton(this.plugin, containerEl);
     addLogoutButton(this.plugin, containerEl);
+    addClearLocalPocketDataButton(this.plugin, containerEl);
   }
 }
