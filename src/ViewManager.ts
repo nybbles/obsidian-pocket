@@ -31,12 +31,14 @@ export class ViewManager {
     this.setState(this.views);
     console.log(`views: ${Array.from(this.views.keys())}`);
   }
+
   removeView(viewName: ViewName): void {
     console.log(`Removing view for ${viewName}`);
     this.views = update(this.views, { $remove: [viewName] });
     this.setState(this.views);
     console.log(`views: ${Array.from(this.views.keys())}`);
   }
+
   clearViews(): void {
     console.log(`Clearing views`);
     this.views = update(this.views, { $set: new Map() });

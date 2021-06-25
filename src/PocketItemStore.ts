@@ -157,3 +157,6 @@ export const openPocketItemStore = async (): Promise<PocketItemStore> => {
   });
   return new PocketItemStore(db);
 };
+
+export const closePocketItemStore = async (pocketItemStore: PocketItemStore) =>
+  await pocketItemStore.db.close();

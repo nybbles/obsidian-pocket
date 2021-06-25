@@ -11,7 +11,11 @@ import {
   PocketItemListView,
   POCKET_ITEM_LIST_VIEW_TYPE,
 } from "./PocketItemListView";
-import { openPocketItemStore, PocketItemStore } from "./PocketItemStore";
+import {
+  closePocketItemStore,
+  openPocketItemStore,
+  PocketItemStore,
+} from "./PocketItemStore";
 import { createReactApp } from "./ReactApp";
 import { PocketSettingTab } from "./Settings";
 import { ViewManager } from "./ViewManager";
@@ -114,17 +118,30 @@ export default class PocketSync extends Plugin {
     console.log("done mounting React components");
   };
 
-  onunload() {
+  async onunload() {
     console.log("unloading plugin");
 
-    this.viewManager.clearViews();
+    console.log("killing all views");
+    this.killAllViews();
     this.viewManager = null;
 
     if (this.appEl) {
       ReactDOM.unmountComponentAtNode(this.appEl);
       this.appEl.detach();
     }
+
+    console.log("closing Pocket item store");
+    await closePocketItemStore(this.itemStore);
+    this.itemStore = null;
   }
+
+  killAllViews = () => {
+    this.app.workspace
+      .getLeavesOfType(POCKET_ITEM_LIST_VIEW_TYPE)
+      .forEach((leaf) => leaf.detach());
+    this.viewManager.views.forEach((view) => view.unload());
+    this.viewManager.clearViews();
+  };
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
