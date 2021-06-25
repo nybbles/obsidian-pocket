@@ -2,6 +2,7 @@ import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import PocketSync from "./main";
 import { getPocketItems } from "./PocketAPI";
 import {
+  AccessInfo,
   clearPocketAccessInfo,
   loadPocketAccessInfo,
   pocketAccessInfoExists,
@@ -22,6 +23,35 @@ const addAuthButton = (containerEl: HTMLElement) =>
       button.onClick(setupAuth);
     });
 
+const doPocketSync = async (plugin: PocketSync, accessInfo: AccessInfo) => {
+  const lastUpdateTimestamp = await plugin.itemStore.getLastUpdateTimestamp();
+
+  new Notice(`Fetching Pocket updates for ${accessInfo.username}`);
+
+  const getPocketItemsResponse = await getPocketItems(
+    accessInfo.accessToken,
+    lastUpdateTimestamp
+  );
+
+  new Notice(
+    `Fetched ${
+      Object.keys(getPocketItemsResponse.response.list).length
+    } updates from Pocket`
+  );
+
+  const storageNotice = new Notice(`Storing updates from Pocket...`, 0);
+
+  await plugin.itemStore.mergeUpdates(
+    getPocketItemsResponse.timestamp,
+    getPocketItemsResponse.response.list
+  );
+
+  storageNotice.hide();
+  new Notice(`Done storing updates from Pocket`);
+};
+
+var pendingSync: Promise<void> | null = null;
+
 const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
     .setName(SYNC_POCKET_CTA)
@@ -35,28 +65,17 @@ const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
           return;
         }
 
-        console.log(
-          `Fetching pocket items for username: ${accessInfo.username}`
-        );
+        if (!!pendingSync) {
+          new Notice("Sync already in progress, skipping");
+          return;
+        }
 
-        const lastUpdateTimestamp =
-          await plugin.itemStore.getLastUpdateTimestamp();
-
-        const getPocketItemsResponse = await getPocketItems(
-          accessInfo.accessToken,
-          lastUpdateTimestamp
-        );
-
-        console.log(
-          `Fetched ${
-            Object.keys(getPocketItemsResponse.response.list).length
-          } updates`
-        );
-
-        await plugin.itemStore.mergeUpdates(
-          getPocketItemsResponse.timestamp,
-          getPocketItemsResponse.response.list
-        );
+        pendingSync = doPocketSync(plugin, accessInfo);
+        try {
+          await pendingSync;
+        } finally {
+          pendingSync = null;
+        }
       });
     });
 
@@ -72,6 +91,7 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
             "Disconnecting from Pocket by clearing Pocket access info"
           );
           clearPocketAccessInfo(plugin);
+          new Notice("Disconnected from Pocket");
         } else {
           new Notice("Already logged out of Pocket, skipping");
         }
