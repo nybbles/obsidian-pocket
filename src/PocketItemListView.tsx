@@ -24,8 +24,9 @@ export class PocketItemListView extends ItemView {
   }
 
   async onClose() {
-    console.log("onClose");
-    this.plugin.viewManager.removeView(this.id);
+    // view manager can be null when plugin has been unloaded. The unload step
+    // clears all views, so the view does not need to be removed here.
+    this.plugin.viewManager?.removeView(this.id);
   }
 
   getPortal() {
