@@ -1,4 +1,5 @@
 import { IDBPDatabase, openDB } from "idb";
+import log from "loglevel";
 import { v4 as uuidv4 } from "uuid";
 import { UpdateTimestamp } from "./PocketAPI";
 import {
@@ -35,7 +36,7 @@ export class PocketItemStore {
     const updates = [];
 
     // TODO: Should all of this be happening in a transaction?
-    console.log("Applying updates");
+    log.debug("Applying updates to Pocket item store");
     for (const key in items) {
       const item = items[key];
       if (isDeletedPocketItem(item)) {
@@ -49,9 +50,9 @@ export class PocketItemStore {
 
     // Wait on all changes, update timestamp, then trigger registered onChange handlers
     await Promise.all(updates);
-    console.log("Updates applied");
+    log.debug("Updates applied to Pocket item store");
     this.setLastUpdateTimestamp(lastUpdateTimestamp);
-    console.log("Running onChange handlers");
+    log.debug("Running Pocket item store onChange handlers");
     await this.handleOnChange();
   };
 
@@ -97,7 +98,7 @@ export class PocketItemStore {
     timestamp: UpdateTimestamp,
     triggerOnChangeHandlers?: boolean
   ): Promise<void> => {
-    console.log("Updating update timestamp");
+    log.debug("Updating update timestamp in Pocket item store");
     await this.db.put(
       METADATA_STORE_NAME,
       timestamp,
@@ -138,8 +139,8 @@ export const openPocketItemStore = async (): Promise<PocketItemStore> => {
   const db = await openDB(DATABASE_NAME, dbVersion, {
     upgrade: (db, oldVersion, newVersion, tx) => {
       if (oldVersion !== newVersion) {
-        console.log(
-          `Upgrading pocket item store to version ${newVersion} from version ${oldVersion}`
+        log.info(
+          `Upgrading Pocket item store to version ${newVersion} from version ${oldVersion}`
         );
       }
 

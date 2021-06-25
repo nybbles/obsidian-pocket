@@ -1,3 +1,4 @@
+import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import PocketSync from "./main";
 import { getPocketItems } from "./PocketAPI";
@@ -87,9 +88,7 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
       button.setButtonText(LOG_OUT_OF_POCKET_CTA);
       button.onClick(async () => {
         if (await pocketAccessInfoExists(plugin)) {
-          console.log(
-            "Disconnecting from Pocket by clearing Pocket access info"
-          );
+          log.debug("Disconnecting from Pocket by clearing Pocket access info");
           clearPocketAccessInfo(plugin);
           new Notice("Disconnected from Pocket");
         } else {

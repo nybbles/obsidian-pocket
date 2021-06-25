@@ -1,3 +1,4 @@
+import log from "loglevel";
 import { MetadataCache, Workspace } from "obsidian";
 import { DoesLinkpathExistFn, OpenLinktextFn } from "./Types";
 
@@ -10,7 +11,7 @@ export const DEFAULT_SOURCE_PATH = "/";
 export const openLinktext =
   (workspace: Workspace): OpenLinktextFn =>
   (linktext: string) => {
-    console.log(`Clicked. Going to ${linktext}`);
+    log.debug(`Clicked. Going to ${linktext}`);
     workspace.openLinkText(linktext, DEFAULT_SOURCE_PATH, true);
   };
 

@@ -1,4 +1,5 @@
 import update from "immutability-helper";
+import log from "loglevel";
 import { useEffect, useState } from "react";
 import { PocketItemListView } from "./PocketItemListView";
 
@@ -26,21 +27,21 @@ export class ViewManager {
   }
 
   addView(viewName: ViewName, view: PocketItemListView): void {
-    console.log(`Adding view for ${viewName}`);
+    log.debug(`Adding view for ${viewName}`);
     this.views = update(this.views, { $add: [[viewName, view]] });
     this.setState(this.views);
-    console.log(`views: ${Array.from(this.views.keys())}`);
+    log.debug(`views: ${Array.from(this.views.keys())}`);
   }
 
   removeView(viewName: ViewName): void {
-    console.log(`Removing view for ${viewName}`);
+    log.debug(`Removing view for ${viewName}`);
     this.views = update(this.views, { $remove: [viewName] });
     this.setState(this.views);
-    console.log(`views: ${Array.from(this.views.keys())}`);
+    log.debug(`views: ${Array.from(this.views.keys())}`);
   }
 
   clearViews(): void {
-    console.log(`Clearing views`);
+    log.debug(`Clearing views`);
     this.views = update(this.views, { $set: new Map() });
     this.setState(this.views);
   }

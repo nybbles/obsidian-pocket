@@ -4,8 +4,8 @@
   "description": "This is a plugin for Obsidian (https://obsidian.md) that allows for easy access to your Pocket (https://getpocket.com) list.",
   "main": "main.js",
   "scripts": {
-    "dev": "rollup --config rollup.config.js -w",
-    "build": "rollup --config rollup.config.js --environment BUILD:production",
+    "dev": "rollup --config rollup.config.js -w --environment BUILD:dev",
+    "build": "rollup --config rollup.config.js --environment BUILD:prod",
     "test": "jest"
   },
   "keywords": [],
@@ -30,6 +30,7 @@
     "postcss-nested": "^5.0.5",
     "rollup": "^2.32.1",
     "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-inject-process-env": "^1.3.1",
     "rollup-plugin-postcss": "^4.0.0",
     "ts-jest": "^27.0.2",
     "ts-node": "^10.0.0",
@@ -40,6 +41,7 @@
     "cors-anywhere": "^0.4.4",
     "idb": "^6.1.2",
     "immutability-helper": "^3.1.1",
+    "loglevel": "^1.7.1",
     "qs": "^6.10.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
