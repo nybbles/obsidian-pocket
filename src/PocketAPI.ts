@@ -1,3 +1,4 @@
+import log from "loglevel";
 import * as qs from "qs";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
 
@@ -110,14 +111,14 @@ export const getPocketItems = async (
 
   if (!!lastUpdateTimestamp) {
     const humanReadable = new Date(lastUpdateTimestamp * 1000).toLocaleString();
-    console.log(`Fetching with Pocket item updates since ${humanReadable}`);
+    log.info(`Fetching with Pocket item updates since ${humanReadable}`);
   } else {
-    console.log(`Fetching all Pocket items`);
+    log.info(`Fetching all Pocket items`);
   }
 
   const response = await doCORSProxiedRequest(GET_ITEMS_URL, requestOptions);
 
-  console.log(`Pocket items fetched.`);
+  log.info(`Pocket items fetched.`);
 
   return {
     timestamp: nextTimestamp,

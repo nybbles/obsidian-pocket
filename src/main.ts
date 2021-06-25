@@ -1,4 +1,5 @@
 import * as cors_proxy from "cors-anywhere";
+import log from "loglevel";
 import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
 import { getAccessToken, Username as PocketUsername } from "./PocketAPI";
@@ -24,14 +25,14 @@ const setupCORSProxy = (): any => {
   const host = "0.0.0.0";
   const port = 9090;
   const corsProxy = cors_proxy.createServer({}).listen(port, host, () => {
-    console.log("Running CORS Anywhere on " + host + ":" + port);
+    log.info("Running CORS Anywhere on " + host + ":" + port);
   });
   return corsProxy;
 };
 
 // See https://www.npmjs.com/package/http-proxy#shutdown
 const shutdownCORSProxy = (corsProxy: any) => {
-  console.log("Shutting down CORS Anywhere");
+  log.info("Shutting down CORS Anywhere");
   corsProxy.close();
 };
 
@@ -44,14 +45,17 @@ export default class PocketSync extends Plugin {
   corsProxy: any; // need to do this because cors-anywhere has no typedefs
 
   async onload() {
-    console.log("loading plugin");
+    const defaultLogLevel = process.env.BUILD === "prod" ? "info" : "debug";
+    log.setDefaultLevel(defaultLogLevel);
+
+    log.info("Loading Pocket plugin");
 
     // Set up CORS proxy for Pocket API calls
-    console.log("setting up CORS proxy");
+    log.info("Setting up CORS proxy for Pocket API calls");
     this.corsProxy = setupCORSProxy();
 
     // Set up Pocket item store
-    console.log("opening Pocket item store");
+    log.debug("Opening Pocket item store");
     this.itemStore = await openPocketItemStore();
 
     this.addCommands();
@@ -59,7 +63,7 @@ export default class PocketSync extends Plugin {
 
     const accessInfo = await loadPocketAccessInfo(this);
     if (!accessInfo) {
-      console.log(`Not authenticated to Pocket`);
+      console.info(`Not authenticated to Pocket`);
     }
 
     this.registerObsidianProtocolHandler(
@@ -91,18 +95,18 @@ export default class PocketSync extends Plugin {
 
   // Mount React app
   mount = () => {
-    console.log("mounting React components");
+    console.debug("Mounting React components");
     ReactDOM.render(
       createReactApp(this.viewManager),
       this.appEl ?? (this.appEl = document.body.createDiv())
     );
-    console.log("done mounting React components");
+    console.debug("Done mounting React components");
   };
 
   async onunload() {
-    console.log("unloading plugin");
+    log.info("Unloading Pocket plugin");
 
-    console.log("killing all views");
+    log.debug("Killing all views");
     this.killAllViews();
     this.viewManager = null;
 
@@ -111,10 +115,11 @@ export default class PocketSync extends Plugin {
       this.appEl.detach();
     }
 
-    console.log("closing Pocket item store");
+    log.debug("Closing Pocket item store");
     await closePocketItemStore(this.itemStore);
     this.itemStore = null;
 
+    log.info("Shutting down CORS proxy for Pocket API calls");
     shutdownCORSProxy(this.corsProxy);
     this.corsProxy = null;
   }
