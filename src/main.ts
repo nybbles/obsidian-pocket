@@ -20,14 +20,6 @@ import { createReactApp } from "./ReactApp";
 import { PocketSettingTab } from "./Settings";
 import { ViewManager } from "./ViewManager";
 
-interface PocketSyncSettings {
-  mySetting: string;
-}
-
-const DEFAULT_SETTINGS: PocketSyncSettings = {
-  mySetting: "default",
-};
-
 const setupCORSProxy = () => {
   // TODO: This code does not handle the setting where the CORS proxy has
   // already been set up.
@@ -40,7 +32,6 @@ const setupCORSProxy = () => {
 };
 
 export default class PocketSync extends Plugin {
-  settings: PocketSyncSettings;
   itemStore: PocketItemStore;
   appEl: HTMLDivElement;
   viewManager: ViewManager;
@@ -49,7 +40,6 @@ export default class PocketSync extends Plugin {
 
   async onload() {
     console.log("loading plugin");
-    await this.loadSettings();
 
     // Set up CORS proxy for Pocket API calls
     console.log("setting up CORS proxy");
@@ -59,27 +49,8 @@ export default class PocketSync extends Plugin {
     console.log("opening Pocket item store");
     this.itemStore = await openPocketItemStore();
 
-    this.addRibbonIcon("dice", "Sample Plugin", () => {
-      new Notice("This is a notice!");
-    });
-
     this.addCommands();
-
-    this.addStatusBarItem().setText("Status Bar Text");
-
     this.addSettingTab(new PocketSettingTab(this.app, this));
-
-    this.registerCodeMirror((cm: CodeMirror.Editor) => {
-      console.log("codemirror", cm);
-    });
-
-    this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-      console.log("click", evt);
-    });
-
-    this.registerInterval(
-      window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-    );
 
     const accessInfo = await loadPocketAccessInfo(this);
     if (!accessInfo) {
@@ -143,14 +114,6 @@ export default class PocketSync extends Plugin {
     this.viewManager.clearViews();
   };
 
-  async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  }
-
-  async saveSettings() {
-    await this.saveData(this.settings);
-  }
-
   openPocketList = async () => {
     await this.app.workspace.activeLeaf.setViewState({
       type: POCKET_ITEM_LIST_VIEW_TYPE,
@@ -166,20 +129,4 @@ export default class PocketSync extends Plugin {
       },
     });
   };
-}
-
-class SampleModal extends Modal {
-  constructor(app: App) {
-    super(app);
-  }
-
-  onOpen() {
-    let { contentEl } = this;
-    contentEl.setText("Woah!");
-  }
-
-  onClose() {
-    let { contentEl } = this;
-    contentEl.empty();
-  }
 }
