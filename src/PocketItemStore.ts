@@ -131,6 +131,7 @@ export class PocketItemStore {
   clearDatabase = async () => {
     await this.db.clear(ITEM_STORE_NAME);
     await this.db.clear(METADATA_STORE_NAME);
+    await this.handleOnChange();
   };
 }
 
