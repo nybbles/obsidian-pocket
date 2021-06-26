@@ -20,6 +20,7 @@
     line-height: 1.5;
     flex-grow: 1;
     width: 100%;
+    color: var(--text-normal);
   }
 .PocketItemList-styles-module_list__2MnxN {
     list-style-type: none;

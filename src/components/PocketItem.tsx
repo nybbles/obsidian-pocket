@@ -27,6 +27,7 @@ const styles = stylesheet`
     line-height: 1.5;
     flex-grow: 1;
     width: 100%;
+    color: var(--text-normal);
   }
 `;
 
