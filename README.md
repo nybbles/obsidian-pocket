@@ -1,57 +1,67 @@
-## Obsidian Sample Plugin
+# obsidian-pocket
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+This plugin for [Obsidian](https://obsidian.md/) that allows you to sync your
+[Pocket](https://getpocket.com/) reading list into Obsidian, so that you can
+easily create Obsidian notes directly from your Pocket reading list.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+![pocket-list](https://raw.githubusercontent.com/nybbles/obsidian-pocket/master/images/pocket-list.png)
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+## Installation
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Changes the default font color to red using `styles.css`.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+The plugin will soon be installable from the "Community plugins" settings tab
+in Obsidian, as described
+[here](https://help.obsidian.md/Advanced+topics/Third-party+plugins#Discover+and+install+community+plugins).
 
-### First time developing plugins?
+## Usage
 
-Quick starting guide for new plugin devs:
+After the plugin has been enabled, you will be able to see a "Pocket" option
+under the "Plugin options" section of the settings panel, as shown below.
 
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+![obsidian-pocket-settings](https://raw.githubusercontent.com/nybbles/obsidian-pocket/master/images/obsidian-pocket-settings.png)
 
-### Releasing new releases
+Click on "Connect your Pocket account" to begin the Pocket authorization flow by
+opening a web page on your default browser. You will be asked whether you want
+to give permission to this plugin to access your Pocket data. Then you will be
+redirected back to Obsidian.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments.
-- Publish the release.
+If you granted permission to this plugin to access Pocket data, you can click on
+"Sync Pocket items" to actually download and store your Pocket list locally
+within Obsidian. Once the Pocket list is downloaded and stored, open the command
+palette and search for "Pocket" to see the list of available commands for this
+plugin.
 
-### Adding your plugin to the community plugin list
+The single command currently available is "Open Pocket list". The Pocket list is
+shown in a screenshot above. Click on any Pocket item's title to create a note
+(or navigate to an existing note) and start writing whatever you want about it!
 
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+## Feature requests, bug reports and PRs
 
-### How to use
+Feature requests, bug reports and PRs are welcome! Please use
+https://github.com/nybbles/obsidian-pocket/issues for this. Please file feature
+requests under https://github.com/nybbles/obsidian-pocket/labels/enhancement, or
+comment in existing feature requests to indicate your interest.
 
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
+## Design overview and security considerations
 
-### Manually installing the plugin
+This plugin runs completely on your local desktop. The only external party it
+communicates with is Pocket, via the [Pocket
+API](https://getpocket.com/developer/). All of your data from Pocket and your
+Pocket access token are stored locally.
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+This plugin uses a locally-running
+[CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) proxy listening
+on localhost:9090, using
+[cors-anywhere](https://github.com/Rob--W/cors-anywhere), which uses
+[node-http-proxy](https://github.com/http-party/node-http-proxy) under the
+hood. If it is important for you to be able to change the proxy listening port,
+please indicate that in https://github.com/nybbles/obsidian-pocket/issues/17.
 
-### API Documentation
+This plugin stores your Pocket data locally in Obsidian's IndexedDB.
 
-See https://github.com/obsidianmd/obsidian-api
+## Support
+
+If you find this plugin valuable, please let me know! It is great to hear from
+people who use what I've built. If you really like this plugin and want to
+express that by buying me a coffee, you can do that via:
+
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="nybbles" data-color="#FF5F5F" data-emoji="" data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
