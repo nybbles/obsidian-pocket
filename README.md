@@ -62,7 +62,7 @@ This plugin stores your Pocket data locally in Obsidian's IndexedDB.
 
 If you find this plugin valuable, please let me know! It is great to hear from
 people who use what I've built. If you really like this plugin and want to
-express that by buying me a coffee, you can do that via:
+express that by buying me a coffee, please do 🙏🏾.
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/gbraad)
 
