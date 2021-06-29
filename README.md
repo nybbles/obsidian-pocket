@@ -64,5 +64,10 @@ If you find this plugin valuable, please let me know! It is great to hear from
 people who use what I've built. If you really like this plugin and want to
 express that by buying me a coffee, you can do that via:
 
-<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="nybbles" data-color="#FF5F5F" data-emoji="" data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00">
-</script>
+<script
+ type="text/javascript"
+ src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+ data-name="bmc-button" data-slug="nybbles" data-color="#FF5F5F" data-emoji=""
+ data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000"
+ data-font-color="#ffffff" data-coffee-color="#FFDD00">
+ </script>
