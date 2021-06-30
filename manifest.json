@@ -1,7 +1,7 @@
 {
   "id": "obsidian-pocket-plugin",
   "name": "Pocket ",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "minAppVersion": "0.9.12",
   "description": "Access your Pocket list easily from within Obsidian",
   "author": "Nimalan Mahendran",
