@@ -15,10 +15,34 @@ export type AccessTokenResponse = {
 
 var storedRequestToken: RequestToken | null = null;
 
+type ConsumerKey = string;
+type SupportedPlatform = "mac" | "windows" | "linux";
+
 // From https://getpocket.com/developer/apps/
-const PLATFORM_CONSUMER_KEYS = {
+const PLATFORM_CONSUMER_KEYS: Record<SupportedPlatform, ConsumerKey> = {
   mac: "97653-12e003276f01f4288ac868c0",
+  windows: "97653-541365a3736338ca19dae55a",
+  linux: "97653-da7a5baf4f5172d3fce89c0a",
 };
+
+const nodePlatformToPlatform = (
+  nodePlatform: NodeJS.Platform
+): SupportedPlatform => {
+  const supportedPlatforms: Record<string, SupportedPlatform> = {
+    darwin: "mac",
+    win32: "windows",
+    linux: "linux",
+  };
+
+  const result = supportedPlatforms[nodePlatform as string];
+  if (!result) {
+    throw new Error("Invalid node platform");
+  }
+  return result;
+};
+
+const CONSUMER_KEY =
+  PLATFORM_CONSUMER_KEYS[nodePlatformToPlatform(process.platform)];
 
 const doCORSProxiedRequest = (
   url: string,
@@ -53,7 +77,7 @@ export const getRequestToken = async (
   const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
 
   const response = await doCORSProxiedRequest(REQUEST_TOKEN_URL, {
-    consumer_key: PLATFORM_CONSUMER_KEYS["mac"],
+    consumer_key: CONSUMER_KEY,
     redirect_uri: authRedirectURI,
   });
 
@@ -74,7 +98,7 @@ export const getAccessToken = async (): Promise<AccessTokenResponse> => {
   const ACCESS_TOKEN_URL = "https://getpocket.com/v3/oauth/authorize";
 
   const response = await doCORSProxiedRequest(ACCESS_TOKEN_URL, {
-    consumer_key: PLATFORM_CONSUMER_KEYS["mac"],
+    consumer_key: CONSUMER_KEY,
     code: storedRequestToken,
   });
 
@@ -102,7 +126,7 @@ export const getPocketItems = async (
   const nextTimestamp = Math.floor(Date.now() / 1000);
 
   const requestOptions = {
-    consumer_key: PLATFORM_CONSUMER_KEYS["mac"],
+    consumer_key: CONSUMER_KEY,
     access_token: accessToken,
     since: !!lastUpdateTimestamp
       ? new Number(lastUpdateTimestamp).toString()
