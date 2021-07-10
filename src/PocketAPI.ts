@@ -44,6 +44,8 @@ const nodePlatformToPlatform = (
 const CONSUMER_KEY =
   PLATFORM_CONSUMER_KEYS[nodePlatformToPlatform(process.platform)];
 
+export const DEFAULT_CORS_PROXY_PORT = 10101;
+
 const doCORSProxiedRequest = (
   url: string,
   body: Record<string, string>

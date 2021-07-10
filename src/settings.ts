@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import PocketSync from "./main";
-import { getPocketItems } from "./PocketAPI";
+import { DEFAULT_CORS_PROXY_PORT, getPocketItems } from "./PocketAPI";
 import {
   AccessInfo,
   clearPocketAccessInfo,
@@ -14,6 +14,11 @@ const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
+const SET_CORS_PROXY_PORT_CTA = "Set CORS proxy port";
+
+export interface PocketSettings {
+  "cors-proxy-port"?: number;
+}
 
 const addAuthButton = (containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -117,12 +122,65 @@ const addClearLocalPocketDataButton = (
     });
 };
 
+const addCORSProxyPortSetting = (
+  plugin: PocketSync,
+  containerEl: HTMLElement,
+  onSettingsChange: OnSettingsChange
+) => {
+  new Setting(containerEl)
+    .setName(SET_CORS_PROXY_PORT_CTA)
+    .setDesc("Sets port used for local CORS proxy")
+    .addText((text) => {
+      const value = plugin.settings["cors-proxy-port"];
+
+      text.inputEl.setAttr("type", "number");
+      text.inputEl.placeholder = `${DEFAULT_CORS_PROXY_PORT} (default)`;
+      text.inputEl.value = value ? value.toString() : "";
+
+      text.onChange((newValue) => {
+        if (!newValue) {
+          text.inputEl.removeClass("error");
+          plugin.settings["cors-proxy-port"] = null;
+          onSettingsChange(plugin.settings);
+          return;
+        }
+
+        const MIN_PORT_NUMBER = 0;
+        const MAX_PORT_NUMBER = 65535;
+        const parsed = parseInt(newValue);
+
+        if (
+          parsed === NaN ||
+          parsed > MAX_PORT_NUMBER ||
+          parsed < MIN_PORT_NUMBER
+        ) {
+          text.inputEl.addClass("error");
+          plugin.settings["cors-proxy-port"] = null;
+          onSettingsChange(plugin.settings);
+          return;
+        }
+
+        text.inputEl.removeClass("error");
+        plugin.settings["cors-proxy-port"] = parsed;
+        onSettingsChange(plugin.settings);
+      });
+    });
+};
+
+export type OnSettingsChange = (newSettings: PocketSettings) => Promise<void>;
+
 export class PocketSettingTab extends PluginSettingTab {
   plugin: PocketSync;
+  onSettingsChange: OnSettingsChange;
 
-  constructor(app: App, plugin: PocketSync) {
+  constructor(
+    app: App,
+    plugin: PocketSync,
+    onSettingsChange: OnSettingsChange
+  ) {
     super(app, plugin);
     this.plugin = plugin;
+    this.onSettingsChange = onSettingsChange;
   }
 
   display(): void {
@@ -132,5 +190,6 @@ export class PocketSettingTab extends PluginSettingTab {
     addSyncButton(this.plugin, containerEl);
     addLogoutButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
+    addCORSProxyPortSetting(this.plugin, containerEl, this.onSettingsChange);
   }
 }
