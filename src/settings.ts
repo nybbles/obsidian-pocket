@@ -1,3 +1,4 @@
+import { stylesheet } from "astroturf";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import PocketSync from "./main";
@@ -9,6 +10,12 @@ import {
   pocketAccessInfoExists,
   setupAuth,
 } from "./PocketAuth";
+
+const styles = stylesheet`
+  .error {
+    border-color: var(--background-modifier-error-hover) !important;
+  }
+`;
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
@@ -139,7 +146,7 @@ const addCORSProxyPortSetting = (
 
       text.onChange((newValue) => {
         if (!newValue) {
-          text.inputEl.removeClass("error");
+          text.inputEl.removeClass(styles.error);
           plugin.settings["cors-proxy-port"] = null;
           onSettingsChange(plugin.settings);
           return;
@@ -154,13 +161,14 @@ const addCORSProxyPortSetting = (
           parsed > MAX_PORT_NUMBER ||
           parsed < MIN_PORT_NUMBER
         ) {
-          text.inputEl.addClass("error");
+          text.inputEl.addClass(styles.error);
+          log.info(`Invalid port number: ${parsed}`);
           plugin.settings["cors-proxy-port"] = null;
           onSettingsChange(plugin.settings);
           return;
         }
 
-        text.inputEl.removeClass("error");
+        text.inputEl.removeClass(styles.error);
         plugin.settings["cors-proxy-port"] = parsed;
         onSettingsChange(plugin.settings);
       });
