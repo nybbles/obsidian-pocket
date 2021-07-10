@@ -2,7 +2,7 @@ import { Plugin } from "obsidian";
 import {
   AccessTokenResponse,
   buildAuthorizationURL,
-  getRequestToken,
+  PocketAPI,
   RequestToken,
 } from "./PocketAPI";
 import { openBrowserWindow } from "./utils";
@@ -55,7 +55,7 @@ export const pocketAccessInfoExists = async (
 const redirectUserToPocketAuth = async (requestToken: RequestToken) =>
   openBrowserWindow(buildAuthorizationURL(requestToken, AUTH_REDIRECT_URI));
 
-export const setupAuth = async () => {
-  const requestToken = await getRequestToken(AUTH_REDIRECT_URI);
+export const setupAuth = (pocketAPI: PocketAPI) => async () => {
+  const requestToken = await pocketAPI.getRequestToken(AUTH_REDIRECT_URI);
   redirectUserToPocketAuth(requestToken);
 };

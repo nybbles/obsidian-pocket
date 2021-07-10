@@ -1,8 +1,8 @@
 import { stylesheet } from "astroturf";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { DEFAULT_CORS_PROXY_PORT } from "./CORSProxy";
 import PocketSync from "./main";
-import { DEFAULT_CORS_PROXY_PORT, getPocketItems } from "./PocketAPI";
 import {
   AccessInfo,
   clearPocketAccessInfo,
@@ -27,13 +27,13 @@ export interface PocketSettings {
   "cors-proxy-port"?: number;
 }
 
-const addAuthButton = (containerEl: HTMLElement) =>
+const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
     .setName("Pocket authorization")
     .setDesc(CONNECT_POCKET_CTA)
     .addButton((button) => {
       button.setButtonText(CONNECT_POCKET_CTA);
-      button.onClick(setupAuth);
+      button.onClick(setupAuth(plugin.pocketAPI));
     });
 
 const doPocketSync = async (plugin: PocketSync, accessInfo: AccessInfo) => {
@@ -41,7 +41,7 @@ const doPocketSync = async (plugin: PocketSync, accessInfo: AccessInfo) => {
 
   new Notice(`Fetching Pocket updates for ${accessInfo.username}`);
 
-  const getPocketItemsResponse = await getPocketItems(
+  const getPocketItemsResponse = await plugin.pocketAPI.getPocketItems(
     accessInfo.accessToken,
     lastUpdateTimestamp
   );
@@ -194,7 +194,7 @@ export class PocketSettingTab extends PluginSettingTab {
   display(): void {
     let { containerEl } = this;
     containerEl.empty();
-    addAuthButton(containerEl);
+    addAuthButton(this.plugin, containerEl);
     addSyncButton(this.plugin, containerEl);
     addLogoutButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
