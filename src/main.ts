@@ -1,8 +1,12 @@
-import * as cors_proxy from "cors-anywhere";
 import log from "loglevel";
 import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
-import { getAccessToken, Username as PocketUsername } from "./PocketAPI";
+import { CORSProxy } from "./CORSProxy";
+import {
+  buildPocketAPI,
+  PocketAPI,
+  Username as PocketUsername,
+} from "./PocketAPI";
 import {
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
@@ -18,23 +22,8 @@ import {
   PocketItemStore,
 } from "./PocketItemStore";
 import { createReactApp } from "./ReactApp";
-import { PocketSettingTab } from "./Settings";
+import { PocketSettings, PocketSettingTab } from "./Settings";
 import { ViewManager } from "./ViewManager";
-
-const setupCORSProxy = (): any => {
-  const host = "0.0.0.0";
-  const port = 9090;
-  const corsProxy = cors_proxy.createServer({}).listen(port, host, () => {
-    log.info("Running CORS Anywhere on " + host + ":" + port);
-  });
-  return corsProxy;
-};
-
-// See https://www.npmjs.com/package/http-proxy#shutdown
-const shutdownCORSProxy = (corsProxy: any) => {
-  log.info("Shutting down CORS Anywhere");
-  corsProxy.close();
-};
 
 export default class PocketSync extends Plugin {
   itemStore: PocketItemStore;
@@ -42,7 +31,17 @@ export default class PocketSync extends Plugin {
   viewManager: ViewManager;
   pocketUsername: PocketUsername | null;
   pocketAuthenticated: boolean;
-  corsProxy: any; // need to do this because cors-anywhere has no typedefs
+  corsProxy: CORSProxy;
+  settings: PocketSettings;
+  pocketAPI: PocketAPI;
+
+  async loadSettings() {
+    this.settings = Object.assign({}, await this.loadData());
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
 
   async onload() {
     const defaultLogLevel = process.env.BUILD === "prod" ? "info" : "debug";
@@ -50,16 +49,25 @@ export default class PocketSync extends Plugin {
 
     log.info("Loading Pocket plugin");
 
+    await this.loadSettings();
+
     // Set up CORS proxy for Pocket API calls
     log.info("Setting up CORS proxy for Pocket API calls");
-    this.corsProxy = setupCORSProxy();
+    this.corsProxy = new CORSProxy(this.settings["cors-proxy-port"]);
+    this.corsProxy.setup();
+    this.pocketAPI = buildPocketAPI(this.corsProxy);
 
     // Set up Pocket item store
     log.debug("Opening Pocket item store");
     this.itemStore = await openPocketItemStore();
 
     this.addCommands();
-    this.addSettingTab(new PocketSettingTab(this.app, this));
+    this.addSettingTab(
+      new PocketSettingTab(this.app, this, async (newSettings) => {
+        this.settings = newSettings;
+        await this.saveSettings();
+      })
+    );
 
     const accessInfo = await loadPocketAccessInfo(this);
     if (!accessInfo) {
@@ -69,7 +77,7 @@ export default class PocketSync extends Plugin {
     this.registerObsidianProtocolHandler(
       OBSIDIAN_AUTH_PROTOCOL_ACTION,
       async (params) => {
-        const accessInfo = await getAccessToken();
+        const accessInfo = await this.pocketAPI.getAccessToken();
         if (!accessInfo.username) {
           throw new Error("Unexpected null username from Pocket auth");
         }
@@ -120,7 +128,8 @@ export default class PocketSync extends Plugin {
     this.itemStore = null;
 
     log.info("Shutting down CORS proxy for Pocket API calls");
-    shutdownCORSProxy(this.corsProxy);
+    this.corsProxy.shutdown();
+    this.pocketAPI = null;
     this.corsProxy = null;
   }
 

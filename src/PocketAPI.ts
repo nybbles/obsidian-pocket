@@ -1,5 +1,6 @@
 import log from "loglevel";
 import * as qs from "qs";
+import { CORSProxy, DoHTTPRequest } from "./CORSProxy";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
 
 export type RequestToken = string;
@@ -44,21 +45,23 @@ const nodePlatformToPlatform = (
 const CONSUMER_KEY =
   PLATFORM_CONSUMER_KEYS[nodePlatformToPlatform(process.platform)];
 
-const doCORSProxiedRequest = (
-  url: string,
-  body: Record<string, string>
-): Promise<Response> => {
-  const proxiedURL = `http://localhost:9090/${url}`;
-  const response = fetch(proxiedURL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    body: qs.stringify(body),
-  });
+export type GetRequestToken = (
+  authRedirectURI: string
+) => Promise<RequestToken>;
+export type GetAccessToken = () => Promise<AccessTokenResponse>;
+export type GetPocketItems = (
+  accessToken: AccessToken,
+  lastUpdateTimestamp?: UpdateTimestamp
+) => Promise<TimestampedPocketGetItemsResponse>;
 
-  return response;
-};
+export interface PocketAPI {
+  getRequestToken: GetRequestToken;
+  getAccessToken: GetAccessToken;
+  getPocketItems: GetPocketItems;
+}
+
+type CurriedBy<T, F> = (t: T) => F;
+type CurriedByDoHTTPRequest<F> = CurriedBy<DoHTTPRequest, F>;
 
 export const buildAuthorizationURL = (
   requestToken: RequestToken,
@@ -67,85 +70,94 @@ export const buildAuthorizationURL = (
   `https://getpocket.com/auth/authorize?request_token=${requestToken}&redirect_uri=${authRedirectURI}`;
 
 // TODO: Handle unsuccessful requests
-export const getRequestToken = async (
-  authRedirectURI: string
-): Promise<RequestToken> => {
-  if (storedRequestToken) {
-    throw new Error("Found unexpected stored request token");
-  }
+export const getRequestToken: CurriedByDoHTTPRequest<GetRequestToken> =
+  (doRequest) => async (authRedirectURI) => {
+    if (storedRequestToken) {
+      throw new Error("Found unexpected stored request token");
+    }
 
-  const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
+    const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
 
-  const response = await doCORSProxiedRequest(REQUEST_TOKEN_URL, {
-    consumer_key: CONSUMER_KEY,
-    redirect_uri: authRedirectURI,
-  });
+    const response = await doRequest(REQUEST_TOKEN_URL, {
+      consumer_key: CONSUMER_KEY,
+      redirect_uri: authRedirectURI,
+    });
 
-  const formdata = await response.text();
-  const parsed = qs.parse(formdata);
+    const formdata = await response.text();
+    const parsed = qs.parse(formdata);
 
-  const requestToken = parsed["code"] as RequestToken;
-  storedRequestToken = requestToken;
-  return requestToken;
-};
+    const requestToken = parsed["code"] as RequestToken;
+    storedRequestToken = requestToken;
+    return requestToken;
+  };
 
 // TODO: Handle unsuccessful requests
-export const getAccessToken = async (): Promise<AccessTokenResponse> => {
-  if (!storedRequestToken) {
-    throw new Error("could not find stored request token");
-  }
+export const getAccessToken: CurriedByDoHTTPRequest<GetAccessToken> =
+  (doRequest) => async () => {
+    if (!storedRequestToken) {
+      throw new Error("could not find stored request token");
+    }
 
-  const ACCESS_TOKEN_URL = "https://getpocket.com/v3/oauth/authorize";
+    const ACCESS_TOKEN_URL = "https://getpocket.com/v3/oauth/authorize";
 
-  const response = await doCORSProxiedRequest(ACCESS_TOKEN_URL, {
-    consumer_key: CONSUMER_KEY,
-    code: storedRequestToken,
-  });
+    const response = await doRequest(ACCESS_TOKEN_URL, {
+      consumer_key: CONSUMER_KEY,
+      code: storedRequestToken,
+    });
 
-  const formdata = await response.text();
-  const parsed = qs.parse(formdata);
+    const formdata = await response.text();
+    const parsed = qs.parse(formdata);
 
-  storedRequestToken = null;
+    storedRequestToken = null;
 
-  return {
-    accessToken: parsed["access_token"] as AccessToken,
-    username: parsed["username"] as Username,
+    return {
+      accessToken: parsed["access_token"] as AccessToken,
+      username: parsed["username"] as Username,
+    };
   };
-};
 
 export type TimestampedPocketGetItemsResponse = {
   timestamp: UpdateTimestamp;
   response: PocketGetItemsResponse;
 };
 
-export const getPocketItems = async (
-  accessToken: AccessToken,
-  lastUpdateTimestamp?: UpdateTimestamp
-): Promise<TimestampedPocketGetItemsResponse> => {
-  const GET_ITEMS_URL = "https://getpocket.com/v3/get";
-  const nextTimestamp = Math.floor(Date.now() / 1000);
+export const getPocketItems: CurriedByDoHTTPRequest<GetPocketItems> =
+  (doRequest) => async (accessToken, lastUpdateTimestamp?) => {
+    const GET_ITEMS_URL = "https://getpocket.com/v3/get";
+    const nextTimestamp = Math.floor(Date.now() / 1000);
 
-  const requestOptions = {
-    consumer_key: CONSUMER_KEY,
-    access_token: accessToken,
-    since: !!lastUpdateTimestamp
-      ? new Number(lastUpdateTimestamp).toString()
-      : null,
+    const requestOptions = {
+      consumer_key: CONSUMER_KEY,
+      access_token: accessToken,
+      since: !!lastUpdateTimestamp
+        ? new Number(lastUpdateTimestamp).toString()
+        : null,
+    };
+
+    if (!!lastUpdateTimestamp) {
+      const humanReadable = new Date(
+        lastUpdateTimestamp * 1000
+      ).toLocaleString();
+      log.info(`Fetching with Pocket item updates since ${humanReadable}`);
+    } else {
+      log.info(`Fetching all Pocket items`);
+    }
+
+    const response = await doRequest(GET_ITEMS_URL, requestOptions);
+
+    log.info(`Pocket items fetched.`);
+
+    return {
+      timestamp: nextTimestamp,
+      response: await response.json(),
+    };
   };
 
-  if (!!lastUpdateTimestamp) {
-    const humanReadable = new Date(lastUpdateTimestamp * 1000).toLocaleString();
-    log.info(`Fetching with Pocket item updates since ${humanReadable}`);
-  } else {
-    log.info(`Fetching all Pocket items`);
-  }
-
-  const response = await doCORSProxiedRequest(GET_ITEMS_URL, requestOptions);
-
-  log.info(`Pocket items fetched.`);
-
+export const buildPocketAPI = (corsProxy: CORSProxy): PocketAPI => {
+  const doRequest: DoHTTPRequest = corsProxy.doCORSProxiedRequest;
   return {
-    timestamp: nextTimestamp,
-    response: await response.json(),
+    getRequestToken: getRequestToken(doRequest),
+    getAccessToken: getAccessToken(doRequest),
+    getPocketItems: getPocketItems(doRequest),
   };
 };

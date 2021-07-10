@@ -29,3 +29,6 @@
   .PocketItemList-styles-module_item__1WnQ- {
     margin: 8px;
   }
+.Settings-styles-module_error__HuWlW {
+    border-color: var(--background-modifier-error-hover) !important;
+  }

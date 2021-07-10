@@ -1,7 +1,8 @@
+import { stylesheet } from "astroturf";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { DEFAULT_CORS_PROXY_PORT } from "./CORSProxy";
 import PocketSync from "./main";
-import { getPocketItems } from "./PocketAPI";
 import {
   AccessInfo,
   clearPocketAccessInfo,
@@ -10,18 +11,29 @@ import {
   setupAuth,
 } from "./PocketAuth";
 
+const styles = stylesheet`
+  .error {
+    border-color: var(--background-modifier-error-hover) !important;
+  }
+`;
+
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
+const SET_CORS_PROXY_PORT_CTA = "Set CORS proxy port";
 
-const addAuthButton = (containerEl: HTMLElement) =>
+export interface PocketSettings {
+  "cors-proxy-port"?: number;
+}
+
+const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
     .setName("Pocket authorization")
     .setDesc(CONNECT_POCKET_CTA)
     .addButton((button) => {
       button.setButtonText(CONNECT_POCKET_CTA);
-      button.onClick(setupAuth);
+      button.onClick(setupAuth(plugin.pocketAPI));
     });
 
 const doPocketSync = async (plugin: PocketSync, accessInfo: AccessInfo) => {
@@ -29,7 +41,7 @@ const doPocketSync = async (plugin: PocketSync, accessInfo: AccessInfo) => {
 
   new Notice(`Fetching Pocket updates for ${accessInfo.username}`);
 
-  const getPocketItemsResponse = await getPocketItems(
+  const getPocketItemsResponse = await plugin.pocketAPI.getPocketItems(
     accessInfo.accessToken,
     lastUpdateTimestamp
   );
@@ -117,20 +129,75 @@ const addClearLocalPocketDataButton = (
     });
 };
 
+const addCORSProxyPortSetting = (
+  plugin: PocketSync,
+  containerEl: HTMLElement,
+  onSettingsChange: OnSettingsChange
+) => {
+  new Setting(containerEl)
+    .setName(SET_CORS_PROXY_PORT_CTA)
+    .setDesc("Sets port used for local CORS proxy")
+    .addText((text) => {
+      const value = plugin.settings["cors-proxy-port"];
+
+      text.inputEl.setAttr("type", "number");
+      text.inputEl.placeholder = `${DEFAULT_CORS_PROXY_PORT} (default)`;
+      text.inputEl.value = value ? value.toString() : "";
+
+      text.onChange((newValue) => {
+        if (!newValue) {
+          text.inputEl.removeClass(styles.error);
+          plugin.settings["cors-proxy-port"] = null;
+          onSettingsChange(plugin.settings);
+          return;
+        }
+
+        const MIN_PORT_NUMBER = 0;
+        const MAX_PORT_NUMBER = 65535;
+        const parsed = parseInt(newValue);
+
+        if (
+          parsed === NaN ||
+          parsed > MAX_PORT_NUMBER ||
+          parsed < MIN_PORT_NUMBER
+        ) {
+          text.inputEl.addClass(styles.error);
+          log.info(`Invalid port number: ${parsed}`);
+          plugin.settings["cors-proxy-port"] = null;
+          onSettingsChange(plugin.settings);
+          return;
+        }
+
+        text.inputEl.removeClass(styles.error);
+        plugin.settings["cors-proxy-port"] = parsed;
+        onSettingsChange(plugin.settings);
+      });
+    });
+};
+
+export type OnSettingsChange = (newSettings: PocketSettings) => Promise<void>;
+
 export class PocketSettingTab extends PluginSettingTab {
   plugin: PocketSync;
+  onSettingsChange: OnSettingsChange;
 
-  constructor(app: App, plugin: PocketSync) {
+  constructor(
+    app: App,
+    plugin: PocketSync,
+    onSettingsChange: OnSettingsChange
+  ) {
     super(app, plugin);
     this.plugin = plugin;
+    this.onSettingsChange = onSettingsChange;
   }
 
   display(): void {
     let { containerEl } = this;
     containerEl.empty();
-    addAuthButton(containerEl);
+    addAuthButton(this.plugin, containerEl);
     addSyncButton(this.plugin, containerEl);
     addLogoutButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
+    addCORSProxyPortSetting(this.plugin, containerEl, this.onSettingsChange);
   }
 }
