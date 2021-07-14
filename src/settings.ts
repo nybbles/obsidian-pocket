@@ -21,7 +21,7 @@ const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
-const SET_CORS_PROXY_PORT_CTA = "Set CORS proxy port";
+const SET_CORS_PROXY_PORT_CTA = "CORS proxy port";
 const SET_ARTICLE_NOTE_TEMPLATE_CTA = "Article note template file location";
 
 export interface PocketSettings {
