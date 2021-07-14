@@ -118,7 +118,7 @@ export const createOrOpenItemNote =
         const templateSetting = plugin.settings["item-note-template"];
         const templateContents = templateSetting
           ? await loadTemplate(vault, metadataCache)(templateSetting)
-          : null;
+          : "";
         const fullpath = fullpathForPocketItem(plugin, pocketItem);
 
         ensureFolderExists(vault, getItemNotesFolder(plugin));
