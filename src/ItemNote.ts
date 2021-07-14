@@ -11,8 +11,8 @@ import PocketSync from "./main";
 import { SavedPocketItem } from "./PocketAPITypes";
 import { ensureFolderExists } from "./utils";
 
-const getArticleNotesFolder = (plugin: PocketSync) =>
-  plugin.settings["article-notes-folder"] ?? "/";
+const getItemNotesFolder = (plugin: PocketSync) =>
+  plugin.settings["item-notes-folder"] ?? "/";
 
 export const displayTextForSavedPocketItem = (item: SavedPocketItem) =>
   item.resolved_title.length !== 0 ? item.resolved_title : item.resolved_url;
@@ -22,25 +22,25 @@ const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
 export const linkpathForSavedPocketItem = (item: SavedPocketItem) =>
   sanitizeTitle(displayTextForSavedPocketItem(item));
 
-export type GetArticleNoteFn = (item: SavedPocketItem) => TFile | null;
+export type GetItemNoteFn = (item: SavedPocketItem) => TFile | null;
 
-const getArticleNote =
-  (metadataCache: MetadataCache, plugin: PocketSync): GetArticleNoteFn =>
+const getItemNote =
+  (metadataCache: MetadataCache, plugin: PocketSync): GetItemNoteFn =>
   (item) => {
-    const articleNotesFolder = getArticleNotesFolder(plugin);
+    const itemNotesFolder = getItemNotesFolder(plugin);
     const linkpath = linkpathForSavedPocketItem(item);
-    return metadataCache.getFirstLinkpathDest(linkpath, articleNotesFolder);
+    return metadataCache.getFirstLinkpathDest(linkpath, itemNotesFolder);
   };
 
-export type DoesArticleNoteExistFnFactory = (
+export type DoesItemNoteExistFnFactory = (
   metadataCache: MetadataCache,
   plugin: PocketSync
-) => DoesArticleNoteExistFn;
-export type DoesArticleNoteExistFn = (item: SavedPocketItem) => boolean;
+) => DoesItemNoteExistFn;
+export type DoesItemNoteExistFn = (item: SavedPocketItem) => boolean;
 
-export const doesArticleNoteExist: DoesArticleNoteExistFnFactory =
+export const doesItemNoteExist: DoesItemNoteExistFnFactory =
   (metadataCache, plugin) => (item: SavedPocketItem) =>
-    !!getArticleNote(metadataCache, plugin)(item);
+    !!getItemNote(metadataCache, plugin)(item);
 
 type TemplateContents = string | null;
 
@@ -57,7 +57,7 @@ const loadTemplate =
       return templateContents;
     } catch (err) {
       log.error(`Failed to load template from ${normalizedTemplatePath}`, err);
-      new Notice("Failed to load Pocket article note template");
+      new Notice("Failed to load Pocket item note template");
       return null;
     }
   };
@@ -70,7 +70,7 @@ const substitutions: Map<string, SubstitutionFn> = new Map([
   ["excerpt", (item) => item.excerpt],
 ]);
 
-const generateInitialArticleNoteContents = (
+const generateInitialItemNoteContents = (
   templateContents: TemplateContents,
   pocketItem: SavedPocketItem
 ): string => {
@@ -81,7 +81,7 @@ const generateInitialArticleNoteContents = (
   }, templateContents);
 };
 
-export type CreateOrOpenArticleNoteFn = (
+export type CreateOrOpenItemNoteFn = (
   pocketItem: SavedPocketItem
 ) => Promise<void>;
 
@@ -89,50 +89,47 @@ const fullpathForPocketItem = (
   plugin: PocketSync,
   pocketItem: SavedPocketItem
 ) => {
-  const articleNotesFolder = getArticleNotesFolder(plugin);
+  const itemNotesFolder = getItemNotesFolder(plugin);
   const linkpath = linkpathForSavedPocketItem(pocketItem);
-  const fullpath = `${articleNotesFolder}/${linkpath}.md`;
+  const fullpath = `${itemNotesFolder}/${linkpath}.md`;
   return fullpath;
 };
 
-const openArticleNote = async (
-  workspace: Workspace,
-  existingArticleNote: TFile
-) => {
-  await workspace.activeLeaf.openFile(existingArticleNote);
+const openItemNote = async (workspace: Workspace, existingItemNote: TFile) => {
+  await workspace.activeLeaf.openFile(existingItemNote);
 };
 
-export const createOrOpenArticleNote =
+export const createOrOpenItemNote =
   (
     plugin: PocketSync,
     workspace: Workspace,
     vault: Vault,
     metadataCache: MetadataCache
-  ): CreateOrOpenArticleNoteFn =>
+  ): CreateOrOpenItemNoteFn =>
   async (pocketItem) => {
-    const articleNote = getArticleNote(metadataCache, plugin)(pocketItem);
-    const articleNoteExists = !!articleNote;
+    const itemNote = getItemNote(metadataCache, plugin)(pocketItem);
+    const itemNoteExists = !!itemNote;
 
-    if (articleNoteExists) {
-      await openArticleNote(workspace, articleNote);
+    if (itemNoteExists) {
+      await openItemNote(workspace, itemNote);
     } else {
       try {
         // If there is a template specified, load the template and apply it.
-        const templateSetting = plugin.settings["article-note-template"];
+        const templateSetting = plugin.settings["item-note-template"];
         const templateContents = templateSetting
           ? await loadTemplate(vault, metadataCache)(templateSetting)
           : null;
         const fullpath = fullpathForPocketItem(plugin, pocketItem);
 
-        ensureFolderExists(vault, getArticleNotesFolder(plugin));
+        ensureFolderExists(vault, getItemNotesFolder(plugin));
 
-        const newArticleNote = await vault.create(
+        const newItemNote = await vault.create(
           fullpath,
-          generateInitialArticleNoteContents(templateContents, pocketItem)
+          generateInitialItemNoteContents(templateContents, pocketItem)
         );
 
-        log.debug("Opening article note now");
-        await openArticleNote(workspace, newArticleNote);
+        log.debug("Opening item note now");
+        await openItemNote(workspace, newItemNote);
       } catch (err) {
         const fullpath = fullpathForPocketItem(plugin, pocketItem);
         const errMsg = `Failed to create file for ${fullpath}`;

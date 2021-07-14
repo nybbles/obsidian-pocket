@@ -1,10 +1,10 @@
 import { stylesheet } from "astroturf";
 import React from "react";
 import {
-  CreateOrOpenArticleNoteFn,
-  DoesArticleNoteExistFn,
+  CreateOrOpenItemNoteFn,
+  DoesItemNoteExistFn,
   linkpathForSavedPocketItem,
-} from "src/ArticleNote";
+} from "src/ItemNote";
 import { openBrowserWindow } from "src/utils";
 import { SavedPocketItem } from "../PocketAPITypes";
 
@@ -62,17 +62,17 @@ const PocketItemNoteLink = ({
 
 export type PocketItemProps = {
   item: SavedPocketItem;
-  doesArticleNoteExist: DoesArticleNoteExistFn;
-  createOrOpenArticleNote: CreateOrOpenArticleNoteFn;
+  doesItemNoteExist: DoesItemNoteExistFn;
+  createOrOpenItemNote: CreateOrOpenItemNoteFn;
 };
 
 export const PocketItem = ({
   item,
-  doesArticleNoteExist,
-  createOrOpenArticleNote,
+  doesItemNoteExist,
+  createOrOpenItemNote,
 }: PocketItemProps) => {
   const linkpath = linkpathForSavedPocketItem(item);
-  const linkpathExists = doesArticleNoteExist(item);
+  const linkpathExists = doesItemNoteExist(item);
 
   const navigateToPocketURL = () => {
     openBrowserWindow(item.resolved_url);
@@ -91,7 +91,7 @@ export const PocketItem = ({
         <PocketItemNoteLink
           linkpath={linkpath}
           linkpathExists={linkpathExists}
-          onClick={() => createOrOpenArticleNote(item)}
+          onClick={() => createOrOpenItemNote(item)}
         />
       </span>
       {item.excerpt && (

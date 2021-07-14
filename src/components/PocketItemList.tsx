@@ -1,7 +1,7 @@
 import { stylesheet } from "astroturf";
 import { MetadataCache } from "obsidian";
 import React, { useEffect, useState } from "react";
-import { createOrOpenArticleNote, doesArticleNoteExist } from "src/ArticleNote";
+import { createOrOpenItemNote, doesItemNoteExist } from "src/ItemNote";
 import PocketSync from "src/main";
 import { SavedPocketItem } from "src/PocketAPITypes";
 import { PocketItemStore } from "src/PocketItemStore";
@@ -56,7 +56,7 @@ export const PocketItemList = ({
   if (items.length === 0) {
     return <>No items synced!</>;
   } else {
-    const createOrOpen = createOrOpenArticleNote(
+    const createOrOpen = createOrOpenItemNote(
       plugin,
       plugin.app.workspace,
       plugin.app.vault,
@@ -68,8 +68,8 @@ export const PocketItemList = ({
           <li key={item.item_id} className={styles.item}>
             <PocketItem
               item={item}
-              doesArticleNoteExist={doesArticleNoteExist(metadataCache, plugin)}
-              createOrOpenArticleNote={createOrOpen}
+              doesItemNoteExist={doesItemNoteExist(metadataCache, plugin)}
+              createOrOpenItemNote={createOrOpen}
             />
           </li>
         ))}
