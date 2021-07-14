@@ -22,9 +22,11 @@ const SYNC_POCKET_CTA = "Sync Pocket items";
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
 const SET_CORS_PROXY_PORT_CTA = "Set CORS proxy port";
+const SET_ARTICLE_NOTE_TEMPLATE_CTA = "Article note template file location";
 
 export interface PocketSettings {
   "cors-proxy-port"?: number;
+  "article-note-template"?: string;
 }
 
 const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
@@ -175,6 +177,25 @@ const addCORSProxyPortSetting = (
     });
 };
 
+const addArticleNoteTemplateSetting = (
+  plugin: PocketSync,
+  containerEl: HTMLElement,
+  onSettingsChange: OnSettingsChange
+) => {
+  new Setting(containerEl)
+    .setName(SET_ARTICLE_NOTE_TEMPLATE_CTA)
+    .setDesc(
+      "Choose the file to use as a template when creating a new note from a Pocket article"
+    )
+    .addText((text) => {
+      text.setValue(plugin.settings["article-note-template"]);
+      text.onChange(async (newValue) => {
+        plugin.settings["article-note-template"] = newValue;
+        onSettingsChange(plugin.settings);
+      });
+    });
+};
+
 export type OnSettingsChange = (newSettings: PocketSettings) => Promise<void>;
 
 export class PocketSettingTab extends PluginSettingTab {
@@ -199,5 +220,10 @@ export class PocketSettingTab extends PluginSettingTab {
     addLogoutButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
     addCORSProxyPortSetting(this.plugin, containerEl, this.onSettingsChange);
+    addArticleNoteTemplateSetting(
+      this.plugin,
+      containerEl,
+      this.onSettingsChange
+    );
   }
 }
