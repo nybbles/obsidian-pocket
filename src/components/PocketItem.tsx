@@ -1,6 +1,10 @@
 import { stylesheet } from "astroturf";
 import React from "react";
-import { DoesLinkpathExistFn, OpenLinktextFn } from "src/Types";
+import {
+  CreateOrOpenArticleNoteFn,
+  DoesArticleNoteExistFn,
+  linkpathForSavedPocketItem,
+} from "src/ArticleNote";
 import { openBrowserWindow } from "src/utils";
 import { SavedPocketItem } from "../PocketAPITypes";
 
@@ -31,49 +35,44 @@ const styles = stylesheet`
   }
 `;
 
-const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
-
 type NoteLinkProps = {
-  displayText: string;
-  openLinktext: OpenLinktextFn;
-  doesLinkpathExist: DoesLinkpathExistFn;
+  linkpath: string;
+  linkpathExists: boolean;
+  onClick: () => Promise<void>;
 };
 
 const PocketItemNoteLink = ({
-  displayText,
-  openLinktext,
-  doesLinkpathExist,
+  linkpath,
+  linkpathExists,
+  onClick,
 }: NoteLinkProps) => {
-  const sanitizedTitle = sanitizeTitle(displayText);
-  const linkpathExists = doesLinkpathExist(sanitizedTitle);
-
   return (
     <a
-      href={sanitizedTitle}
-      data-href={sanitizedTitle}
+      href={linkpath}
+      data-href={linkpath}
       className={`internal-link ${linkpathExists ? "" : "is-unresolved"}`}
       target="blank"
       rel="noopener"
-      onClick={() => openLinktext(sanitizedTitle)}
+      onClick={onClick}
     >
-      {sanitizedTitle}
+      {linkpath}
     </a>
   );
 };
 
 export type PocketItemProps = {
   item: SavedPocketItem;
-  openLinktext: OpenLinktextFn;
-  doesLinkpathExist: DoesLinkpathExistFn;
+  doesArticleNoteExist: DoesArticleNoteExistFn;
+  createOrOpenArticleNote: CreateOrOpenArticleNoteFn;
 };
 
 export const PocketItem = ({
   item,
-  openLinktext,
-  doesLinkpathExist,
+  doesArticleNoteExist,
+  createOrOpenArticleNote,
 }: PocketItemProps) => {
-  const displayText =
-    item.resolved_title.length !== 0 ? item.resolved_title : item.resolved_url;
+  const linkpath = linkpathForSavedPocketItem(item);
+  const linkpathExists = doesArticleNoteExist(item);
 
   const navigateToPocketURL = () => {
     openBrowserWindow(item.resolved_url);
@@ -90,9 +89,9 @@ export const PocketItem = ({
     >
       <span className={styles.itemTitle}>
         <PocketItemNoteLink
-          displayText={displayText}
-          openLinktext={openLinktext}
-          doesLinkpathExist={doesLinkpathExist}
+          linkpath={linkpath}
+          linkpathExists={linkpathExists}
+          onClick={() => createOrOpenArticleNote(item)}
         />
       </span>
       {item.excerpt && (
