@@ -1,9 +1,10 @@
 import { stylesheet } from "astroturf";
-import { MetadataCache, Workspace } from "obsidian";
+import { MetadataCache } from "obsidian";
 import React, { useEffect, useState } from "react";
+import { createOrOpenItemNote, doesItemNoteExist } from "src/ItemNote";
+import PocketSync from "src/main";
 import { SavedPocketItem } from "src/PocketAPITypes";
 import { PocketItemStore } from "src/PocketItemStore";
-import { doesLinkpathExist, openLinktext } from "src/utils";
 import { PocketItem } from "./PocketItem";
 
 const styles = stylesheet`
@@ -19,13 +20,13 @@ const styles = stylesheet`
 export type PocketItemListProps = {
   itemStore: PocketItemStore;
   metadataCache: MetadataCache;
-  workspace: Workspace;
+  plugin: PocketSync;
 };
 
 export const PocketItemList = ({
   itemStore,
   metadataCache,
-  workspace,
+  plugin,
 }: PocketItemListProps) => {
   const [items, setItems] = useState<SavedPocketItem[]>([]);
 
@@ -55,14 +56,20 @@ export const PocketItemList = ({
   if (items.length === 0) {
     return <>No items synced!</>;
   } else {
+    const createOrOpen = createOrOpenItemNote(
+      plugin,
+      plugin.app.workspace,
+      plugin.app.vault,
+      plugin.app.metadataCache
+    );
     return (
       <ul className={styles.list}>
         {items.map((item) => (
           <li key={item.item_id} className={styles.item}>
             <PocketItem
               item={item}
-              openLinktext={openLinktext(workspace)}
-              doesLinkpathExist={doesLinkpathExist(metadataCache)}
+              doesItemNoteExist={doesItemNoteExist(metadataCache, plugin)}
+              createOrOpenItemNote={createOrOpen}
             />
           </li>
         ))}

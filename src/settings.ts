@@ -21,10 +21,14 @@ const CONNECT_POCKET_CTA = "Connect your Pocket account";
 const SYNC_POCKET_CTA = "Sync Pocket items";
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
-const SET_CORS_PROXY_PORT_CTA = "Set CORS proxy port";
+const SET_CORS_PROXY_PORT_CTA = "CORS proxy port";
+const SET_ITEM_NOTE_TEMPLATE_CTA = "Pocket item note template file location";
+const SET_ITEM_NOTES_LOCATION_CTA = "Pocket item notes folder location";
 
 export interface PocketSettings {
   "cors-proxy-port"?: number;
+  "item-note-template"?: string;
+  "item-notes-folder"?: string;
 }
 
 const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
@@ -144,11 +148,11 @@ const addCORSProxyPortSetting = (
       text.inputEl.placeholder = `${DEFAULT_CORS_PROXY_PORT} (default)`;
       text.inputEl.value = value ? value.toString() : "";
 
-      text.onChange((newValue) => {
+      text.onChange(async (newValue) => {
         if (!newValue) {
           text.inputEl.removeClass(styles.error);
           plugin.settings["cors-proxy-port"] = null;
-          onSettingsChange(plugin.settings);
+          await onSettingsChange(plugin.settings);
           return;
         }
 
@@ -164,13 +168,51 @@ const addCORSProxyPortSetting = (
           text.inputEl.addClass(styles.error);
           log.info(`Invalid port number: ${parsed}`);
           plugin.settings["cors-proxy-port"] = null;
-          onSettingsChange(plugin.settings);
+          await onSettingsChange(plugin.settings);
           return;
         }
 
         text.inputEl.removeClass(styles.error);
         plugin.settings["cors-proxy-port"] = parsed;
-        onSettingsChange(plugin.settings);
+        await onSettingsChange(plugin.settings);
+      });
+    });
+};
+
+const addItemNoteTemplateSetting = (
+  plugin: PocketSync,
+  containerEl: HTMLElement,
+  onSettingsChange: OnSettingsChange
+) => {
+  new Setting(containerEl)
+    .setName(SET_ITEM_NOTE_TEMPLATE_CTA)
+    .setDesc(
+      "Choose the file to use as a template when creating a new note from a Pocket item"
+    )
+    .addText((text) => {
+      text.setPlaceholder("Example: Templates/Pocket item note");
+      text.setValue(plugin.settings["item-note-template"]);
+      text.onChange(async (newValue) => {
+        plugin.settings["item-note-template"] = newValue;
+        await onSettingsChange(plugin.settings);
+      });
+    });
+};
+
+const addItemNotesLocationSetting = (
+  plugin: PocketSync,
+  containerEl: HTMLElement,
+  onSettingsChange: OnSettingsChange
+) => {
+  new Setting(containerEl)
+    .setName(SET_ITEM_NOTES_LOCATION_CTA)
+    .setDesc("Choose the folder for creating and finding Pocket item notes")
+    .addText(async (text) => {
+      text.setPlaceholder("Example: Pocket item notes/");
+      text.setValue(plugin.settings["item-notes-folder"]);
+      text.onChange(async (newValue) => {
+        plugin.settings["item-notes-folder"] = newValue;
+        await onSettingsChange(plugin.settings);
       });
     });
 };
@@ -199,5 +241,11 @@ export class PocketSettingTab extends PluginSettingTab {
     addLogoutButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
     addCORSProxyPortSetting(this.plugin, containerEl, this.onSettingsChange);
+    addItemNoteTemplateSetting(this.plugin, containerEl, this.onSettingsChange);
+    addItemNotesLocationSetting(
+      this.plugin,
+      containerEl,
+      this.onSettingsChange
+    );
   }
 }

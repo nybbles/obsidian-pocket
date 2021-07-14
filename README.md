@@ -14,10 +14,14 @@ in Obsidian, as described
 
 ## Usage
 
+### Settings
+
 After the plugin has been enabled, you will be able to see a "Pocket" option
 under the "Plugin options" section of the settings panel, as shown below.
 
 ![obsidian-pocket-settings](https://raw.githubusercontent.com/nybbles/obsidian-pocket/master/images/obsidian-pocket-settings.png)
+
+### Connecting your Pocket account and syncing Pocket items
 
 Click on "Connect your Pocket account" to begin the Pocket authorization flow by
 opening a web page on your default browser. You will be asked whether you want
@@ -26,13 +30,66 @@ redirected back to Obsidian.
 
 If you granted permission to this plugin to access Pocket data, you can click on
 "Sync Pocket items" to actually download and store your Pocket list locally
-within Obsidian. Once the Pocket list is downloaded and stored, open the command
-palette and search for "Pocket" to see the list of available commands for this
-plugin.
+within Obsidian.
 
-The single command currently available is "Open Pocket list". The Pocket list is
-shown in a screenshot above. Click on any Pocket item's title to create a note
-(or navigate to an existing note) and start writing whatever you want about it!
+### Opening and using the Pocket list
+
+Once the Pocket list is downloaded and stored, open the command palette and
+search for "Pocket" to see the list of available commands. The single command
+currently available is "Open Pocket list". The Pocket list is shown in a
+screenshot above.
+
+Meta+click (e.g. command+click on Mac OS) to open the Pocket item URL in your browser.
+
+### Notes for Pocket items
+
+Click on any Pocket item's title to create a note (or navigate to an existing
+note) for that Pocket item. Notes for Pocket items will be created in the Pocket
+item notes folder, which can be configured in settings.
+
+Notes in Obisidan are matched to Pocket items based on their name. If you find
+this setup limiting, please file a feature request (see bottom of this README
+for how to do that).
+
+A template for new Pocket item notes can be specified in settings.
+
+## Using templates for Pocket notes
+
+Templates for Pocket notes work similar to any other template in Obsidian, see
+[here](https://help.obsidian.md/Plugins/Templates), except that only the
+following variables are supported:
+
+| Variable name | What it means                                       |
+| ------------- | --------------------------------------------------- |
+| `{{title}}`   | The title of the Pocket item                        |
+| `{{url}}`     | The URL of the Pocket item                          |
+| `{{excerpt}}` | The excerpt extracted by Pocket for the Pocket item |
+
+Here's an example template that will put this metadata into the [YAML
+frontmatter](https://help.obsidian.md/Advanced+topics/YAML+front+matter) of the
+note for the Pocket item:
+
+```
+---
+Title: {{title}}
+URL: {{url}}
+Excerpt: {{excerpt}}
+---
+```
+
+If you had saved [this
+URL](https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/)
+to Pocket, synced it to Obsidian using this plugin and then created a note for
+the corresponding Pocket item with the above template, your note would start off
+containing the following:
+
+```
+---
+Title: Carbon removal hype is becoming a dangerous distraction
+URL: https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/
+Excerpt: In February, oil giant Shell trumpeted a scenario in which the world pulls global warming back to 1.5 ˚C by 2100, even as natural gas, oil, and coal continue to generate huge shares of the world’s energy.
+---
+```
 
 ## Feature requests, bug reports and PRs
 

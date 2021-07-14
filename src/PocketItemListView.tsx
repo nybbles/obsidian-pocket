@@ -35,7 +35,7 @@ export class PocketItemListView extends ItemView {
         <PocketItemList
           itemStore={this.plugin.itemStore}
           metadataCache={this.app.metadataCache}
-          workspace={this.app.workspace}
+          plugin={this.plugin}
         />
       </div>
     );
