@@ -77,7 +77,11 @@ Excerpt: {{excerpt}}
 ---
 ```
 
-If you had saved [this URL](https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/) to Pocket, synced it to Obsidian using this plugin and then created a note for the corresponding Pocket item with the above template, your note would start off containing the following:
+If you had saved [this
+URL](https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/)
+to Pocket, synced it to Obsidian using this plugin and then created a note for
+the corresponding Pocket item with the above template, your note would start off
+containing the following:
 
 ```
 ---
