@@ -1,8 +1,8 @@
 {
   "id": "obsidian-pocket",
   "name": "Pocket reading list integration",
-  "version": "0.2.0",
-  "minAppVersion": "0.9.12",
+  "version": "0.3.0",
+  "minAppVersion": "0.12.11",
   "description": "Access your Pocket list entries and create notes for them easily",
   "author": "Nimalan Mahendran",
   "authorUrl": "https://twitter.com/nimalan",
