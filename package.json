@@ -25,7 +25,7 @@
     "@types/uuid": "^8.3.0",
     "astroturf": "^1.0.0-beta.21",
     "jest": "^27.0.4",
-    "obsidian": "^0.12.0",
+    "obsidian": "^0.12.11",
     "postcss": "^8.3.5",
     "postcss-nested": "^5.0.5",
     "rollup": "^2.32.1",
