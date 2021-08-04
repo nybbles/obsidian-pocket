@@ -1,7 +1,23 @@
 import log from "loglevel";
+import { request } from "obsidian";
 import * as qs from "qs";
-import { CORSProxy, DoHTTPRequest } from "./CORSProxy";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
+
+export type ResponseBody = string;
+
+export type DoHTTPRequest = (
+  url: string,
+  body: Record<string, string>
+) => Promise<ResponseBody>;
+
+const doRequest: DoHTTPRequest = async (url, body) => {
+  return request({
+    url: url,
+    method: "POST",
+    contentType: "application/x-www-form-urlencoded",
+    body: qs.stringify(body),
+  });
+};
 
 export type RequestToken = string;
 export type AccessToken = string;
@@ -60,9 +76,6 @@ export interface PocketAPI {
   getPocketItems: GetPocketItems;
 }
 
-type CurriedBy<T, F> = (t: T) => F;
-type CurriedByDoHTTPRequest<F> = CurriedBy<DoHTTPRequest, F>;
-
 export const buildAuthorizationURL = (
   requestToken: RequestToken,
   authRedirectURI: string
@@ -70,94 +83,91 @@ export const buildAuthorizationURL = (
   `https://getpocket.com/auth/authorize?request_token=${requestToken}&redirect_uri=${authRedirectURI}`;
 
 // TODO: Handle unsuccessful requests
-export const getRequestToken: CurriedByDoHTTPRequest<GetRequestToken> =
-  (doRequest) => async (authRedirectURI) => {
-    if (storedRequestToken) {
-      throw new Error("Found unexpected stored request token");
-    }
+export const getRequestToken: GetRequestToken = async (authRedirectURI) => {
+  if (storedRequestToken) {
+    throw new Error("Found unexpected stored request token");
+  }
 
-    const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
+  const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
 
-    const responseBody = await doRequest(REQUEST_TOKEN_URL, {
-      consumer_key: CONSUMER_KEY,
-      redirect_uri: authRedirectURI,
-    });
+  const responseBody = await doRequest(REQUEST_TOKEN_URL, {
+    consumer_key: CONSUMER_KEY,
+    redirect_uri: authRedirectURI,
+  });
 
-    const formdata = await responseBody;
-    const parsed = qs.parse(formdata);
+  const formdata = await responseBody;
+  const parsed = qs.parse(formdata);
 
-    const requestToken = parsed["code"] as RequestToken;
-    storedRequestToken = requestToken;
-    return requestToken;
-  };
+  const requestToken = parsed["code"] as RequestToken;
+  storedRequestToken = requestToken;
+  return requestToken;
+};
 
 // TODO: Handle unsuccessful requests
-export const getAccessToken: CurriedByDoHTTPRequest<GetAccessToken> =
-  (doRequest) => async () => {
-    if (!storedRequestToken) {
-      throw new Error("could not find stored request token");
-    }
+export const getAccessToken: GetAccessToken = async () => {
+  if (!storedRequestToken) {
+    throw new Error("could not find stored request token");
+  }
 
-    const ACCESS_TOKEN_URL = "https://getpocket.com/v3/oauth/authorize";
+  const ACCESS_TOKEN_URL = "https://getpocket.com/v3/oauth/authorize";
 
-    const responseBody = await doRequest(ACCESS_TOKEN_URL, {
-      consumer_key: CONSUMER_KEY,
-      code: storedRequestToken,
-    });
+  const responseBody = await doRequest(ACCESS_TOKEN_URL, {
+    consumer_key: CONSUMER_KEY,
+    code: storedRequestToken,
+  });
 
-    const formdata = await responseBody;
-    const parsed = qs.parse(formdata);
+  const formdata = await responseBody;
+  const parsed = qs.parse(formdata);
 
-    storedRequestToken = null;
+  storedRequestToken = null;
 
-    return {
-      accessToken: parsed["access_token"] as AccessToken,
-      username: parsed["username"] as Username,
-    };
+  return {
+    accessToken: parsed["access_token"] as AccessToken,
+    username: parsed["username"] as Username,
   };
+};
 
 export type TimestampedPocketGetItemsResponse = {
   timestamp: UpdateTimestamp;
   response: PocketGetItemsResponse;
 };
 
-export const getPocketItems: CurriedByDoHTTPRequest<GetPocketItems> =
-  (doRequest) => async (accessToken, lastUpdateTimestamp?) => {
-    const GET_ITEMS_URL = "https://getpocket.com/v3/get";
-    const nextTimestamp = Math.floor(Date.now() / 1000);
+export const getPocketItems: GetPocketItems = async (
+  accessToken,
+  lastUpdateTimestamp?
+) => {
+  const GET_ITEMS_URL = "https://getpocket.com/v3/get";
+  const nextTimestamp = Math.floor(Date.now() / 1000);
 
-    const requestOptions = {
-      consumer_key: CONSUMER_KEY,
-      access_token: accessToken,
-      since: !!lastUpdateTimestamp
-        ? new Number(lastUpdateTimestamp).toString()
-        : null,
-    };
-
-    if (!!lastUpdateTimestamp) {
-      const humanReadable = new Date(
-        lastUpdateTimestamp * 1000
-      ).toLocaleString();
-      log.info(`Fetching with Pocket item updates since ${humanReadable}`);
-    } else {
-      log.info(`Fetching all Pocket items`);
-    }
-
-    const responseBody = await doRequest(GET_ITEMS_URL, requestOptions);
-
-    log.info(`Pocket items fetched.`);
-
-    return {
-      timestamp: nextTimestamp,
-      response: JSON.parse(await responseBody),
-    };
+  const requestOptions = {
+    consumer_key: CONSUMER_KEY,
+    access_token: accessToken,
+    since: !!lastUpdateTimestamp
+      ? new Number(lastUpdateTimestamp).toString()
+      : null,
   };
 
-export const buildPocketAPI = (corsProxy: CORSProxy): PocketAPI => {
-  const doRequest: DoHTTPRequest = corsProxy.doCORSProxiedRequest;
+  if (!!lastUpdateTimestamp) {
+    const humanReadable = new Date(lastUpdateTimestamp * 1000).toLocaleString();
+    log.info(`Fetching with Pocket item updates since ${humanReadable}`);
+  } else {
+    log.info(`Fetching all Pocket items`);
+  }
+
+  const responseBody = await doRequest(GET_ITEMS_URL, requestOptions);
+
+  log.info(`Pocket items fetched.`);
+
   return {
-    getRequestToken: getRequestToken(doRequest),
-    getAccessToken: getAccessToken(doRequest),
-    getPocketItems: getPocketItems(doRequest),
+    timestamp: nextTimestamp,
+    response: JSON.parse(await responseBody),
+  };
+};
+
+export const buildPocketAPI = (): PocketAPI => {
+  return {
+    getRequestToken: getRequestToken,
+    getAccessToken: getAccessToken,
+    getPocketItems: getPocketItems,
   };
 };

@@ -105,14 +105,6 @@ communicates with is Pocket, via the [Pocket
 API](https://getpocket.com/developer/). All of your data from Pocket and your
 Pocket access token are stored locally.
 
-This plugin uses a locally-running
-[CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) proxy listening
-on localhost:9090, using
-[cors-anywhere](https://github.com/Rob--W/cors-anywhere), which uses
-[node-http-proxy](https://github.com/http-party/node-http-proxy) under the
-hood. If it is important for you to be able to change the proxy listening port,
-please indicate that in https://github.com/nybbles/obsidian-pocket/issues/17.
-
 This plugin stores your Pocket data locally in Obsidian's IndexedDB.
 
 ## Support
