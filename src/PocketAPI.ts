@@ -78,12 +78,12 @@ export const getRequestToken: CurriedByDoHTTPRequest<GetRequestToken> =
 
     const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
 
-    const response = await doRequest(REQUEST_TOKEN_URL, {
+    const responseBody = await doRequest(REQUEST_TOKEN_URL, {
       consumer_key: CONSUMER_KEY,
       redirect_uri: authRedirectURI,
     });
 
-    const formdata = await response.text();
+    const formdata = await responseBody;
     const parsed = qs.parse(formdata);
 
     const requestToken = parsed["code"] as RequestToken;
@@ -100,12 +100,12 @@ export const getAccessToken: CurriedByDoHTTPRequest<GetAccessToken> =
 
     const ACCESS_TOKEN_URL = "https://getpocket.com/v3/oauth/authorize";
 
-    const response = await doRequest(ACCESS_TOKEN_URL, {
+    const responseBody = await doRequest(ACCESS_TOKEN_URL, {
       consumer_key: CONSUMER_KEY,
       code: storedRequestToken,
     });
 
-    const formdata = await response.text();
+    const formdata = await responseBody;
     const parsed = qs.parse(formdata);
 
     storedRequestToken = null;
@@ -143,13 +143,13 @@ export const getPocketItems: CurriedByDoHTTPRequest<GetPocketItems> =
       log.info(`Fetching all Pocket items`);
     }
 
-    const response = await doRequest(GET_ITEMS_URL, requestOptions);
+    const responseBody = await doRequest(GET_ITEMS_URL, requestOptions);
 
     log.info(`Pocket items fetched.`);
 
     return {
       timestamp: nextTimestamp,
-      response: await response.json(),
+      response: JSON.parse(await responseBody),
     };
   };
 

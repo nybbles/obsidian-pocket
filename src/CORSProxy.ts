@@ -4,10 +4,12 @@ import * as qs from "qs";
 
 export const DEFAULT_CORS_PROXY_PORT = 10101;
 
+export type ResponseBody = string;
+
 export type DoHTTPRequest = (
   url: string,
   body: Record<string, string>
-) => Promise<Response>;
+) => Promise<ResponseBody>;
 
 export class CORSProxy {
   proxyServer: any; // need to do this because cors-anywhere has no typedefs
@@ -41,9 +43,9 @@ export class CORSProxy {
     this.proxyServer = null;
   }
 
-  doCORSProxiedRequest: DoHTTPRequest = (url, body) => {
+  doCORSProxiedRequest: DoHTTPRequest = async (url, body) => {
     const proxiedURL = `http://localhost:${this.port}/${url}`;
-    const response = fetch(proxiedURL, {
+    const response = await fetch(proxiedURL, {
       method: "POST",
       headers: {
         "content-type": "application/x-www-form-urlencoded",
@@ -51,6 +53,6 @@ export class CORSProxy {
       body: qs.stringify(body),
     });
 
-    return response;
+    return response.text();
   };
 }
