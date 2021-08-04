@@ -1,7 +1,6 @@
 import log from "loglevel";
 import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
-import { CORSProxy } from "./CORSProxy";
 import {
   buildPocketAPI,
   PocketAPI,
@@ -31,7 +30,6 @@ export default class PocketSync extends Plugin {
   viewManager: ViewManager;
   pocketUsername: PocketUsername | null;
   pocketAuthenticated: boolean;
-  corsProxy: CORSProxy;
   settings: PocketSettings;
   pocketAPI: PocketAPI;
 
@@ -51,11 +49,7 @@ export default class PocketSync extends Plugin {
 
     await this.loadSettings();
 
-    // Set up CORS proxy for Pocket API calls
-    log.info("Setting up CORS proxy for Pocket API calls");
-    this.corsProxy = new CORSProxy(this.settings["cors-proxy-port"]);
-    this.corsProxy.setup();
-    this.pocketAPI = buildPocketAPI(this.corsProxy);
+    this.pocketAPI = buildPocketAPI();
 
     // Set up Pocket item store
     log.debug("Opening Pocket item store");
@@ -127,10 +121,7 @@ export default class PocketSync extends Plugin {
     await closePocketItemStore(this.itemStore);
     this.itemStore = null;
 
-    log.info("Shutting down CORS proxy for Pocket API calls");
-    this.corsProxy.shutdown();
     this.pocketAPI = null;
-    this.corsProxy = null;
   }
 
   killAllViews = () => {
