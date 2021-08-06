@@ -63,10 +63,14 @@ export default class PocketSync extends Plugin {
       })
     );
 
-    const accessInfo = await loadPocketAccessInfo(this);
-    if (!accessInfo) {
-      console.info(`Not authenticated to Pocket`);
-    }
+    (async () => {
+      const accessInfo = await loadPocketAccessInfo(this);
+      if (!accessInfo) {
+        console.info(`Not authenticated to Pocket`);
+      }
+      this.pocketAuthenticated = !!accessInfo;
+      this.pocketUsername = accessInfo?.username;
+    })();
 
     this.registerObsidianProtocolHandler(
       OBSIDIAN_AUTH_PROTOCOL_ACTION,
@@ -82,9 +86,6 @@ export default class PocketSync extends Plugin {
         new Notice(`Logged in to Pocket as ${this.pocketUsername}`);
       }
     );
-
-    this.pocketAuthenticated = !!accessInfo;
-    this.pocketUsername = accessInfo?.username;
 
     // Set up React-based Pocket item list view
     this.viewManager = new ViewManager();
