@@ -6,5 +6,5 @@
   "description": "Access your Pocket list entries and create notes for them easily",
   "author": "Nimalan Mahendran",
   "authorUrl": "https://twitter.com/nimalan",
-  "isDesktopOnly": true
+  "isDesktopOnly": false
 }
