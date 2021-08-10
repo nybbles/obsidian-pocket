@@ -1,5 +1,5 @@
 import { stylesheet } from "astroturf";
-import React from "react";
+import React, { MouseEvent } from "react";
 import {
   CreateOrOpenItemNoteFn,
   DoesItemNoteExistFn,
@@ -38,7 +38,7 @@ const styles = stylesheet`
 type NoteLinkProps = {
   linkpath: string;
   linkpathExists: boolean;
-  onClick: () => Promise<void>;
+  onClick: (event: MouseEvent) => Promise<void>;
 };
 
 const PocketItemNoteLink = ({
@@ -66,6 +66,11 @@ export type PocketItemProps = {
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
 };
 
+enum PocketItemClickAction {
+  NavigateToPocketURL,
+  CreateOrOpenItemNote,
+}
+
 export const PocketItem = ({
   item,
   doesItemNoteExist,
@@ -78,11 +83,20 @@ export const PocketItem = ({
     openBrowserWindow(item.resolved_url);
   };
 
+  const getPocketItemClickAction = (event: MouseEvent) => {
+    return event.metaKey
+      ? PocketItemClickAction.NavigateToPocketURL
+      : PocketItemClickAction.CreateOrOpenItemNote;
+  };
+
   return (
     <div
       className={styles.item}
       onClick={(event) => {
-        if (event.metaKey) {
+        if (
+          getPocketItemClickAction(event) ==
+          PocketItemClickAction.NavigateToPocketURL
+        ) {
           navigateToPocketURL();
         }
       }}
@@ -91,7 +105,14 @@ export const PocketItem = ({
         <PocketItemNoteLink
           linkpath={linkpath}
           linkpathExists={linkpathExists}
-          onClick={() => createOrOpenItemNote(item)}
+          onClick={async (event) => {
+            if (
+              getPocketItemClickAction(event) ==
+              PocketItemClickAction.CreateOrOpenItemNote
+            ) {
+              await createOrOpenItemNote(item);
+            }
+          }}
         />
       </span>
       {item.excerpt && (
