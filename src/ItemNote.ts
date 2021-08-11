@@ -53,6 +53,14 @@ const loadTemplate =
         normalizedTemplatePath,
         ""
       );
+
+      if (!templateFile) {
+        const errMsg = `Unable to find template file at ${normalizedTemplatePath}`;
+        log.warn(errMsg);
+        new Notice(errMsg);
+        return null;
+      }
+
       const templateContents = vault.cachedRead(templateFile);
       return templateContents;
     } catch (err) {

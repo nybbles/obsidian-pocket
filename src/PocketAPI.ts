@@ -2,6 +2,8 @@ import log from "loglevel";
 import { request } from "obsidian";
 import * as qs from "qs";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
+import { SupportedPlatform } from "./Types";
+import { getPlatform } from "./utils";
 
 export type ResponseBody = string;
 
@@ -33,7 +35,6 @@ export type AccessTokenResponse = {
 var storedRequestToken: RequestToken | null = null;
 
 type ConsumerKey = string;
-type SupportedPlatform = "mac" | "windows" | "linux";
 
 // From https://getpocket.com/developer/apps/
 const PLATFORM_CONSUMER_KEYS: Record<SupportedPlatform, ConsumerKey> = {
@@ -42,24 +43,7 @@ const PLATFORM_CONSUMER_KEYS: Record<SupportedPlatform, ConsumerKey> = {
   linux: "97653-da7a5baf4f5172d3fce89c0a",
 };
 
-const nodePlatformToPlatform = (
-  nodePlatform: NodeJS.Platform
-): SupportedPlatform => {
-  const supportedPlatforms: Record<string, SupportedPlatform> = {
-    darwin: "mac",
-    win32: "windows",
-    linux: "linux",
-  };
-
-  const result = supportedPlatforms[nodePlatform as string];
-  if (!result) {
-    throw new Error("Invalid node platform");
-  }
-  return result;
-};
-
-const CONSUMER_KEY =
-  PLATFORM_CONSUMER_KEYS[nodePlatformToPlatform(process.platform)];
+const CONSUMER_KEY = PLATFORM_CONSUMER_KEYS[getPlatform()];
 
 export type GetRequestToken = (
   authRedirectURI: string
