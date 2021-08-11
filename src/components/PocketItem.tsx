@@ -66,6 +66,7 @@ export type PocketItemProps = {
 enum PocketItemClickAction {
   NavigateToPocketURL,
   CreateOrOpenItemNote,
+  Noop,
 }
 
 export const PocketItem = ({
@@ -81,12 +82,18 @@ export const PocketItem = ({
   };
 
   const getPocketItemClickAction = (event: MouseEvent) => {
-    const platform: SupportedPlatform = getPlatform();
     const navigateModifierPressed =
-      platform === "windows" ? event.altKey : event.metaKey;
-    return navigateModifierPressed
-      ? PocketItemClickAction.NavigateToPocketURL
-      : PocketItemClickAction.CreateOrOpenItemNote;
+      getPlatform() === "windows" ? event.altKey : event.metaKey;
+    const noModifiedsPressed =
+      !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+
+    if (navigateModifierPressed) {
+      return PocketItemClickAction.NavigateToPocketURL;
+    } else if (noModifiedsPressed) {
+      return PocketItemClickAction.CreateOrOpenItemNote;
+    } else {
+      return PocketItemClickAction.Noop;
+    }
   };
 
   return (
@@ -103,6 +110,8 @@ export const PocketItem = ({
                 break;
               case PocketItemClickAction.CreateOrOpenItemNote:
                 await createOrOpenItemNote(item);
+                break;
+              case PocketItemClickAction.Noop:
                 break;
               default:
                 throw new Error(`Unknown PocketItemClickAction ${clickAction}`);
