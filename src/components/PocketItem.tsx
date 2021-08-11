@@ -48,11 +48,7 @@ const PocketItemNoteLink = ({
 }: NoteLinkProps) => {
   return (
     <a
-      href={linkpath}
-      data-href={linkpath}
       className={`internal-link ${linkpathExists ? "" : "is-unresolved"}`}
-      target="blank"
-      rel="noopener"
       onClick={onClick}
     >
       {linkpath}
