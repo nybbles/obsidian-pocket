@@ -90,27 +90,22 @@ export const PocketItem = ({
   };
 
   return (
-    <div
-      className={styles.item}
-      onClick={(event) => {
-        if (
-          getPocketItemClickAction(event) ==
-          PocketItemClickAction.NavigateToPocketURL
-        ) {
-          navigateToPocketURL();
-        }
-      }}
-    >
+    <div className={styles.item}>
       <span className={styles.itemTitle}>
         <PocketItemNoteLink
           linkpath={linkpath}
           linkpathExists={linkpathExists}
           onClick={async (event) => {
-            if (
-              getPocketItemClickAction(event) ==
-              PocketItemClickAction.CreateOrOpenItemNote
-            ) {
-              await createOrOpenItemNote(item);
+            const clickAction = getPocketItemClickAction(event);
+            switch (clickAction) {
+              case PocketItemClickAction.NavigateToPocketURL:
+                navigateToPocketURL();
+                break;
+              case PocketItemClickAction.CreateOrOpenItemNote:
+                await createOrOpenItemNote(item);
+                break;
+              default:
+                throw new Error(`Unknown PocketItemClickAction ${clickAction}`);
             }
           }}
         />
