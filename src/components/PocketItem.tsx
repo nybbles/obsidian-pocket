@@ -5,7 +5,8 @@ import {
   DoesItemNoteExistFn,
   linkpathForSavedPocketItem,
 } from "src/ItemNote";
-import { openBrowserWindow } from "src/utils";
+import { SupportedPlatform } from "src/Types";
+import { getPlatform, openBrowserWindow } from "src/utils";
 import { SavedPocketItem } from "../PocketAPITypes";
 
 const styles = stylesheet`
@@ -80,7 +81,10 @@ export const PocketItem = ({
   };
 
   const getPocketItemClickAction = (event: MouseEvent) => {
-    return event.metaKey
+    const platform: SupportedPlatform = getPlatform();
+    const navigateModifierPressed =
+      platform === "windows" ? event.altKey : event.metaKey;
+    return navigateModifierPressed
       ? PocketItemClickAction.NavigateToPocketURL
       : PocketItemClickAction.CreateOrOpenItemNote;
   };
