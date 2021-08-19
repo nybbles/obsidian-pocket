@@ -32,6 +32,8 @@ If you granted permission to this plugin to access Pocket data, you can click on
 "Sync Pocket items" to actually download and store your Pocket list locally
 within Obsidian.
 
+You can also sync your Pocket items using an Obsidian command: "Sync Pocket list".
+
 ### Opening and using the Pocket list
 
 Once the Pocket list is downloaded and stored, open the command palette and
