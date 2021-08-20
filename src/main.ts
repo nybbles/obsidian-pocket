@@ -2,17 +2,6 @@ import log from "loglevel";
 import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
 import {
-  buildPocketAPI,
-  PocketAPI,
-  Username as PocketUsername,
-} from "./PocketAPI";
-import {
-  AccessInfo,
-  loadPocketAccessInfo,
-  OBSIDIAN_AUTH_PROTOCOL_ACTION,
-  storePocketAccessInfo,
-} from "./PocketAuth";
-import {
   PocketItemListView,
   POCKET_ITEM_LIST_VIEW_TYPE,
 } from "./PocketItemListView";
@@ -25,56 +14,20 @@ import { createReactApp } from "./ReactApp";
 import { PocketSettings, PocketSettingTab } from "./Settings";
 import { ViewManager } from "./ViewManager";
 
-const doPocketSync = async (plugin: PocketSync, accessInfo: AccessInfo) => {
-  const lastUpdateTimestamp = await plugin.itemStore.getLastUpdateTimestamp();
-
-  new Notice(`Fetching Pocket updates for ${accessInfo.username}`);
-
-  const getPocketItemsResponse = await plugin.pocketAPI.getPocketItems(
-    accessInfo.accessToken,
-    lastUpdateTimestamp
-  );
-
-  new Notice(
-    `Fetched ${
-      Object.keys(getPocketItemsResponse.response.list).length
-    } updates from Pocket`
-  );
-
-  const storageNotice = new Notice(`Storing updates from Pocket...`, 0);
-
-  await plugin.itemStore.mergeUpdates(
-    getPocketItemsResponse.timestamp,
-    getPocketItemsResponse.response.list
-  );
-
-  storageNotice.hide();
-  new Notice(`Done storing updates from Pocket`);
-};
-
 export default class PocketSync extends Plugin {
   itemStore: PocketItemStore;
   appEl: HTMLDivElement;
   viewManager: ViewManager;
-  pocketUsername: PocketUsername | null;
   pocketAuthenticated: boolean;
   settings: PocketSettings;
-  pocketAPI: PocketAPI;
   pendingSync: Promise<void> | null = null;
 
   async syncPocketItems() {
-    const accessInfo = await loadPocketAccessInfo(this);
-    if (!accessInfo) {
-      new Notice("Not logged into Pocket, skipping sync");
-      return;
-    }
-
     if (!!this.pendingSync) {
       new Notice("Sync already in progress, skipping");
       return;
     }
 
-    this.pendingSync = doPocketSync(this, accessInfo);
     try {
       await this.pendingSync;
     } finally {
@@ -100,8 +53,6 @@ export default class PocketSync extends Plugin {
 
     this.pendingSync = null;
 
-    this.pocketAPI = buildPocketAPI();
-
     // Set up Pocket item store
     log.debug("Opening Pocket item store");
     this.itemStore = await openPocketItemStore();
@@ -112,30 +63,6 @@ export default class PocketSync extends Plugin {
         this.settings = newSettings;
         await this.saveSettings();
       })
-    );
-
-    (async () => {
-      const accessInfo = await loadPocketAccessInfo(this);
-      if (!accessInfo) {
-        console.info(`Not authenticated to Pocket`);
-      }
-      this.pocketAuthenticated = !!accessInfo;
-      this.pocketUsername = accessInfo?.username;
-    })();
-
-    this.registerObsidianProtocolHandler(
-      OBSIDIAN_AUTH_PROTOCOL_ACTION,
-      async (params) => {
-        const accessInfo = await this.pocketAPI.getAccessToken();
-        if (!accessInfo.username) {
-          throw new Error("Unexpected null username from Pocket auth");
-        }
-
-        storePocketAccessInfo(this, accessInfo);
-        this.pocketAuthenticated = true;
-        this.pocketUsername = accessInfo.username;
-        new Notice(`Logged in to Pocket as ${this.pocketUsername}`);
-      }
     );
 
     // Set up React-based Pocket item list view
@@ -172,8 +99,6 @@ export default class PocketSync extends Plugin {
     log.debug("Closing Pocket item store");
     await closePocketItemStore(this.itemStore);
     this.itemStore = null;
-
-    this.pocketAPI = null;
   }
 
   killAllViews = () => {

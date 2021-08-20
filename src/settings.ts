@@ -32,7 +32,6 @@ const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
     .setDesc(CONNECT_POCKET_CTA)
     .addButton((button) => {
       button.setButtonText(CONNECT_POCKET_CTA);
-      button.onClick(setupAuth(plugin.pocketAPI));
     });
 
 const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
@@ -63,7 +62,6 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
       });
 
       plugin.pocketAuthenticated = false;
-      plugin.pocketUsername = null;
     });
 };
 
