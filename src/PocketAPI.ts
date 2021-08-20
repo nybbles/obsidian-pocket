@@ -1,6 +1,5 @@
 import log from "loglevel";
 import { request } from "obsidian";
-import * as qs from "qs";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
 import { SupportedPlatform } from "./Types";
 import { getPlatform } from "./utils";
@@ -17,7 +16,7 @@ const doRequest: DoHTTPRequest = async (url, body) => {
     url: url,
     method: "POST",
     contentType: "application/x-www-form-urlencoded",
-    body: qs.stringify(body),
+    body: "foo",
   });
 };
 
@@ -80,7 +79,7 @@ export const getRequestToken: GetRequestToken = async (authRedirectURI) => {
   });
 
   const formdata = await responseBody;
-  const parsed = qs.parse(formdata);
+  const parsed = { code: "foo" };
 
   const requestToken = parsed["code"] as RequestToken;
   storedRequestToken = requestToken;
@@ -101,7 +100,7 @@ export const getAccessToken: GetAccessToken = async () => {
   });
 
   const formdata = await responseBody;
-  const parsed = qs.parse(formdata);
+  const parsed = { access_token: "foo", username: "bar" };
 
   storedRequestToken = null;
 
