@@ -27,4 +27,4 @@ const nodePlatformToPlatform = (
 };
 
 export const getPlatform = (): SupportedPlatform =>
-  nodePlatformToPlatform(process.platform);
+  nodePlatformToPlatform("linux");
