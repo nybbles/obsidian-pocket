@@ -1,6 +1,5 @@
 import { IDBPDatabase, openDB } from "idb";
 import log from "loglevel";
-import { UpdateTimestamp } from "./PocketAPI";
 import {
   isDeletedPocketItem,
   isSavedPocketItem,
@@ -18,6 +17,8 @@ const LAST_UPDATED_TIMESTAMP_KEY = "last_updated_timestamp";
 
 export type OnChangeCallback = () => Promise<void>;
 export type CallbackId = string;
+
+type UpdateTimestamp = number;
 
 export class PocketItemStore {
   db: IDBPDatabase;
