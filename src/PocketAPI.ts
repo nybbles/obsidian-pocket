@@ -1,5 +1,4 @@
 import log from "loglevel";
-import { request } from "obsidian";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
 import { SupportedPlatform } from "./Types";
 import { getPlatform } from "./utils";
@@ -12,12 +11,7 @@ export type DoHTTPRequest = (
 ) => Promise<ResponseBody>;
 
 const doRequest: DoHTTPRequest = async (url, body) => {
-  return request({
-    url: url,
-    method: "POST",
-    contentType: "application/x-www-form-urlencoded",
-    body: "foo",
-  });
+  return "foo";
 };
 
 export type RequestToken = string;
