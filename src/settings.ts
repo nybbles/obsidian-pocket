@@ -2,6 +2,11 @@ import { stylesheet } from "astroturf";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import PocketSync from "./main";
+import {
+  clearPocketAccessInfo,
+  pocketAccessInfoExists,
+  setupAuth,
+} from "./PocketAuth";
 
 const styles = stylesheet`
   .error {
@@ -46,7 +51,15 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
     .setDesc("Disconnects Obsidian from Pocket")
     .addButton((button) => {
       button.setButtonText(LOG_OUT_OF_POCKET_CTA);
-      button.onClick(async () => {});
+      button.onClick(async () => {
+        if (await pocketAccessInfoExists(plugin)) {
+          log.debug("Disconnecting from Pocket by clearing Pocket access info");
+          clearPocketAccessInfo(plugin);
+          new Notice("Disconnected from Pocket");
+        } else {
+          new Notice("Already logged out of Pocket, skipping");
+        }
+      });
 
       plugin.pocketAuthenticated = false;
     });
