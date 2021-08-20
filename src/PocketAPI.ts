@@ -1,9 +1,5 @@
-import log from "loglevel";
-import { request } from "obsidian";
-import * as qs from "qs";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
 import { SupportedPlatform } from "./Types";
-import { getPlatform } from "./utils";
 
 export type ResponseBody = string;
 
@@ -13,12 +9,15 @@ export type DoHTTPRequest = (
 ) => Promise<ResponseBody>;
 
 const doRequest: DoHTTPRequest = async (url, body) => {
+  /*
   return request({
     url: url,
     method: "POST",
     contentType: "application/x-www-form-urlencoded",
-    body: qs.stringify(body),
+    body: "foo",
   });
+  */
+  return "foo";
 };
 
 export type RequestToken = string;
@@ -43,7 +42,7 @@ const PLATFORM_CONSUMER_KEYS: Record<SupportedPlatform, ConsumerKey> = {
   linux: "97653-da7a5baf4f5172d3fce89c0a",
 };
 
-const CONSUMER_KEY = PLATFORM_CONSUMER_KEYS[getPlatform()];
+const CONSUMER_KEY = PLATFORM_CONSUMER_KEYS["linux"];
 
 export type GetRequestToken = (
   authRedirectURI: string
@@ -80,7 +79,9 @@ export const getRequestToken: GetRequestToken = async (authRedirectURI) => {
   });
 
   const formdata = await responseBody;
-  const parsed = qs.parse(formdata);
+  const parsed = {
+    code: "foo",
+  };
 
   const requestToken = parsed["code"] as RequestToken;
   storedRequestToken = requestToken;
@@ -101,7 +102,7 @@ export const getAccessToken: GetAccessToken = async () => {
   });
 
   const formdata = await responseBody;
-  const parsed = qs.parse(formdata);
+  const parsed = { access_token: "foo", username: "bar" };
 
   storedRequestToken = null;
 
@@ -133,18 +134,15 @@ export const getPocketItems: GetPocketItems = async (
 
   if (!!lastUpdateTimestamp) {
     const humanReadable = new Date(lastUpdateTimestamp * 1000).toLocaleString();
-    log.info(`Fetching with Pocket item updates since ${humanReadable}`);
   } else {
-    log.info(`Fetching all Pocket items`);
   }
 
   const responseBody = await doRequest(GET_ITEMS_URL, requestOptions);
 
-  log.info(`Pocket items fetched.`);
-
   return {
     timestamp: nextTimestamp,
-    response: JSON.parse(await responseBody),
+    // response: JSON.parse(await responseBody),
+    response: { status: 200, complete: 1, list: {} },
   };
 };
 
