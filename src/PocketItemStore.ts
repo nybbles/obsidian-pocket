@@ -1,6 +1,5 @@
 import { IDBPDatabase, openDB } from "idb";
 import log from "loglevel";
-import { v4 as uuidv4 } from "uuid";
 import { UpdateTimestamp } from "./PocketAPI";
 import {
   isDeletedPocketItem,
@@ -112,7 +111,7 @@ export class PocketItemStore {
   };
 
   subscribeOnChange = (cb: OnChangeCallback): CallbackId => {
-    const callbackId = uuidv4();
+    const callbackId = "foo"; // TODO: FIX THIS SO that it is unique
     this.onChangeCallbacks.set(callbackId, cb);
     return callbackId;
   };
