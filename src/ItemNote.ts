@@ -1,3 +1,4 @@
+import log from "loglevel";
 import {
   MetadataCache,
   normalizePath,
@@ -55,7 +56,7 @@ const loadTemplate =
 
       if (!templateFile) {
         const errMsg = `Unable to find template file at ${normalizedTemplatePath}`;
-        // log.warn(errMsg);
+        log.warn(errMsg);
         new Notice(errMsg);
         return null;
       }
@@ -63,7 +64,7 @@ const loadTemplate =
       const templateContents = vault.cachedRead(templateFile);
       return templateContents;
     } catch (err) {
-      // log.error(`Failed to load template from ${normalizedTemplatePath}`, err);
+      log.error(`Failed to load template from ${normalizedTemplatePath}`, err);
       new Notice("Failed to load Pocket item note template");
       return null;
     }
@@ -81,14 +82,11 @@ const generateInitialItemNoteContents = (
   templateContents: TemplateContents,
   pocketItem: SavedPocketItem
 ): string => {
-  return "foo";
-  /*
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {
     const [variableName, substitutionFn] = currentValue;
     const regex = new RegExp(`{{${variableName}}}`, "gi");
     return acc.replace(regex, substitutionFn(pocketItem));
   }, templateContents);
-  */
 };
 
 export type CreateOrOpenItemNoteFn = (
@@ -138,10 +136,12 @@ export const createOrOpenItemNote =
           generateInitialItemNoteContents(templateContents, pocketItem)
         );
 
+        log.debug("Opening item note now");
         await openItemNote(workspace, newItemNote);
       } catch (err) {
         const fullpath = fullpathForPocketItem(plugin, pocketItem);
         const errMsg = `Failed to create file for ${fullpath}`;
+        log.error(errMsg, err);
         new Notice(errMsg);
         return;
       }
