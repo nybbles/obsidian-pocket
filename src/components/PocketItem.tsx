@@ -1,11 +1,12 @@
 import { stylesheet } from "astroturf";
-import React from "react";
+import React, { MouseEvent } from "react";
 import {
   CreateOrOpenItemNoteFn,
   DoesItemNoteExistFn,
   linkpathForSavedPocketItem,
 } from "src/ItemNote";
-import { openBrowserWindow } from "src/utils";
+import { SupportedPlatform } from "src/Types";
+import { getPlatform, openBrowserWindow } from "src/utils";
 import { SavedPocketItem } from "../PocketAPITypes";
 
 const styles = stylesheet`
@@ -38,7 +39,7 @@ const styles = stylesheet`
 type NoteLinkProps = {
   linkpath: string;
   linkpathExists: boolean;
-  onClick: () => Promise<void>;
+  onClick: (event: MouseEvent) => Promise<void>;
 };
 
 const PocketItemNoteLink = ({
@@ -48,11 +49,7 @@ const PocketItemNoteLink = ({
 }: NoteLinkProps) => {
   return (
     <a
-      href={linkpath}
-      data-href={linkpath}
       className={`internal-link ${linkpathExists ? "" : "is-unresolved"}`}
-      target="blank"
-      rel="noopener"
       onClick={onClick}
     >
       {linkpath}
@@ -66,6 +63,12 @@ export type PocketItemProps = {
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
 };
 
+enum PocketItemClickAction {
+  NavigateToPocketURL,
+  CreateOrOpenItemNote,
+  Noop,
+}
+
 export const PocketItem = ({
   item,
   doesItemNoteExist,
@@ -78,20 +81,42 @@ export const PocketItem = ({
     openBrowserWindow(item.resolved_url);
   };
 
+  const getPocketItemClickAction = (event: MouseEvent) => {
+    const navigateModifierPressed =
+      getPlatform() === "windows" ? event.altKey : event.metaKey;
+    const noModifiedsPressed =
+      !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+
+    if (navigateModifierPressed) {
+      return PocketItemClickAction.NavigateToPocketURL;
+    } else if (noModifiedsPressed) {
+      return PocketItemClickAction.CreateOrOpenItemNote;
+    } else {
+      return PocketItemClickAction.Noop;
+    }
+  };
+
   return (
-    <div
-      className={styles.item}
-      onClick={(event) => {
-        if (event.metaKey) {
-          navigateToPocketURL();
-        }
-      }}
-    >
+    <div className={styles.item}>
       <span className={styles.itemTitle}>
         <PocketItemNoteLink
           linkpath={linkpath}
           linkpathExists={linkpathExists}
-          onClick={() => createOrOpenItemNote(item)}
+          onClick={async (event) => {
+            const clickAction = getPocketItemClickAction(event);
+            switch (clickAction) {
+              case PocketItemClickAction.NavigateToPocketURL:
+                navigateToPocketURL();
+                break;
+              case PocketItemClickAction.CreateOrOpenItemNote:
+                await createOrOpenItemNote(item);
+                break;
+              case PocketItemClickAction.Noop:
+                break;
+              default:
+                throw new Error(`Unknown PocketItemClickAction ${clickAction}`);
+            }
+          }}
         />
       </span>
       {item.excerpt && (

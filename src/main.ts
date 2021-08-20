@@ -7,6 +7,7 @@ import {
   Username as PocketUsername,
 } from "./PocketAPI";
 import {
+  AccessInfo,
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
   storePocketAccessInfo,
@@ -24,6 +25,33 @@ import { createReactApp } from "./ReactApp";
 import { PocketSettings, PocketSettingTab } from "./Settings";
 import { ViewManager } from "./ViewManager";
 
+const doPocketSync = async (plugin: PocketSync, accessInfo: AccessInfo) => {
+  const lastUpdateTimestamp = await plugin.itemStore.getLastUpdateTimestamp();
+
+  new Notice(`Fetching Pocket updates for ${accessInfo.username}`);
+
+  const getPocketItemsResponse = await plugin.pocketAPI.getPocketItems(
+    accessInfo.accessToken,
+    lastUpdateTimestamp
+  );
+
+  new Notice(
+    `Fetched ${
+      Object.keys(getPocketItemsResponse.response.list).length
+    } updates from Pocket`
+  );
+
+  const storageNotice = new Notice(`Storing updates from Pocket...`, 0);
+
+  await plugin.itemStore.mergeUpdates(
+    getPocketItemsResponse.timestamp,
+    getPocketItemsResponse.response.list
+  );
+
+  storageNotice.hide();
+  new Notice(`Done storing updates from Pocket`);
+};
+
 export default class PocketSync extends Plugin {
   itemStore: PocketItemStore;
   appEl: HTMLDivElement;
@@ -32,6 +60,27 @@ export default class PocketSync extends Plugin {
   pocketAuthenticated: boolean;
   settings: PocketSettings;
   pocketAPI: PocketAPI;
+  pendingSync: Promise<void> | null = null;
+
+  async syncPocketItems() {
+    const accessInfo = await loadPocketAccessInfo(this);
+    if (!accessInfo) {
+      new Notice("Not logged into Pocket, skipping sync");
+      return;
+    }
+
+    if (!!this.pendingSync) {
+      new Notice("Sync already in progress, skipping");
+      return;
+    }
+
+    this.pendingSync = doPocketSync(this, accessInfo);
+    try {
+      await this.pendingSync;
+    } finally {
+      this.pendingSync = null;
+    }
+  }
 
   async loadSettings() {
     this.settings = Object.assign({}, await this.loadData());
@@ -48,6 +97,8 @@ export default class PocketSync extends Plugin {
     log.info("Loading Pocket plugin");
 
     await this.loadSettings();
+
+    this.pendingSync = null;
 
     this.pocketAPI = buildPocketAPI();
 
@@ -145,6 +196,14 @@ export default class PocketSync extends Plugin {
       name: "Open Pocket list",
       callback: () => {
         this.openPocketList();
+      },
+    });
+
+    this.addCommand({
+      id: "sync-pocket-list",
+      name: "Sync Pocket list",
+      callback: () => {
+        this.syncPocketItems();
       },
     });
   };

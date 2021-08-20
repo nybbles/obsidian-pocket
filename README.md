@@ -32,6 +32,8 @@ If you granted permission to this plugin to access Pocket data, you can click on
 "Sync Pocket items" to actually download and store your Pocket list locally
 within Obsidian.
 
+You can also sync your Pocket items using an Obsidian command: "Sync Pocket list".
+
 ### Opening and using the Pocket list
 
 Once the Pocket list is downloaded and stored, open the command palette and
@@ -39,13 +41,16 @@ search for "Pocket" to see the list of available commands. The single command
 currently available is "Open Pocket list". The Pocket list is shown in a
 screenshot above.
 
-Meta+click (e.g. command+click on Mac OS) to open the Pocket item URL in your browser.
-
 ### Notes for Pocket items
 
 Click on any Pocket item's title to create a note (or navigate to an existing
 note) for that Pocket item. Notes for Pocket items will be created in the Pocket
 item notes folder, which can be configured in settings.
+
+Open the Pocket item URL in your browser using Meta+click for Linux and Mac OS
+(e.g. command+click on Mac OS) and using Alt+click for Windows.
+
+Meta+click (e.g. command+click on Mac OS) to open the Pocket item URL in your browser.
 
 Notes in Obisidan are matched to Pocket items based on their name. If you find
 this setup limiting, please file a feature request (see bottom of this README
