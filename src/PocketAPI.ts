@@ -1,8 +1,9 @@
 import log from "loglevel";
-import { request } from "obsidian";
+import { Notice, request } from "obsidian";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
 import { SupportedPlatform } from "./Types";
 import { getPlatform } from "./utils";
+import * as qs from "query-string";
 
 export type ResponseBody = string;
 
@@ -16,7 +17,7 @@ const doRequest: DoHTTPRequest = async (url, body) => {
     url: url,
     method: "POST",
     contentType: "application/x-www-form-urlencoded",
-    body: "foo",
+    body: qs.stringify(body),
   });
 };
 
@@ -68,7 +69,7 @@ export const buildAuthorizationURL = (
 // TODO: Handle unsuccessful requests
 export const getRequestToken: GetRequestToken = async (authRedirectURI) => {
   if (storedRequestToken) {
-    throw new Error("Found unexpected stored request token");
+    log.warn("Found unexpected stored request token");
   }
 
   const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
@@ -79,7 +80,7 @@ export const getRequestToken: GetRequestToken = async (authRedirectURI) => {
   });
 
   const formdata = await responseBody;
-  const parsed = { code: "foo" };
+  const parsed = qs.parse(formdata);
 
   const requestToken = parsed["code"] as RequestToken;
   storedRequestToken = requestToken;
@@ -100,7 +101,7 @@ export const getAccessToken: GetAccessToken = async () => {
   });
 
   const formdata = await responseBody;
-  const parsed = { access_token: "foo", username: "bar" };
+  const parsed = qs.parse(formdata);
 
   storedRequestToken = null;
 
