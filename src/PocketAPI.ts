@@ -137,14 +137,23 @@ export const getPocketItems: GetPocketItems = async (
     log.info(`Fetching all Pocket items`);
   }
 
-  const responseBody = await doRequest(GET_ITEMS_URL, requestOptions);
+  try {
+    const responseBody = await doRequest(GET_ITEMS_URL, requestOptions);
+    log.info(`Pocket items fetched.`);
+    const response = await responseBody;
+    const parsedResponse = JSON.parse(response);
 
-  log.info(`Pocket items fetched.`);
+    return {
+      timestamp: nextTimestamp,
+      response: parsedResponse,
+    };
+  } catch (err) {
+    const errorMessage = `Encountered error ${err} while fetching Pocket items`;
+    log.error(errorMessage);
+    new Notice(errorMessage);
 
-  return {
-    timestamp: nextTimestamp,
-    response: JSON.parse(await responseBody),
-  };
+    throw err;
+  }
 };
 
 export const buildPocketAPI = (): PocketAPI => {
