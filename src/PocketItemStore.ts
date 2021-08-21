@@ -64,6 +64,12 @@ export class PocketItemStore {
     item: SavedPocketItem,
     triggerOnChangeHandlers?: boolean
   ) => {
+    if (!item.resolved_title && !item.resolved_url) {
+      log.warn(
+        `Item ${item.item_id} is invalid, not adding to Pocket item store`
+      );
+      return;
+    }
     await this.db.put(ITEM_STORE_NAME, item);
     triggerOnChangeHandlers && (await this.handleOnChange());
   };

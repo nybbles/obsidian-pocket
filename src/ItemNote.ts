@@ -14,9 +14,15 @@ import { ensureFolderExists } from "./utils";
 const getItemNotesFolder = (plugin: PocketSync) =>
   plugin.settings["item-notes-folder"] ?? "/";
 
-export const displayTextForSavedPocketItem = (item: SavedPocketItem) =>
-  item.resolved_title.length !== 0 ? item.resolved_title : item.resolved_url;
+export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
+  if (!item.resolved_title && !item.resolved_url) {
+    log.error(item.item_id);
+  }
 
+  return item.resolved_title && item.resolved_title.length !== 0
+    ? item.resolved_title
+    : item.resolved_url;
+};
 const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
 
 export const linkpathForSavedPocketItem = (item: SavedPocketItem) =>
