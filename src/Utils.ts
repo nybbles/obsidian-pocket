@@ -26,5 +26,14 @@ const nodePlatformToPlatform = (
   return result;
 };
 
+// Taken from
+// https://github.com/valentine195/obsidian-leaflet-plugin/blob/01fbecdb99a0372dbae2786039db82922ea5d4d8/src/utils/utils.ts#L55.
+export const getUniqueId = (): string =>
+  "ID_xyxyxyxyxyxy".replace(/[xy]/g, (c) => {
+    var r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+
 export const getPlatform = (): SupportedPlatform =>
   nodePlatformToPlatform("linux");

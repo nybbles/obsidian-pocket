@@ -8,6 +8,7 @@ import {
   PocketItemRecord,
   SavedPocketItem,
 } from "./PocketAPITypes";
+import { getUniqueId } from "./utils";
 import { ViewName } from "./ViewManager";
 
 const DATABASE_NAME = "pocket_db";
@@ -117,7 +118,7 @@ export class PocketItemStore {
   };
 
   subscribeOnChange = (cb: OnChangeCallback): CallbackId => {
-    const callbackId = "foo"; // TODO: FIX THIS SO that it is unique
+    const callbackId = getUniqueId();
     this.onChangeCallbacks.set(callbackId, cb);
     return callbackId;
   };
