@@ -1,4 +1,5 @@
 import { stylesheet } from "astroturf";
+import { Platform } from "obsidian";
 import React, { MouseEvent } from "react";
 import {
   CreateOrOpenItemNoteFn,
@@ -82,17 +83,22 @@ export const PocketItem = ({
   };
 
   const getPocketItemClickAction = (event: MouseEvent) => {
-    const navigateModifierPressed =
-      getPlatform() === "windows" ? event.altKey : event.metaKey;
-    const noModifiedsPressed =
-      !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+    if (Platform.isDesktopApp) {
+      const navigateModifierPressed =
+        getPlatform() === "windows" ? event.altKey : event.metaKey;
+      const noModifiedsPressed =
+        !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
 
-    if (navigateModifierPressed) {
-      return PocketItemClickAction.NavigateToPocketURL;
-    } else if (noModifiedsPressed) {
-      return PocketItemClickAction.CreateOrOpenItemNote;
+      if (navigateModifierPressed) {
+        return PocketItemClickAction.NavigateToPocketURL;
+      } else if (noModifiedsPressed) {
+        return PocketItemClickAction.CreateOrOpenItemNote;
+      } else {
+        return PocketItemClickAction.Noop;
+      }
     } else {
-      return PocketItemClickAction.Noop;
+      // Mobile does not have any keyboard modifiers
+      return PocketItemClickAction.CreateOrOpenItemNote;
     }
   };
 
