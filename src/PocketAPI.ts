@@ -1,9 +1,9 @@
 import log from "loglevel";
 import { Notice, request } from "obsidian";
+import * as qs from "query-string";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
 import { SupportedPlatform } from "./Types";
 import { getPlatform } from "./utils";
-import * as qs from "query-string";
 
 export type ResponseBody = string;
 
@@ -41,6 +41,8 @@ const PLATFORM_CONSUMER_KEYS: Record<SupportedPlatform, ConsumerKey> = {
   mac: "97653-12e003276f01f4288ac868c0",
   windows: "97653-541365a3736338ca19dae55a",
   linux: "97653-da7a5baf4f5172d3fce89c0a",
+  ios: "98643-0f7acf0859cccd827a59d02f",
+  android: "98644-7deaf66746d3a0457a1f7961",
 };
 
 const CONSUMER_KEY = PLATFORM_CONSUMER_KEYS[getPlatform()];

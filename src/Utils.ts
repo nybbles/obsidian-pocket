@@ -1,5 +1,5 @@
-import { Vault } from "obsidian";
-import { SupportedPlatform } from "./Types";
+import { Platform, Vault } from "obsidian";
+import { SupportedDesktopPlatform, SupportedPlatform } from "./Types";
 
 export const openBrowserWindow = (url: string) => window.location.assign(url);
 
@@ -12,8 +12,8 @@ export const ensureFolderExists = async (vault: Vault, path: string) => {
 
 const nodePlatformToPlatform = (
   nodePlatform: NodeJS.Platform
-): SupportedPlatform => {
-  const supportedPlatforms: Record<string, SupportedPlatform> = {
+): SupportedDesktopPlatform => {
+  const supportedPlatforms: Record<string, SupportedDesktopPlatform> = {
     darwin: "mac",
     win32: "windows",
     linux: "linux",
@@ -36,4 +36,8 @@ export const getUniqueId = (): string =>
   });
 
 export const getPlatform = (): SupportedPlatform =>
-  nodePlatformToPlatform("linux");
+  Platform.isDesktopApp
+    ? nodePlatformToPlatform(process.platform)
+    : Platform.isIosApp
+    ? "ios"
+    : "android";
