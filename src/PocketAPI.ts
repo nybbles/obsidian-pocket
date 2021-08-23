@@ -1,6 +1,6 @@
 import log from "loglevel";
-import { request } from "obsidian";
-import * as qs from "qs";
+import { Notice, request } from "obsidian";
+import * as qs from "query-string";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
 import { SupportedPlatform } from "./Types";
 import { getPlatform } from "./utils";
@@ -41,6 +41,8 @@ const PLATFORM_CONSUMER_KEYS: Record<SupportedPlatform, ConsumerKey> = {
   mac: "97653-12e003276f01f4288ac868c0",
   windows: "97653-541365a3736338ca19dae55a",
   linux: "97653-da7a5baf4f5172d3fce89c0a",
+  ios: "98643-0f7acf0859cccd827a59d02f",
+  android: "98644-7deaf66746d3a0457a1f7961",
 };
 
 const CONSUMER_KEY = PLATFORM_CONSUMER_KEYS[getPlatform()];
@@ -69,7 +71,7 @@ export const buildAuthorizationURL = (
 // TODO: Handle unsuccessful requests
 export const getRequestToken: GetRequestToken = async (authRedirectURI) => {
   if (storedRequestToken) {
-    throw new Error("Found unexpected stored request token");
+    log.warn("Found unexpected stored request token");
   }
 
   const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
@@ -138,14 +140,23 @@ export const getPocketItems: GetPocketItems = async (
     log.info(`Fetching all Pocket items`);
   }
 
-  const responseBody = await doRequest(GET_ITEMS_URL, requestOptions);
+  try {
+    const responseBody = await doRequest(GET_ITEMS_URL, requestOptions);
+    log.info(`Pocket items fetched.`);
+    const response = await responseBody;
+    const parsedResponse = JSON.parse(response);
 
-  log.info(`Pocket items fetched.`);
+    return {
+      timestamp: nextTimestamp,
+      response: parsedResponse,
+    };
+  } catch (err) {
+    const errorMessage = `Encountered error ${err} while fetching Pocket items`;
+    log.error(errorMessage);
+    new Notice(errorMessage);
 
-  return {
-    timestamp: nextTimestamp,
-    response: JSON.parse(await responseBody),
-  };
+    throw err;
+  }
 };
 
 export const buildPocketAPI = (): PocketAPI => {

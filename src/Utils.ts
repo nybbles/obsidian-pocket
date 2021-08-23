@@ -1,5 +1,5 @@
-import { Vault } from "obsidian";
-import { SupportedPlatform } from "./Types";
+import { Platform, Vault } from "obsidian";
+import { SupportedDesktopPlatform, SupportedPlatform } from "./Types";
 
 export const openBrowserWindow = (url: string) => window.location.assign(url);
 
@@ -12,8 +12,8 @@ export const ensureFolderExists = async (vault: Vault, path: string) => {
 
 const nodePlatformToPlatform = (
   nodePlatform: NodeJS.Platform
-): SupportedPlatform => {
-  const supportedPlatforms: Record<string, SupportedPlatform> = {
+): SupportedDesktopPlatform => {
+  const supportedPlatforms: Record<string, SupportedDesktopPlatform> = {
     darwin: "mac",
     win32: "windows",
     linux: "linux",
@@ -26,5 +26,18 @@ const nodePlatformToPlatform = (
   return result;
 };
 
+// Taken from
+// https://github.com/valentine195/obsidian-leaflet-plugin/blob/01fbecdb99a0372dbae2786039db82922ea5d4d8/src/utils/utils.ts#L55.
+export const getUniqueId = (): string =>
+  "ID_xyxyxyxyxyxy".replace(/[xy]/g, (c) => {
+    var r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+
 export const getPlatform = (): SupportedPlatform =>
-  nodePlatformToPlatform(process.platform);
+  Platform.isDesktopApp
+    ? nodePlatformToPlatform(process.platform)
+    : Platform.isIosApp
+    ? "ios"
+    : "android";

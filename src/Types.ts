@@ -1,1 +1,5 @@
-export type SupportedPlatform = "mac" | "windows" | "linux";
+export type SupportedDesktopPlatform = "mac" | "windows" | "linux";
+export type SupportedMobilePlatform = "ios" | "android";
+export type SupportedPlatform =
+  | SupportedDesktopPlatform
+  | SupportedMobilePlatform;

@@ -1,6 +1,5 @@
 import { IDBPDatabase, openDB } from "idb";
 import log from "loglevel";
-import { v4 as uuidv4 } from "uuid";
 import { UpdateTimestamp } from "./PocketAPI";
 import {
   isDeletedPocketItem,
@@ -9,6 +8,7 @@ import {
   PocketItemRecord,
   SavedPocketItem,
 } from "./PocketAPITypes";
+import { getUniqueId } from "./utils";
 import { ViewName } from "./ViewManager";
 
 const DATABASE_NAME = "pocket_db";
@@ -65,6 +65,12 @@ export class PocketItemStore {
     item: SavedPocketItem,
     triggerOnChangeHandlers?: boolean
   ) => {
+    if (!item.resolved_title && !item.resolved_url) {
+      log.warn(
+        `Item ${item.item_id} is invalid, not adding to Pocket item store`
+      );
+      return;
+    }
     await this.db.put(ITEM_STORE_NAME, item);
     triggerOnChangeHandlers && (await this.handleOnChange());
   };
@@ -112,7 +118,7 @@ export class PocketItemStore {
   };
 
   subscribeOnChange = (cb: OnChangeCallback): CallbackId => {
-    const callbackId = uuidv4();
+    const callbackId = getUniqueId();
     this.onChangeCallbacks.set(callbackId, cb);
     return callbackId;
   };

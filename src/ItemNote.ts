@@ -14,9 +14,16 @@ import { ensureFolderExists } from "./utils";
 const getItemNotesFolder = (plugin: PocketSync) =>
   plugin.settings["item-notes-folder"] ?? "/";
 
-export const displayTextForSavedPocketItem = (item: SavedPocketItem) =>
-  item.resolved_title.length !== 0 ? item.resolved_title : item.resolved_url;
+export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
+  if (!item.resolved_title && !item.resolved_url) {
+    log.error(`Found Pocket item ${item.item_id} without title or URL`);
+    return `Untitled ${item.item_id}`;
+  }
 
+  return item.resolved_title && item.resolved_title.length !== 0
+    ? item.resolved_title
+    : item.resolved_url;
+};
 const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
 
 export const linkpathForSavedPocketItem = (item: SavedPocketItem) =>
@@ -74,8 +81,8 @@ type SubstitutionFn = (item: SavedPocketItem) => string;
 
 const substitutions: Map<string, SubstitutionFn> = new Map([
   ["title", (item) => item.resolved_title ?? "Untitled"],
-  ["url", (item) => item.resolved_url],
-  ["excerpt", (item) => item.excerpt],
+  ["url", (item) => item.resolved_url ?? "Missing URL"],
+  ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
 ]);
 
 const generateInitialItemNoteContents = (
