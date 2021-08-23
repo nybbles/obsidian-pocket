@@ -81,8 +81,8 @@ type SubstitutionFn = (item: SavedPocketItem) => string;
 
 const substitutions: Map<string, SubstitutionFn> = new Map([
   ["title", (item) => item.resolved_title ?? "Untitled"],
-  ["url", (item) => item.resolved_url],
-  ["excerpt", (item) => item.excerpt],
+  ["url", (item) => item.resolved_url ?? "Missing URL"],
+  ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
 ]);
 
 const generateInitialItemNoteContents = (
