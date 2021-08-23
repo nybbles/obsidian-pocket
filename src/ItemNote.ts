@@ -16,7 +16,8 @@ const getItemNotesFolder = (plugin: PocketSync) =>
 
 export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
   if (!item.resolved_title && !item.resolved_url) {
-    log.error(item.item_id);
+    log.error(`Found Pocket item ${item.item_id} without title or URL`);
+    return `Untitled ${item.item_id}`;
   }
 
   return item.resolved_title && item.resolved_title.length !== 0
