@@ -131,6 +131,7 @@ export const getPocketItems: GetPocketItems = async (
     since: !!lastUpdateTimestamp
       ? new Number(lastUpdateTimestamp).toString()
       : null,
+    detailType: "complete",
   };
 
   if (!!lastUpdateTimestamp) {
