@@ -128,6 +128,12 @@ export const PocketItem = ({
       {item.excerpt && (
         <span className={styles.itemExcerpt}>{item.excerpt}</span>
       )}
+      <span>
+        {item.tags &&
+          Object.entries(item.tags)
+            .map(([k, v]) => `#${v.tag}`)
+            .join(", ")}
+      </span>
     </div>
   );
 };

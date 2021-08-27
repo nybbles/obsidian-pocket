@@ -17,11 +17,17 @@ export interface DeletedPocketItem extends BasePocketItem {
   status: PocketItemStatus.Deleted;
 }
 
+export interface PocketTag {
+  item_id: string;
+  tag: string;
+}
+
 export interface SavedPocketItem extends BasePocketItem {
   status: PocketItemStatus.Unread | PocketItemStatus.Archived;
   resolved_title: string;
   resolved_url: string;
   excerpt: string;
+  tags: Record<string, PocketTag>;
 }
 
 export type PocketItem = SavedPocketItem | DeletedPocketItem;
