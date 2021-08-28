@@ -6,9 +6,8 @@ import {
   DoesItemNoteExistFn,
   linkpathForSavedPocketItem,
 } from "src/ItemNote";
-import { SupportedPlatform } from "src/Types";
 import { getPlatform, openBrowserWindow } from "src/utils";
-import { SavedPocketItem } from "../PocketAPITypes";
+import { PocketTag, SavedPocketItem } from "../PocketAPITypes";
 
 const styles = stylesheet`
   .item {
@@ -35,6 +34,20 @@ const styles = stylesheet`
     width: 100%;
     color: var(--text-normal);
   }
+
+  .itemTagList {
+    list-style: none;
+    padding-inline-start: 0px;
+    margin-top: 4px;
+  }
+  .itemTagList > li {
+    display: inline;
+    color: var(--text-muted);
+    background-color: var(--background-secondary);
+    margin: 4px;
+    padding: 2px;
+    border-radius: 4px;
+  }
 `;
 
 type NoteLinkProps = {
@@ -55,6 +68,20 @@ const PocketItemNoteLink = ({
     >
       {linkpath}
     </a>
+  );
+};
+
+type PocketItemTagListProps = {
+  tags: PocketTag[];
+};
+
+const PocketItemTagList = ({ tags }: PocketItemTagListProps) => {
+  return (
+    <ul className={styles.itemTagList}>
+      {tags.map((x) => (
+        <li key={x.tag}>#{x.tag}</li>
+      ))}
+    </ul>
   );
 };
 
@@ -102,6 +129,9 @@ export const PocketItem = ({
     }
   };
 
+  const pocketTags: PocketTag[] =
+    item.tags && Object.entries(item.tags).map(([k, v]) => v);
+
   return (
     <div className={styles.item}>
       <span className={styles.itemTitle}>
@@ -128,6 +158,7 @@ export const PocketItem = ({
       {item.excerpt && (
         <span className={styles.itemExcerpt}>{item.excerpt}</span>
       )}
+      {pocketTags && <PocketItemTagList tags={pocketTags} />}
     </div>
   );
 };

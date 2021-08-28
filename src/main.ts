@@ -7,7 +7,6 @@ import {
   Username as PocketUsername,
 } from "./PocketAPI";
 import {
-  AccessInfo,
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
   storePocketAccessInfo,
@@ -21,36 +20,10 @@ import {
   openPocketItemStore,
   PocketItemStore,
 } from "./PocketItemStore";
+import { doPocketSync } from "./PocketSync";
 import { createReactApp } from "./ReactApp";
 import { PocketSettings, PocketSettingTab } from "./Settings";
 import { ViewManager } from "./ViewManager";
-
-const doPocketSync = async (plugin: PocketSync, accessInfo: AccessInfo) => {
-  const lastUpdateTimestamp = await plugin.itemStore.getLastUpdateTimestamp();
-
-  new Notice(`Fetching Pocket updates for ${accessInfo.username}`);
-
-  const getPocketItemsResponse = await plugin.pocketAPI.getPocketItems(
-    accessInfo.accessToken,
-    lastUpdateTimestamp
-  );
-
-  new Notice(
-    `Fetched ${
-      Object.keys(getPocketItemsResponse.response.list).length
-    } updates from Pocket`
-  );
-
-  const storageNotice = new Notice(`Storing updates from Pocket...`, 0);
-
-  await plugin.itemStore.mergeUpdates(
-    getPocketItemsResponse.timestamp,
-    getPocketItemsResponse.response.list
-  );
-
-  storageNotice.hide();
-  new Notice(`Done storing updates from Pocket`);
-};
 
 export default class PocketSync extends Plugin {
   itemStore: PocketItemStore;
@@ -74,7 +47,7 @@ export default class PocketSync extends Plugin {
       return;
     }
 
-    this.pendingSync = doPocketSync(this, accessInfo);
+    this.pendingSync = doPocketSync(this.itemStore, this.pocketAPI, accessInfo);
     try {
       await this.pendingSync;
     } finally {
@@ -105,6 +78,7 @@ export default class PocketSync extends Plugin {
     // Set up Pocket item store
     log.debug("Opening Pocket item store");
     this.itemStore = await openPocketItemStore();
+    log.debug("Pocket item store opened");
 
     this.addCommands();
     this.addSettingTab(
@@ -117,7 +91,7 @@ export default class PocketSync extends Plugin {
     (async () => {
       const accessInfo = await loadPocketAccessInfo(this);
       if (!accessInfo) {
-        console.info(`Not authenticated to Pocket`);
+        log.info(`Not authenticated to Pocket`);
       }
       this.pocketAuthenticated = !!accessInfo;
       this.pocketUsername = accessInfo?.username;
@@ -170,7 +144,7 @@ export default class PocketSync extends Plugin {
     }
 
     log.debug("Closing Pocket item store");
-    await closePocketItemStore(this.itemStore);
+    closePocketItemStore(this.itemStore);
     this.itemStore = null;
 
     this.pocketAPI = null;

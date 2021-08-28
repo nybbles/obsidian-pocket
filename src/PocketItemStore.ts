@@ -1,5 +1,6 @@
-import { IDBPDatabase, openDB } from "idb";
+import { IDBPDatabase, IDBPObjectStore, openDB } from "idb";
 import log from "loglevel";
+import { Notice } from "obsidian";
 import { UpdateTimestamp } from "./PocketAPI";
 import {
   isDeletedPocketItem,
@@ -20,9 +21,19 @@ const LAST_UPDATED_TIMESTAMP_KEY = "last_updated_timestamp";
 export type OnChangeCallback = () => Promise<void>;
 export type CallbackId = string;
 
+type IDBPPocketItemStoreRW = IDBPObjectStore<
+  unknown,
+  ["items"],
+  "items",
+  "readwrite"
+>;
+
 export class PocketItemStore {
   db: IDBPDatabase;
   onChangeCallbacks: Map<ViewName, OnChangeCallback>;
+
+  static isItemValid = (item: SavedPocketItem) =>
+    !item.resolved_title && !item.resolved_url;
 
   constructor(db: IDBPDatabase) {
     this.db = db;
@@ -33,45 +44,43 @@ export class PocketItemStore {
     lastUpdateTimestamp: UpdateTimestamp,
     items: PocketItemRecord
   ): Promise<void> => {
-    const updates = [];
-
     // TODO: Should all of this be happening in a transaction?
     log.debug("Applying updates to Pocket item store");
+
+    const tx = this.db.transaction(ITEM_STORE_NAME, "readwrite");
+
     for (const key in items) {
       const item = items[key];
       if (isDeletedPocketItem(item)) {
-        updates.push(this.deleteItem(item.item_id, false));
+        this.deleteItem(tx.store, item.item_id, false);
       } else if (isSavedPocketItem(item)) {
-        updates.push(this.putItem(item, false));
+        this.putItem(tx.store, item, false);
       } else {
         throw new Error("unexpected");
       }
     }
 
+    await tx.done;
+
     // Wait on all changes, update timestamp, then trigger registered onChange handlers
-    await Promise.all(updates);
     log.debug("Updates applied to Pocket item store");
     this.setLastUpdateTimestamp(lastUpdateTimestamp);
     log.debug("Running Pocket item store onChange handlers");
     await this.handleOnChange();
   };
 
-  addItem = async (item: SavedPocketItem, triggerOnChangeHandlers = true) => {
-    await this.db.add(ITEM_STORE_NAME, item);
-    triggerOnChangeHandlers && (await this.handleOnChange());
-  };
-
   putItem = async (
+    store: IDBPPocketItemStoreRW,
     item: SavedPocketItem,
     triggerOnChangeHandlers?: boolean
   ) => {
-    if (!item.resolved_title && !item.resolved_url) {
+    if (PocketItemStore.isItemValid(item)) {
       log.warn(
         `Item ${item.item_id} is invalid, not adding to Pocket item store`
       );
       return;
     }
-    await this.db.put(ITEM_STORE_NAME, item);
+    await store.put(item);
     triggerOnChangeHandlers && (await this.handleOnChange());
   };
 
@@ -88,10 +97,11 @@ export class PocketItemStore {
   };
 
   deleteItem = async (
+    store: IDBPPocketItemStoreRW,
     itemId: PocketItemId,
     triggerOnChangeHandlers?: boolean
   ) => {
-    await this.db.delete(ITEM_STORE_NAME, itemId);
+    await store.delete(itemId);
     triggerOnChangeHandlers && (await this.handleOnChange());
   };
 
@@ -142,9 +152,9 @@ export class PocketItemStore {
 }
 
 export const openPocketItemStore = async (): Promise<PocketItemStore> => {
-  const dbVersion = 2;
+  const dbVersion = 3;
   const db = await openDB(DATABASE_NAME, dbVersion, {
-    upgrade: (db, oldVersion, newVersion, tx) => {
+    upgrade: async (db, oldVersion, newVersion, tx) => {
       if (oldVersion !== newVersion) {
         log.info(
           `Upgrading Pocket item store to version ${newVersion} from version ${oldVersion}`
@@ -153,18 +163,30 @@ export const openPocketItemStore = async (): Promise<PocketItemStore> => {
 
       switch (oldVersion) {
         case 0:
-          db.createObjectStore(ITEM_STORE_NAME, {
+          const itemStore = db.createObjectStore(ITEM_STORE_NAME, {
             keyPath: "item_id",
           });
-          db.createObjectStore(METADATA_STORE_NAME);
+          const metadataStore = db.createObjectStore(METADATA_STORE_NAME);
         case 1:
-          const itemStore = tx.objectStore(ITEM_STORE_NAME);
           itemStore.createIndex("sort_id", "sort_id", { unique: false });
+        case 2:
+          const itemsExist =
+            (await tx.objectStore(ITEM_STORE_NAME).count()) !== 0;
+          const databaseBeingCreated = oldVersion === 0;
+          const resetFetchTimestamp = itemsExist && !databaseBeingCreated;
+
+          if (resetFetchTimestamp) {
+            await tx.objectStore(METADATA_STORE_NAME).clear();
+            new Notice(
+              "Next Pocket sync will fetch full details of Pocket items, including tags",
+              0
+            );
+          }
       }
     },
   });
   return new PocketItemStore(db);
 };
 
-export const closePocketItemStore = async (pocketItemStore: PocketItemStore) =>
-  await pocketItemStore.db.close();
+export const closePocketItemStore = (pocketItemStore: PocketItemStore) =>
+  pocketItemStore.db.close();
