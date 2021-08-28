@@ -69,11 +69,6 @@ export class PocketItemStore {
     await this.handleOnChange();
   };
 
-  addItem = async (item: SavedPocketItem, triggerOnChangeHandlers = true) => {
-    await this.db.add(ITEM_STORE_NAME, item);
-    triggerOnChangeHandlers && (await this.handleOnChange());
-  };
-
   putItem = async (
     store: IDBPPocketItemStoreRW,
     item: SavedPocketItem,
