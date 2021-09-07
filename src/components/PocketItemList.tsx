@@ -1,7 +1,11 @@
 import { stylesheet } from "astroturf";
 import { MetadataCache } from "obsidian";
 import React, { useEffect, useState } from "react";
-import { createOrOpenItemNote, doesItemNoteExist } from "src/ItemNote";
+import {
+  createOrOpenItemNote,
+  doesItemNoteExist,
+  openSearchForTag,
+} from "src/ItemNote";
 import PocketSync from "src/main";
 import { SavedPocketItem } from "src/PocketAPITypes";
 import { PocketItemStore } from "src/PocketItemStore";
@@ -62,6 +66,7 @@ export const PocketItemList = ({
       plugin.app.vault,
       plugin.app.metadataCache
     );
+
     return (
       <ul className={styles.list}>
         {items.map((item) => (
@@ -70,6 +75,7 @@ export const PocketItemList = ({
               item={item}
               doesItemNoteExist={doesItemNoteExist(metadataCache, plugin)}
               createOrOpenItemNote={createOrOpen}
+              openSearchForTag={openSearchForTag(plugin.app)}
             />
           </li>
         ))}

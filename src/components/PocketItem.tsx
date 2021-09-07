@@ -5,6 +5,7 @@ import {
   CreateOrOpenItemNoteFn,
   DoesItemNoteExistFn,
   linkpathForSavedPocketItem,
+  OpenSearchForTagFn,
 } from "src/ItemNote";
 import { getPlatform, openBrowserWindow } from "src/utils";
 import { PocketTag, SavedPocketItem } from "../PocketAPITypes";
@@ -73,13 +74,29 @@ const PocketItemNoteLink = ({
 
 type PocketItemTagListProps = {
   tags: PocketTag[];
+  openSearchForTag: OpenSearchForTagFn;
 };
 
-const PocketItemTagList = ({ tags }: PocketItemTagListProps) => {
+const PocketItemTagList = ({
+  tags,
+  openSearchForTag,
+}: PocketItemTagListProps) => {
   return (
     <ul className={styles.itemTagList}>
       {tags.map((x) => (
-        <li key={x.tag}>#{x.tag}</li>
+        <li key={x.tag}>
+          <a
+            href={`#${x.tag}`}
+            className={"tag"}
+            target="_blank"
+            rel="noopener"
+            onClick={() => {
+              openSearchForTag(`#${x.tag}`);
+            }}
+          >
+            {`#${x.tag}`}
+          </a>
+        </li>
       ))}
     </ul>
   );
@@ -89,6 +106,7 @@ export type PocketItemProps = {
   item: SavedPocketItem;
   doesItemNoteExist: DoesItemNoteExistFn;
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
+  openSearchForTag: OpenSearchForTagFn;
 };
 
 enum PocketItemClickAction {
@@ -101,6 +119,7 @@ export const PocketItem = ({
   item,
   doesItemNoteExist,
   createOrOpenItemNote,
+  openSearchForTag,
 }: PocketItemProps) => {
   const linkpath = linkpathForSavedPocketItem(item);
   const linkpathExists = doesItemNoteExist(item);
@@ -158,7 +177,12 @@ export const PocketItem = ({
       {item.excerpt && (
         <span className={styles.itemExcerpt}>{item.excerpt}</span>
       )}
-      {pocketTags && <PocketItemTagList tags={pocketTags} />}
+      {pocketTags && (
+        <PocketItemTagList
+          tags={pocketTags}
+          openSearchForTag={openSearchForTag}
+        />
+      )}
     </div>
   );
 };
