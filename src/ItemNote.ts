@@ -8,7 +8,11 @@ import {
   Workspace,
 } from "obsidian";
 import PocketSync from "./main";
-import { SavedPocketItem } from "./PocketAPITypes";
+import {
+  PocketTags,
+  pocketTagsToPocketTagList,
+  SavedPocketItem,
+} from "./PocketAPITypes";
 import { ensureFolderExists } from "./utils";
 
 const getItemNotesFolder = (plugin: PocketSync) =>
@@ -77,12 +81,24 @@ const loadTemplate =
     }
   };
 
+const TAG_NOTE_CONTENT_SEPARATOR = ", ";
+
+const tagsToNoteContent = (tags: PocketTags) => {
+  if (!tags) {
+    return "";
+  }
+
+  const tagList = pocketTagsToPocketTagList(tags);
+  return tagList.map((x) => `#${x.tag}`).join(TAG_NOTE_CONTENT_SEPARATOR);
+};
+
 type SubstitutionFn = (item: SavedPocketItem) => string;
 
 const substitutions: Map<string, SubstitutionFn> = new Map([
   ["title", (item) => item.resolved_title ?? "Untitled"],
   ["url", (item) => item.resolved_url ?? "Missing URL"],
   ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
+  ["tags", (item) => tagsToNoteContent(item.tags)],
 ]);
 
 const generateInitialItemNoteContents = (
