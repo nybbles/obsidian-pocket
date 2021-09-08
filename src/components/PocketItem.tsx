@@ -8,7 +8,11 @@ import {
   OpenSearchForTagFn,
 } from "src/ItemNote";
 import { getPlatform, openBrowserWindow } from "src/utils";
-import { PocketTag, SavedPocketItem } from "../PocketAPITypes";
+import {
+  PocketTag,
+  pocketTagsToPocketTagList,
+  SavedPocketItem,
+} from "../PocketAPITypes";
 
 const styles = stylesheet`
   .item {
@@ -149,7 +153,7 @@ export const PocketItem = ({
   };
 
   const pocketTags: PocketTag[] =
-    item.tags && Object.entries(item.tags).map(([k, v]) => v);
+    item.tags && pocketTagsToPocketTagList(item.tags);
 
   return (
     <div className={styles.item}>

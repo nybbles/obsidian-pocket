@@ -69,6 +69,7 @@ following variables are supported:
 | `{{title}}`   | The title of the Pocket item                        |
 | `{{url}}`     | The URL of the Pocket item                          |
 | `{{excerpt}}` | The excerpt extracted by Pocket for the Pocket item |
+| `{{tags}}`    | The Pocket tags for the Pocket item                 |
 
 Here's an example template that will put this metadata into the [YAML
 frontmatter](https://help.obsidian.md/Advanced+topics/YAML+front+matter) of the
@@ -78,8 +79,12 @@ note for the Pocket item:
 ---
 Title: {{title}}
 URL: {{url}}
-Excerpt: {{excerpt}}
+Tags: {{tags}}
+Excerpt: >
+    {{excerpt}}
 ---
+{{url}}
+{{tags}}
 ```
 
 If you had saved [this
