@@ -6,7 +6,6 @@ import {
   CreateOrOpenItemNoteFn,
   DoesItemNoteExistFn,
   linkpathForSavedPocketItem,
-  OpenSearchForTagFn,
 } from "src/ItemNote";
 import { getPlatform, openBrowserWindow } from "src/utils";
 import {
@@ -14,6 +13,7 @@ import {
   pocketTagsToPocketTagList,
   SavedPocketItem,
 } from "../../pocket_api/PocketAPITypes";
+import { OpenSearchForTagFn } from "src/Tags";
 
 const styles = stylesheet`
   .item {
