@@ -44,7 +44,6 @@ export class PocketItemStore {
     lastUpdateTimestamp: UpdateTimestamp,
     items: PocketItemRecord
   ): Promise<void> => {
-    // TODO: Should all of this be happening in a transaction?
     log.debug("Applying updates to Pocket item store");
 
     const tx = this.db.transaction(ITEM_STORE_NAME, "readwrite");
