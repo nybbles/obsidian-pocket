@@ -1,12 +1,12 @@
 import { stylesheet } from "astroturf";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import PocketSync from "./main";
+import PocketSync from "../main";
 import {
   clearPocketAccessInfo,
   pocketAccessInfoExists,
   setupAuth,
-} from "./PocketAuth";
+} from "../pocket_api/PocketAuth";
 
 const styles = stylesheet`
   .error {

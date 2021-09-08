@@ -5,25 +5,25 @@ import {
   buildPocketAPI,
   PocketAPI,
   Username as PocketUsername,
-} from "./PocketAPI";
+} from "./pocket_api/PocketAPI";
 import {
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
   storePocketAccessInfo,
-} from "./PocketAuth";
+} from "./pocket_api/PocketAuth";
 import {
   PocketItemListView,
   POCKET_ITEM_LIST_VIEW_TYPE,
-} from "./PocketItemListView";
+} from "./ui/PocketItemListView";
 import {
   closePocketItemStore,
   openPocketItemStore,
   PocketItemStore,
-} from "./PocketItemStore";
-import { doPocketSync } from "./PocketSync";
-import { createReactApp } from "./ReactApp";
-import { PocketSettings, PocketSettingTab } from "./Settings";
-import { ViewManager } from "./ViewManager";
+} from "./data/PocketItemStore";
+import { doPocketSync } from "./data/PocketSync";
+import { createReactApp } from "./ui/ReactApp";
+import { PocketSettings, PocketSettingTab } from "./ui/settings";
+import { ViewManager } from "./ui/ViewManager";
 
 export default class PocketSync extends Plugin {
   itemStore: PocketItemStore;

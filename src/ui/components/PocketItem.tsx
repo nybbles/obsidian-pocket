@@ -1,6 +1,7 @@
 import { stylesheet } from "astroturf";
 import { Platform } from "obsidian";
 import React, { MouseEvent } from "react";
+import { PocketItemTagList } from "src/ui/components/PocketItemTagList";
 import {
   CreateOrOpenItemNoteFn,
   DoesItemNoteExistFn,
@@ -12,7 +13,7 @@ import {
   PocketTag,
   pocketTagsToPocketTagList,
   SavedPocketItem,
-} from "../PocketAPITypes";
+} from "../../pocket_api/PocketAPITypes";
 
 const styles = stylesheet`
   .item {
@@ -39,20 +40,6 @@ const styles = stylesheet`
     width: 100%;
     color: var(--text-normal);
   }
-
-  .itemTagList {
-    list-style: none;
-    padding-inline-start: 0px;
-    margin-top: 4px;
-  }
-  .itemTagList > li {
-    display: inline;
-    color: var(--text-muted);
-    background-color: var(--background-secondary);
-    margin: 4px;
-    padding: 2px;
-    border-radius: 4px;
-  }
 `;
 
 type NoteLinkProps = {
@@ -73,36 +60,6 @@ const PocketItemNoteLink = ({
     >
       {linkpath}
     </a>
-  );
-};
-
-type PocketItemTagListProps = {
-  tags: PocketTag[];
-  openSearchForTag: OpenSearchForTagFn;
-};
-
-const PocketItemTagList = ({
-  tags,
-  openSearchForTag,
-}: PocketItemTagListProps) => {
-  return (
-    <ul className={styles.itemTagList}>
-      {tags.map((x) => (
-        <li key={x.tag}>
-          <a
-            href={`#${x.tag}`}
-            className={"tag"}
-            target="_blank"
-            rel="noopener"
-            onClick={() => {
-              openSearchForTag(`#${x.tag}`);
-            }}
-          >
-            {`#${x.tag}`}
-          </a>
-        </li>
-      ))}
-    </ul>
   );
 };
 

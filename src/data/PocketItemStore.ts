@@ -1,16 +1,16 @@
 import { IDBPDatabase, IDBPObjectStore, openDB } from "idb";
 import log from "loglevel";
 import { Notice } from "obsidian";
-import { UpdateTimestamp } from "./PocketAPI";
+import { UpdateTimestamp } from "../pocket_api/PocketAPI";
 import {
   isDeletedPocketItem,
   isSavedPocketItem,
   PocketItemId,
   PocketItemRecord,
   SavedPocketItem,
-} from "./PocketAPITypes";
-import { getUniqueId } from "./utils";
-import { ViewName } from "./ViewManager";
+} from "../pocket_api/PocketAPITypes";
+import { getUniqueId } from "../utils";
+import { ViewName } from "../ui/ViewManager";
 
 const DATABASE_NAME = "pocket_db";
 const ITEM_STORE_NAME = "items";

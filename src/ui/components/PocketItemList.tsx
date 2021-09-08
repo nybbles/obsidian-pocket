@@ -7,8 +7,8 @@ import {
   openSearchForTag,
 } from "src/ItemNote";
 import PocketSync from "src/main";
-import { SavedPocketItem } from "src/PocketAPITypes";
-import { PocketItemStore } from "src/PocketItemStore";
+import { SavedPocketItem } from "src/pocket_api/PocketAPITypes";
+import { PocketItemStore } from "src/data/PocketItemStore";
 import { PocketItem } from "./PocketItem";
 
 const styles = stylesheet`

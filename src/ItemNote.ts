@@ -13,7 +13,7 @@ import {
   PocketTags,
   pocketTagsToPocketTagList,
   SavedPocketItem,
-} from "./PocketAPITypes";
+} from "./pocket_api/PocketAPITypes";
 import { ensureFolderExists } from "./utils";
 
 const getItemNotesFolder = (plugin: PocketSync) =>
