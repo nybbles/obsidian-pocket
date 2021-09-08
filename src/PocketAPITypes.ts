@@ -22,13 +22,18 @@ export interface PocketTag {
   tag: string;
 }
 
+export type PocketTags = Record<string, PocketTag>;
+
 export interface SavedPocketItem extends BasePocketItem {
   status: PocketItemStatus.Unread | PocketItemStatus.Archived;
   resolved_title: string;
   resolved_url: string;
   excerpt: string;
-  tags: Record<string, PocketTag>;
+  tags: PocketTags;
 }
+
+export const pocketTagsToPocketTagList = (tags: PocketTags): PocketTag[] =>
+  Object.entries(tags).map(([k, v]) => v);
 
 export type PocketItem = SavedPocketItem | DeletedPocketItem;
 
