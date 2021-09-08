@@ -1,7 +1,7 @@
 import { stylesheet } from "astroturf";
 import React from "react";
-import { OpenSearchForTagFn } from "src/ItemNote";
-import { PocketTag } from "../../pocket_api/PocketAPITypes";
+import { OpenSearchForTagFn } from "src/Tags";
+import { PocketTag } from "src/pocket_api/PocketAPITypes";
 
 const styles = stylesheet`
   .itemTagList {

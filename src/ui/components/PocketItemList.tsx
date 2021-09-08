@@ -1,14 +1,11 @@
 import { stylesheet } from "astroturf";
 import { MetadataCache } from "obsidian";
 import React, { useEffect, useState } from "react";
-import {
-  createOrOpenItemNote,
-  doesItemNoteExist,
-  openSearchForTag,
-} from "src/ItemNote";
+import { PocketItemStore } from "src/data/PocketItemStore";
+import { createOrOpenItemNote, doesItemNoteExist } from "src/ItemNote";
 import PocketSync from "src/main";
 import { SavedPocketItem } from "src/pocket_api/PocketAPITypes";
-import { PocketItemStore } from "src/data/PocketItemStore";
+import { openSearchForTag } from "src/Tags";
 import { PocketItem } from "./PocketItem";
 
 const styles = stylesheet`
