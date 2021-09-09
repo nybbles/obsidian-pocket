@@ -31,6 +31,7 @@ export const PocketItemList = ({
 }: PocketItemListProps) => {
   const [items, setItems] = useState<SavedPocketItem[]>([]);
 
+  // Load all items on initial render
   useEffect(() => {
     var subscribed = true;
     const fetch = async () => {
@@ -44,6 +45,7 @@ export const PocketItemList = ({
     };
   }, []);
 
+  // Subscribe to updates to item store after initial render
   useEffect(() => {
     const cbId = itemStore.subscribeOnChange(async () => {
       const updatedItems = await itemStore.getAllItemsBySortId();
@@ -58,7 +60,7 @@ export const PocketItemList = ({
     return <>No items synced!</>;
   } else {
     const createOrOpen = createOrOpenItemNote(
-      plugin,
+      plugin.settingsManager,
       plugin.app.workspace,
       plugin.app.vault,
       plugin.app.metadataCache
@@ -70,7 +72,10 @@ export const PocketItemList = ({
           <li key={item.item_id} className={styles.item}>
             <PocketItem
               item={item}
-              doesItemNoteExist={doesItemNoteExist(metadataCache, plugin)}
+              doesItemNoteExist={doesItemNoteExist(
+                metadataCache,
+                plugin.settingsManager
+              )}
               createOrOpenItemNote={createOrOpen}
               openSearchForTag={openSearchForTag(plugin.app)}
             />

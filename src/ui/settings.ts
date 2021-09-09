@@ -1,6 +1,8 @@
 import { stylesheet } from "astroturf";
+import update from "immutability-helper";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { PocketSettings, SettingsManager } from "src/SettingsManager";
 import PocketSync from "../main";
 import {
   clearPocketAccessInfo,
@@ -20,11 +22,6 @@ const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
 const SET_ITEM_NOTE_TEMPLATE_CTA = "Pocket item note template file location";
 const SET_ITEM_NOTES_LOCATION_CTA = "Pocket item notes folder location";
-
-export interface PocketSettings {
-  "item-note-template"?: string;
-  "item-notes-folder"?: string;
-}
 
 const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -84,9 +81,8 @@ const addClearLocalPocketDataButton = (
 };
 
 const addItemNoteTemplateSetting = (
-  plugin: PocketSync,
-  containerEl: HTMLElement,
-  onSettingsChange: OnSettingsChange
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
 ) => {
   new Setting(containerEl)
     .setName(SET_ITEM_NOTE_TEMPLATE_CTA)
@@ -95,28 +91,33 @@ const addItemNoteTemplateSetting = (
     )
     .addText((text) => {
       text.setPlaceholder("Example: Templates/Pocket item note");
-      text.setValue(plugin.settings["item-note-template"]);
+      text.setValue(settingsManager.settings["item-note-template"]);
       text.onChange(async (newValue) => {
-        plugin.settings["item-note-template"] = newValue;
-        await onSettingsChange(plugin.settings);
+        await settingsManager.onSettingsChange(
+          update(settingsManager.settings, {
+            "item-note-template": { $set: newValue },
+          })
+        );
       });
     });
 };
 
 const addItemNotesLocationSetting = (
-  plugin: PocketSync,
-  containerEl: HTMLElement,
-  onSettingsChange: OnSettingsChange
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
 ) => {
   new Setting(containerEl)
     .setName(SET_ITEM_NOTES_LOCATION_CTA)
     .setDesc("Choose the folder for creating and finding Pocket item notes")
     .addText(async (text) => {
       text.setPlaceholder("Example: Pocket item notes/");
-      text.setValue(plugin.settings["item-notes-folder"]);
+      text.setValue(settingsManager.settings["item-notes-folder"]);
       text.onChange(async (newValue) => {
-        plugin.settings["item-notes-folder"] = newValue;
-        await onSettingsChange(plugin.settings);
+        await settingsManager.onSettingsChange(
+          update(settingsManager.settings, {
+            "item-notes-folder": { $set: newValue },
+          })
+        );
       });
     });
 };
@@ -125,16 +126,12 @@ export type OnSettingsChange = (newSettings: PocketSettings) => Promise<void>;
 
 export class PocketSettingTab extends PluginSettingTab {
   plugin: PocketSync;
-  onSettingsChange: OnSettingsChange;
+  settingsManager: SettingsManager;
 
-  constructor(
-    app: App,
-    plugin: PocketSync,
-    onSettingsChange: OnSettingsChange
-  ) {
+  constructor(app: App, plugin: PocketSync, settingsManager: SettingsManager) {
     super(app, plugin);
     this.plugin = plugin;
-    this.onSettingsChange = onSettingsChange;
+    this.settingsManager = settingsManager;
   }
 
   display(): void {
@@ -144,11 +141,7 @@ export class PocketSettingTab extends PluginSettingTab {
     addSyncButton(this.plugin, containerEl);
     addLogoutButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
-    addItemNoteTemplateSetting(this.plugin, containerEl, this.onSettingsChange);
-    addItemNotesLocationSetting(
-      this.plugin,
-      containerEl,
-      this.onSettingsChange
-    );
+    addItemNoteTemplateSetting(this.settingsManager, containerEl);
+    addItemNotesLocationSetting(this.settingsManager, containerEl);
   }
 }
