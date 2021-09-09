@@ -17,11 +17,6 @@ const styles = stylesheet`
 `;
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
-const SYNC_POCKET_CTA = "Sync Pocket items";
-const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
-const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
-const SET_ITEM_NOTE_TEMPLATE_CTA = "Pocket item note template file location";
-const SET_ITEM_NOTES_LOCATION_CTA = "Pocket item notes folder location";
 
 const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -31,6 +26,8 @@ const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       button.setButtonText(CONNECT_POCKET_CTA);
       button.onClick(setupAuth(plugin.pocketAPI));
     });
+
+const SYNC_POCKET_CTA = "Sync Pocket items";
 
 const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -43,7 +40,9 @@ const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       });
     });
 
-const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
+const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
+
+const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
     .setName(LOG_OUT_OF_POCKET_CTA)
     .setDesc("Disconnects Obsidian from Pocket")
@@ -62,12 +61,13 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
       plugin.pocketAuthenticated = false;
       plugin.pocketUsername = null;
     });
-};
+
+const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
 
 const addClearLocalPocketDataButton = (
   plugin: PocketSync,
   containerEl: HTMLElement
-) => {
+) =>
   new Setting(containerEl)
     .setName(CLEAR_LOCAL_POCKET_DATA_CTA)
     .setDesc("Clears Pocket data stored locally by Pocket-obsidian plugin")
@@ -78,12 +78,13 @@ const addClearLocalPocketDataButton = (
         new Notice("Cleared locally-stored Pocket data");
       });
     });
-};
+
+const SET_ITEM_NOTE_TEMPLATE_CTA = "Pocket item note template file location";
 
 const addItemNoteTemplateSetting = (
   settingsManager: SettingsManager,
   containerEl: HTMLElement
-) => {
+) =>
   new Setting(containerEl)
     .setName(SET_ITEM_NOTE_TEMPLATE_CTA)
     .setDesc(
@@ -100,12 +101,13 @@ const addItemNoteTemplateSetting = (
         );
       });
     });
-};
+
+const SET_ITEM_NOTES_LOCATION_CTA = "Pocket item notes folder location";
 
 const addItemNotesLocationSetting = (
   settingsManager: SettingsManager,
   containerEl: HTMLElement
-) => {
+) =>
   new Setting(containerEl)
     .setName(SET_ITEM_NOTES_LOCATION_CTA)
     .setDesc("Choose the folder for creating and finding Pocket item notes")
@@ -120,9 +122,50 @@ const addItemNotesLocationSetting = (
         );
       });
     });
-};
 
-export type OnSettingsChange = (newSettings: PocketSettings) => Promise<void>;
+const MULTI_WORD_TAG_CONVERTER_CTA = "Multi-word Pocket tag converter options";
+const MULTI_WORD_TAG_CONVERTER_DESC = `
+Pocket supports spaces within a tag (e.g. '#tag with spaces' is a valid Pocket
+tag), while Obsidian tags do not. This setting determines how Pocket tags that
+contain spaces are changed to work consistently in Obsidian.
+
+This setting only affects the Pocket reading list - it does not change any
+existing tags in Pocket or Obsidian.`;
+
+const addMultiWordTagConverterSetting = (
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
+) => {
+  new Setting(containerEl)
+    .setName(MULTI_WORD_TAG_CONVERTER_CTA)
+    .setDesc(MULTI_WORD_TAG_CONVERTER_DESC)
+    .addDropdown((dropdown) => {
+      dropdown.addOption(
+        "snake-case",
+        "Snake case ('#tag with spaces' becomes #tag_with_spaces)"
+      );
+      dropdown.addOption(
+        "camel-case",
+        "Camel case ('#tag with spaces' becomes #TagWithSpaces)"
+      );
+      dropdown.addOption(
+        "do-nothing",
+        "Do nothing ('#tag with spaces' remains unchanged)"
+      );
+
+      dropdown.setValue(
+        settingsManager.settings["multi-word-tag-converter"] || "snake-case"
+      );
+
+      dropdown.onChange(async (newValue) => {
+        await settingsManager.onSettingsChange(
+          update(settingsManager.settings, {
+            "multi-word-tag-converter": { $set: newValue },
+          })
+        );
+      });
+    });
+};
 
 export class PocketSettingTab extends PluginSettingTab {
   plugin: PocketSync;
@@ -143,5 +186,6 @@ export class PocketSettingTab extends PluginSettingTab {
     addClearLocalPocketDataButton(this.plugin, containerEl);
     addItemNoteTemplateSetting(this.settingsManager, containerEl);
     addItemNotesLocationSetting(this.settingsManager, containerEl);
+    addMultiWordTagConverterSetting(this.settingsManager, containerEl);
   }
 }

@@ -1,6 +1,7 @@
 export interface PocketSettings {
   "item-note-template"?: string;
   "item-notes-folder"?: string;
+  "multi-word-tag-converter"?: string;
 }
 
 export type LoadPocketSettingsFn = () => Promise<PocketSettings>;

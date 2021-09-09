@@ -9,3 +9,5 @@ export const openSearchForTag =
     const globalSearch = app.internalPlugins.plugins["global-search"].instance;
     globalSearch.openGlobalSearch(`tag:${tag}`);
   };
+
+export type MultiWordTagConverters = "snake-case" | "camel-case" | "do-nothing";
