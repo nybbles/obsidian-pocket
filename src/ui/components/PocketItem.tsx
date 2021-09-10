@@ -5,14 +5,15 @@ import {
   CreateOrOpenItemNoteFn,
   DoesItemNoteExistFn,
   linkpathForSavedPocketItem,
-  OpenSearchForTagFn,
 } from "src/ItemNote";
+import { OpenSearchForTagFn, TagNormalizationFn } from "src/Tags";
+import { PocketItemTagList } from "src/ui/components/PocketItemTagList";
 import { getPlatform, openBrowserWindow } from "src/utils";
 import {
   PocketTag,
   pocketTagsToPocketTagList,
   SavedPocketItem,
-} from "../PocketAPITypes";
+} from "../../pocket_api/PocketAPITypes";
 
 const styles = stylesheet`
   .item {
@@ -39,20 +40,6 @@ const styles = stylesheet`
     width: 100%;
     color: var(--text-normal);
   }
-
-  .itemTagList {
-    list-style: none;
-    padding-inline-start: 0px;
-    margin-top: 4px;
-  }
-  .itemTagList > li {
-    display: inline;
-    color: var(--text-muted);
-    background-color: var(--background-secondary);
-    margin: 4px;
-    padding: 2px;
-    border-radius: 4px;
-  }
 `;
 
 type NoteLinkProps = {
@@ -76,38 +63,9 @@ const PocketItemNoteLink = ({
   );
 };
 
-type PocketItemTagListProps = {
-  tags: PocketTag[];
-  openSearchForTag: OpenSearchForTagFn;
-};
-
-const PocketItemTagList = ({
-  tags,
-  openSearchForTag,
-}: PocketItemTagListProps) => {
-  return (
-    <ul className={styles.itemTagList}>
-      {tags.map((x) => (
-        <li key={x.tag}>
-          <a
-            href={`#${x.tag}`}
-            className={"tag"}
-            target="_blank"
-            rel="noopener"
-            onClick={() => {
-              openSearchForTag(`#${x.tag}`);
-            }}
-          >
-            {`#${x.tag}`}
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-};
-
 export type PocketItemProps = {
   item: SavedPocketItem;
+  tagNormalizer: TagNormalizationFn;
   doesItemNoteExist: DoesItemNoteExistFn;
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
   openSearchForTag: OpenSearchForTagFn;
@@ -121,6 +79,7 @@ enum PocketItemClickAction {
 
 export const PocketItem = ({
   item,
+  tagNormalizer,
   doesItemNoteExist,
   createOrOpenItemNote,
   openSearchForTag,
@@ -184,6 +143,7 @@ export const PocketItem = ({
       {pocketTags && (
         <PocketItemTagList
           tags={pocketTags}
+          tagNormalizer={tagNormalizer}
           openSearchForTag={openSearchForTag}
         />
       )}

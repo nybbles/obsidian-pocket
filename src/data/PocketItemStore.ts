@@ -1,16 +1,16 @@
 import { IDBPDatabase, IDBPObjectStore, openDB } from "idb";
 import log from "loglevel";
 import { Notice } from "obsidian";
-import { UpdateTimestamp } from "./PocketAPI";
+import { CallbackId, CallbackRegistry } from "src/Types";
+import { UpdateTimestamp } from "../pocket_api/PocketAPI";
 import {
   isDeletedPocketItem,
   isSavedPocketItem,
   PocketItemId,
   PocketItemRecord,
   SavedPocketItem,
-} from "./PocketAPITypes";
-import { getUniqueId } from "./utils";
-import { ViewName } from "./ViewManager";
+} from "../pocket_api/PocketAPITypes";
+import { getUniqueId } from "../utils";
 
 const DATABASE_NAME = "pocket_db";
 const ITEM_STORE_NAME = "items";
@@ -19,7 +19,6 @@ const METADATA_STORE_NAME = "metadata";
 const LAST_UPDATED_TIMESTAMP_KEY = "last_updated_timestamp";
 
 export type OnChangeCallback = () => Promise<void>;
-export type CallbackId = string;
 
 type IDBPPocketItemStoreRW = IDBPObjectStore<
   unknown,
@@ -30,7 +29,7 @@ type IDBPPocketItemStoreRW = IDBPObjectStore<
 
 export class PocketItemStore {
   db: IDBPDatabase;
-  onChangeCallbacks: Map<ViewName, OnChangeCallback>;
+  onChangeCallbacks: CallbackRegistry<OnChangeCallback>;
 
   static isItemValid = (item: SavedPocketItem) =>
     !item.resolved_title && !item.resolved_url;
@@ -44,7 +43,6 @@ export class PocketItemStore {
     lastUpdateTimestamp: UpdateTimestamp,
     items: PocketItemRecord
   ): Promise<void> => {
-    // TODO: Should all of this be happening in a transaction?
     log.debug("Applying updates to Pocket item store");
 
     const tx = this.db.transaction(ITEM_STORE_NAME, "readwrite");

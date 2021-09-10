@@ -2,8 +2,8 @@ import log from "loglevel";
 import { Notice, request } from "obsidian";
 import * as qs from "query-string";
 import { PocketGetItemsResponse } from "./PocketAPITypes";
-import { SupportedPlatform } from "./Types";
-import { getPlatform } from "./utils";
+import { SupportedPlatform } from "../Types";
+import { getPlatform } from "../utils";
 
 export type ResponseBody = string;
 

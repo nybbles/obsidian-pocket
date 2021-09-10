@@ -1,6 +1,5 @@
 import log from "loglevel";
 import {
-  App,
   MetadataCache,
   normalizePath,
   Notice,
@@ -8,16 +7,21 @@ import {
   Vault,
   Workspace,
 } from "obsidian";
-import PocketSync from "./main";
 import {
   PocketTags,
   pocketTagsToPocketTagList,
   SavedPocketItem,
-} from "./PocketAPITypes";
+} from "./pocket_api/PocketAPITypes";
+import { SettingsManager } from "./SettingsManager";
+import {
+  getTagNormalizer,
+  MultiWordTagConversion,
+  TagNormalizationFn,
+} from "./Tags";
 import { ensureFolderExists } from "./utils";
 
-const getItemNotesFolder = (plugin: PocketSync) =>
-  plugin.settings["item-notes-folder"] ?? "/";
+const getItemNotesFolder = (settingsManager: SettingsManager) =>
+  settingsManager.getSetting("item-notes-folder") ?? "/";
 
 export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
   if (!item.resolved_title && !item.resolved_url) {
@@ -37,22 +41,25 @@ export const linkpathForSavedPocketItem = (item: SavedPocketItem) =>
 export type GetItemNoteFn = (item: SavedPocketItem) => TFile | null;
 
 const getItemNote =
-  (metadataCache: MetadataCache, plugin: PocketSync): GetItemNoteFn =>
+  (
+    metadataCache: MetadataCache,
+    settingsManager: SettingsManager
+  ): GetItemNoteFn =>
   (item) => {
-    const itemNotesFolder = getItemNotesFolder(plugin);
+    const itemNotesFolder = getItemNotesFolder(settingsManager);
     const linkpath = linkpathForSavedPocketItem(item);
     return metadataCache.getFirstLinkpathDest(linkpath, itemNotesFolder);
   };
 
 export type DoesItemNoteExistFnFactory = (
   metadataCache: MetadataCache,
-  plugin: PocketSync
+  settingsManager: SettingsManager
 ) => DoesItemNoteExistFn;
 export type DoesItemNoteExistFn = (item: SavedPocketItem) => boolean;
 
 export const doesItemNoteExist: DoesItemNoteExistFnFactory =
-  (metadataCache, plugin) => (item: SavedPocketItem) =>
-    !!getItemNote(metadataCache, plugin)(item);
+  (metadataCache, settingsManager) => (item: SavedPocketItem) =>
+    !!getItemNote(metadataCache, settingsManager)(item);
 
 type TemplateContents = string | null;
 
@@ -84,28 +91,38 @@ const loadTemplate =
 
 const TAG_NOTE_CONTENT_SEPARATOR = ", ";
 
-const tagsToNoteContent = (tags: PocketTags) => {
+const tagsToNoteContent = (
+  tagNormalizer: TagNormalizationFn,
+  tags: PocketTags
+) => {
   if (!tags) {
     return "";
   }
 
   const tagList = pocketTagsToPocketTagList(tags);
-  return tagList.map((x) => `#${x.tag}`).join(TAG_NOTE_CONTENT_SEPARATOR);
+  return tagList.map(tagNormalizer).join(TAG_NOTE_CONTENT_SEPARATOR);
 };
-
-type SubstitutionFn = (item: SavedPocketItem) => string;
-
-const substitutions: Map<string, SubstitutionFn> = new Map([
-  ["title", (item) => item.resolved_title ?? "Untitled"],
-  ["url", (item) => item.resolved_url ?? "Missing URL"],
-  ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
-  ["tags", (item) => tagsToNoteContent(item.tags)],
-]);
 
 const generateInitialItemNoteContents = (
   templateContents: TemplateContents,
-  pocketItem: SavedPocketItem
+  pocketItem: SavedPocketItem,
+  settingsManager: SettingsManager
 ): string => {
+  type SubstitutionFn = (item: SavedPocketItem) => string;
+
+  const tagNormalizer = getTagNormalizer({
+    multiWordTagConversion: settingsManager.getSetting(
+      "multi-word-tag-converter"
+    ) as MultiWordTagConversion,
+  });
+
+  const substitutions: Map<string, SubstitutionFn> = new Map([
+    ["title", (item) => item.resolved_title ?? "Untitled"],
+    ["url", (item) => item.resolved_url ?? "Missing URL"],
+    ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
+    ["tags", (item) => tagsToNoteContent(tagNormalizer, item.tags)],
+  ]);
+
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {
     const [variableName, substitutionFn] = currentValue;
     const regex = new RegExp(`{{${variableName}}}`, "gi");
@@ -118,10 +135,10 @@ export type CreateOrOpenItemNoteFn = (
 ) => Promise<void>;
 
 const fullpathForPocketItem = (
-  plugin: PocketSync,
+  settingsManager: SettingsManager,
   pocketItem: SavedPocketItem
 ) => {
-  const itemNotesFolder = getItemNotesFolder(plugin);
+  const itemNotesFolder = getItemNotesFolder(settingsManager);
   const linkpath = linkpathForSavedPocketItem(pocketItem);
   const fullpath = `${itemNotesFolder}/${linkpath}.md`;
   return fullpath;
@@ -133,13 +150,13 @@ const openItemNote = async (workspace: Workspace, existingItemNote: TFile) => {
 
 export const createOrOpenItemNote =
   (
-    plugin: PocketSync,
+    settingsManager: SettingsManager,
     workspace: Workspace,
     vault: Vault,
     metadataCache: MetadataCache
   ): CreateOrOpenItemNoteFn =>
   async (pocketItem) => {
-    const itemNote = getItemNote(metadataCache, plugin)(pocketItem);
+    const itemNote = getItemNote(metadataCache, settingsManager)(pocketItem);
     const itemNoteExists = !!itemNote;
 
     if (itemNoteExists) {
@@ -147,37 +164,32 @@ export const createOrOpenItemNote =
     } else {
       try {
         // If there is a template specified, load the template and apply it.
-        const templateSetting = plugin.settings["item-note-template"];
+        const templateSetting =
+          settingsManager.getSetting("item-note-template");
         const templateContents = templateSetting
           ? await loadTemplate(vault, metadataCache)(templateSetting)
           : "";
-        const fullpath = fullpathForPocketItem(plugin, pocketItem);
+        const fullpath = fullpathForPocketItem(settingsManager, pocketItem);
 
-        ensureFolderExists(vault, getItemNotesFolder(plugin));
+        ensureFolderExists(vault, getItemNotesFolder(settingsManager));
 
         const newItemNote = await vault.create(
           fullpath,
-          generateInitialItemNoteContents(templateContents, pocketItem)
+          generateInitialItemNoteContents(
+            templateContents,
+            pocketItem,
+            settingsManager
+          )
         );
 
         log.debug("Opening item note now");
         await openItemNote(workspace, newItemNote);
       } catch (err) {
-        const fullpath = fullpathForPocketItem(plugin, pocketItem);
+        const fullpath = fullpathForPocketItem(settingsManager, pocketItem);
         const errMsg = `Failed to create file for ${fullpath}`;
         log.error(errMsg, err);
         new Notice(errMsg);
         return;
       }
     }
-  };
-
-export type OpenSearchForTagFn = (tag: string) => void;
-
-export const openSearchForTag =
-  (app: App): OpenSearchForTagFn =>
-  (tag: string) => {
-    // @ts-ignore
-    const globalSearch = app.internalPlugins.plugins["global-search"].instance;
-    globalSearch.openGlobalSearch(`tag:${tag}`);
   };

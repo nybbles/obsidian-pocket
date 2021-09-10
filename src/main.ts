@@ -2,28 +2,29 @@ import log from "loglevel";
 import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
 import {
+  closePocketItemStore,
+  openPocketItemStore,
+  PocketItemStore,
+} from "./data/PocketItemStore";
+import { doPocketSync } from "./data/PocketSync";
+import {
   buildPocketAPI,
   PocketAPI,
   Username as PocketUsername,
-} from "./PocketAPI";
+} from "./pocket_api/PocketAPI";
 import {
   loadPocketAccessInfo,
   OBSIDIAN_AUTH_PROTOCOL_ACTION,
   storePocketAccessInfo,
-} from "./PocketAuth";
+} from "./pocket_api/PocketAuth";
+import { PocketSettings, SettingsManager } from "./SettingsManager";
 import {
   PocketItemListView,
   POCKET_ITEM_LIST_VIEW_TYPE,
-} from "./PocketItemListView";
-import {
-  closePocketItemStore,
-  openPocketItemStore,
-  PocketItemStore,
-} from "./PocketItemStore";
-import { doPocketSync } from "./PocketSync";
-import { createReactApp } from "./ReactApp";
-import { PocketSettings, PocketSettingTab } from "./Settings";
-import { ViewManager } from "./ViewManager";
+} from "./ui/PocketItemListView";
+import { createReactApp } from "./ui/ReactApp";
+import { PocketSettingTab } from "./ui/settings";
+import { ViewManager } from "./ui/ViewManager";
 
 export default class PocketSync extends Plugin {
   itemStore: PocketItemStore;
@@ -31,7 +32,7 @@ export default class PocketSync extends Plugin {
   viewManager: ViewManager;
   pocketUsername: PocketUsername | null;
   pocketAuthenticated: boolean;
-  settings: PocketSettings;
+  settingsManager: SettingsManager;
   pocketAPI: PocketAPI;
   pendingSync: Promise<void> | null = null;
 
@@ -55,21 +56,24 @@ export default class PocketSync extends Plugin {
     }
   }
 
-  async loadSettings() {
-    this.settings = Object.assign({}, await this.loadData());
-  }
-
-  async saveSettings() {
-    await this.saveData(this.settings);
-  }
-
   async onload() {
     const defaultLogLevel = process.env.BUILD === "prod" ? "info" : "debug";
     log.setDefaultLevel(defaultLogLevel);
 
     log.info("Loading Pocket plugin");
 
-    await this.loadSettings();
+    this.settingsManager = new SettingsManager({
+      loadSettings: async () => {
+        const settings: PocketSettings = Object.assign(
+          {},
+          await this.loadData()
+        );
+        return settings;
+      },
+      saveSettings: async (settings: PocketSettings) =>
+        await this.saveData(settings),
+    });
+    await this.settingsManager.load();
 
     this.pendingSync = null;
 
@@ -82,10 +86,7 @@ export default class PocketSync extends Plugin {
 
     this.addCommands();
     this.addSettingTab(
-      new PocketSettingTab(this.app, this, async (newSettings) => {
-        this.settings = newSettings;
-        await this.saveSettings();
-      })
+      new PocketSettingTab(this.app, this, this.settingsManager)
     );
 
     (async () => {

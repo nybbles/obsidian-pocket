@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
-import { PocketAPI } from "./PocketAPI";
-import { AccessInfo } from "./PocketAuth";
+import { PocketAPI } from "../pocket_api/PocketAPI";
+import { AccessInfo } from "../pocket_api/PocketAuth";
 import { PocketItemStore } from "./PocketItemStore";
 
 export const doPocketSync = async (

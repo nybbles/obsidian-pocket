@@ -1,12 +1,14 @@
 import { stylesheet } from "astroturf";
+import update from "immutability-helper";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import PocketSync from "./main";
+import { PocketSettings, SettingsManager } from "src/SettingsManager";
+import PocketSync from "../main";
 import {
   clearPocketAccessInfo,
   pocketAccessInfoExists,
   setupAuth,
-} from "./PocketAuth";
+} from "../pocket_api/PocketAuth";
 
 const styles = stylesheet`
   .error {
@@ -15,16 +17,6 @@ const styles = stylesheet`
 `;
 
 const CONNECT_POCKET_CTA = "Connect your Pocket account";
-const SYNC_POCKET_CTA = "Sync Pocket items";
-const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
-const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
-const SET_ITEM_NOTE_TEMPLATE_CTA = "Pocket item note template file location";
-const SET_ITEM_NOTES_LOCATION_CTA = "Pocket item notes folder location";
-
-export interface PocketSettings {
-  "item-note-template"?: string;
-  "item-notes-folder"?: string;
-}
 
 const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -34,6 +26,8 @@ const addAuthButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       button.setButtonText(CONNECT_POCKET_CTA);
       button.onClick(setupAuth(plugin.pocketAPI));
     });
+
+const SYNC_POCKET_CTA = "Sync Pocket items";
 
 const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
@@ -46,7 +40,9 @@ const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       });
     });
 
-const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
+const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
+
+const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) =>
   new Setting(containerEl)
     .setName(LOG_OUT_OF_POCKET_CTA)
     .setDesc("Disconnects Obsidian from Pocket")
@@ -65,12 +61,13 @@ const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) => {
       plugin.pocketAuthenticated = false;
       plugin.pocketUsername = null;
     });
-};
+
+const CLEAR_LOCAL_POCKET_DATA_CTA = "Clear locally-stored Pocket data";
 
 const addClearLocalPocketDataButton = (
   plugin: PocketSync,
   containerEl: HTMLElement
-) => {
+) =>
   new Setting(containerEl)
     .setName(CLEAR_LOCAL_POCKET_DATA_CTA)
     .setDesc("Clears Pocket data stored locally by Pocket-obsidian plugin")
@@ -81,13 +78,13 @@ const addClearLocalPocketDataButton = (
         new Notice("Cleared locally-stored Pocket data");
       });
     });
-};
+
+const SET_ITEM_NOTE_TEMPLATE_CTA = "Pocket item note template file location";
 
 const addItemNoteTemplateSetting = (
-  plugin: PocketSync,
-  containerEl: HTMLElement,
-  onSettingsChange: OnSettingsChange
-) => {
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
+) =>
   new Setting(containerEl)
     .setName(SET_ITEM_NOTE_TEMPLATE_CTA)
     .setDesc(
@@ -95,46 +92,80 @@ const addItemNoteTemplateSetting = (
     )
     .addText((text) => {
       text.setPlaceholder("Example: Templates/Pocket item note");
-      text.setValue(plugin.settings["item-note-template"]);
+      text.setValue(settingsManager.getSetting("item-note-template"));
       text.onChange(async (newValue) => {
-        plugin.settings["item-note-template"] = newValue;
-        await onSettingsChange(plugin.settings);
+        await settingsManager.updateSetting("item-note-template", newValue);
       });
     });
-};
+
+const SET_ITEM_NOTES_LOCATION_CTA = "Pocket item notes folder location";
 
 const addItemNotesLocationSetting = (
-  plugin: PocketSync,
-  containerEl: HTMLElement,
-  onSettingsChange: OnSettingsChange
-) => {
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
+) =>
   new Setting(containerEl)
     .setName(SET_ITEM_NOTES_LOCATION_CTA)
     .setDesc("Choose the folder for creating and finding Pocket item notes")
     .addText(async (text) => {
       text.setPlaceholder("Example: Pocket item notes/");
-      text.setValue(plugin.settings["item-notes-folder"]);
+      text.setValue(settingsManager.getSetting("item-notes-folder"));
       text.onChange(async (newValue) => {
-        plugin.settings["item-notes-folder"] = newValue;
-        await onSettingsChange(plugin.settings);
+        await settingsManager.updateSetting("item-notes-folder", newValue);
+      });
+    });
+
+const MULTI_WORD_TAG_CONVERTER_CTA = "Multi-word Pocket tag converter options";
+const MULTI_WORD_TAG_CONVERTER_DESC = `
+Pocket supports spaces within a tag (e.g. '#tag with spaces' is a valid Pocket
+tag), while Obsidian tags do not. This setting determines how Pocket tags that
+contain spaces are changed to work consistently in Obsidian.
+
+This setting only affects the Pocket reading list - it does not change any
+existing tags in Pocket or Obsidian.`;
+
+const addMultiWordTagConverterSetting = (
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
+) => {
+  new Setting(containerEl)
+    .setName(MULTI_WORD_TAG_CONVERTER_CTA)
+    .setDesc(MULTI_WORD_TAG_CONVERTER_DESC)
+    .addDropdown((dropdown) => {
+      dropdown.addOption(
+        "snake-case",
+        "Snake case ('#tag with spaces' becomes #tag_with_spaces)"
+      );
+      dropdown.addOption(
+        "camel-case",
+        "Camel case ('#tag with spaces' becomes #TagWithSpaces)"
+      );
+      dropdown.addOption(
+        "do-nothing",
+        "Do nothing ('#tag with spaces' remains unchanged)"
+      );
+
+      dropdown.setValue(
+        settingsManager.getSetting("multi-word-tag-converter") || "snake-case"
+      );
+
+      dropdown.onChange(async (newValue) => {
+        await settingsManager.updateSetting(
+          "multi-word-tag-converter",
+          newValue
+        );
       });
     });
 };
 
-export type OnSettingsChange = (newSettings: PocketSettings) => Promise<void>;
-
 export class PocketSettingTab extends PluginSettingTab {
   plugin: PocketSync;
-  onSettingsChange: OnSettingsChange;
+  settingsManager: SettingsManager;
 
-  constructor(
-    app: App,
-    plugin: PocketSync,
-    onSettingsChange: OnSettingsChange
-  ) {
+  constructor(app: App, plugin: PocketSync, settingsManager: SettingsManager) {
     super(app, plugin);
     this.plugin = plugin;
-    this.onSettingsChange = onSettingsChange;
+    this.settingsManager = settingsManager;
   }
 
   display(): void {
@@ -144,11 +175,8 @@ export class PocketSettingTab extends PluginSettingTab {
     addSyncButton(this.plugin, containerEl);
     addLogoutButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
-    addItemNoteTemplateSetting(this.plugin, containerEl, this.onSettingsChange);
-    addItemNotesLocationSetting(
-      this.plugin,
-      containerEl,
-      this.onSettingsChange
-    );
+    addItemNoteTemplateSetting(this.settingsManager, containerEl);
+    addItemNotesLocationSetting(this.settingsManager, containerEl);
+    addMultiWordTagConverterSetting(this.settingsManager, containerEl);
   }
 }
