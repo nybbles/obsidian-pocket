@@ -6,7 +6,11 @@ import { createOrOpenItemNote, doesItemNoteExist } from "src/ItemNote";
 import PocketSync from "src/main";
 import { SavedPocketItem } from "src/pocket_api/PocketAPITypes";
 import { PocketSettings } from "src/SettingsManager";
-import { MultiWordTagConversion, openSearchForTag } from "src/Tags";
+import {
+  getTagNormalizer,
+  MultiWordTagConversion,
+  openSearchForTag,
+} from "src/Tags";
 import { PocketItem } from "./PocketItem";
 
 const styles = stylesheet`
@@ -92,7 +96,9 @@ export const PocketItemList = ({
           <li key={item.item_id} className={styles.item}>
             <PocketItem
               item={item}
-              multiWordTagConversion={multiWordTagConversion}
+              tagNormalizer={getTagNormalizer({
+                multiWordTagConversion: multiWordTagConversion,
+              })}
               doesItemNoteExist={doesItemNoteExist(
                 metadataCache,
                 settingsManager

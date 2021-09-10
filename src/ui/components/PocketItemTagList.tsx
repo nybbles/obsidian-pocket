@@ -1,12 +1,7 @@
 import { stylesheet } from "astroturf";
 import React from "react";
-import {
-  MultiWordTagConversion,
-  multiWordTagConversions,
-  OpenSearchForTagFn,
-} from "src/Tags";
 import { PocketTag } from "src/pocket_api/PocketAPITypes";
-import log from "loglevel";
+import { OpenSearchForTagFn, TagNormalizationFn } from "src/Tags";
 
 const styles = stylesheet`
   .itemTagList {
@@ -26,22 +21,19 @@ const styles = stylesheet`
 
 export type PocketItemTagListProps = {
   tags: PocketTag[];
-  multiWordTagConversion: MultiWordTagConversion;
+  tagNormalizer: TagNormalizationFn;
   openSearchForTag: OpenSearchForTagFn;
 };
 
 export const PocketItemTagList = ({
   tags,
-  multiWordTagConversion,
+  tagNormalizer,
   openSearchForTag,
 }: PocketItemTagListProps) => {
-  const multiWordTagConverter = multiWordTagConversions.get(
-    multiWordTagConversion
-  );
   return (
     <ul className={styles.itemTagList}>
       {tags.map((x) => {
-        const tag = `#${multiWordTagConverter(x.tag)}`;
+        const tag = tagNormalizer(x);
         return (
           <li key={tag}>
             <a

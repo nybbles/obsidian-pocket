@@ -1,4 +1,5 @@
 import { App } from "obsidian";
+import { PocketTag } from "./pocket_api/PocketAPITypes";
 
 export type OpenSearchForTagFn = (tag: string) => void;
 
@@ -11,9 +12,7 @@ export const openSearchForTag =
   };
 
 export type MultiWordTagConversion = "snake-case" | "camel-case" | "do-nothing";
-
 export type MultiWordTagConversionFn = (tag: string) => string;
-
 export const multiWordTagConversions: Map<
   MultiWordTagConversion,
   MultiWordTagConversionFn
@@ -33,3 +32,18 @@ export const multiWordTagConversions: Map<
   ],
   ["do-nothing", (tag) => tag],
 ]);
+
+export type TagNormalizationFn = (tag: PocketTag) => string;
+
+export interface TagNormalizationChoiceParams {
+  multiWordTagConversion: MultiWordTagConversion;
+}
+
+export const getTagNormalizer = ({
+  multiWordTagConversion,
+}: TagNormalizationChoiceParams): TagNormalizationFn => {
+  const multiWordTagConverter = multiWordTagConversions.get(
+    multiWordTagConversion
+  );
+  return (tag) => `#${multiWordTagConverter(tag.tag)}`;
+};

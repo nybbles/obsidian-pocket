@@ -1,19 +1,19 @@
 import { stylesheet } from "astroturf";
 import { Platform } from "obsidian";
 import React, { MouseEvent } from "react";
-import { PocketItemTagList } from "src/ui/components/PocketItemTagList";
 import {
   CreateOrOpenItemNoteFn,
   DoesItemNoteExistFn,
   linkpathForSavedPocketItem,
 } from "src/ItemNote";
+import { OpenSearchForTagFn, TagNormalizationFn } from "src/Tags";
+import { PocketItemTagList } from "src/ui/components/PocketItemTagList";
 import { getPlatform, openBrowserWindow } from "src/utils";
 import {
   PocketTag,
   pocketTagsToPocketTagList,
   SavedPocketItem,
 } from "../../pocket_api/PocketAPITypes";
-import { MultiWordTagConversion, OpenSearchForTagFn } from "src/Tags";
 
 const styles = stylesheet`
   .item {
@@ -65,7 +65,7 @@ const PocketItemNoteLink = ({
 
 export type PocketItemProps = {
   item: SavedPocketItem;
-  multiWordTagConversion: MultiWordTagConversion;
+  tagNormalizer: TagNormalizationFn;
   doesItemNoteExist: DoesItemNoteExistFn;
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
   openSearchForTag: OpenSearchForTagFn;
@@ -79,7 +79,7 @@ enum PocketItemClickAction {
 
 export const PocketItem = ({
   item,
-  multiWordTagConversion,
+  tagNormalizer,
   doesItemNoteExist,
   createOrOpenItemNote,
   openSearchForTag,
@@ -143,7 +143,7 @@ export const PocketItem = ({
       {pocketTags && (
         <PocketItemTagList
           tags={pocketTags}
-          multiWordTagConversion={multiWordTagConversion}
+          tagNormalizer={tagNormalizer}
           openSearchForTag={openSearchForTag}
         />
       )}

@@ -13,7 +13,11 @@ import {
   SavedPocketItem,
 } from "./pocket_api/PocketAPITypes";
 import { SettingsManager } from "./SettingsManager";
-import { MultiWordTagConversion, multiWordTagConversions } from "./Tags";
+import {
+  getTagNormalizer,
+  MultiWordTagConversion,
+  TagNormalizationFn,
+} from "./Tags";
 import { ensureFolderExists } from "./utils";
 
 const getItemNotesFolder = (settingsManager: SettingsManager) =>
@@ -88,20 +92,15 @@ const loadTemplate =
 const TAG_NOTE_CONTENT_SEPARATOR = ", ";
 
 const tagsToNoteContent = (
-  multiWordTagConversion: MultiWordTagConversion,
+  tagNormalizer: TagNormalizationFn,
   tags: PocketTags
 ) => {
   if (!tags) {
     return "";
   }
 
-  const multiWordTagConverter = multiWordTagConversions.get(
-    multiWordTagConversion
-  );
   const tagList = pocketTagsToPocketTagList(tags);
-  return tagList
-    .map((x) => `#${multiWordTagConverter(x.tag)}`)
-    .join(TAG_NOTE_CONTENT_SEPARATOR);
+  return tagList.map(tagNormalizer).join(TAG_NOTE_CONTENT_SEPARATOR);
 };
 
 const generateInitialItemNoteContents = (
@@ -111,15 +110,17 @@ const generateInitialItemNoteContents = (
 ): string => {
   type SubstitutionFn = (item: SavedPocketItem) => string;
 
-  const multiWordTagConversion = settingsManager.getSetting(
-    "multi-word-tag-converter"
-  ) as MultiWordTagConversion;
+  const tagNormalizer = getTagNormalizer({
+    multiWordTagConversion: settingsManager.getSetting(
+      "multi-word-tag-converter"
+    ) as MultiWordTagConversion,
+  });
 
   const substitutions: Map<string, SubstitutionFn> = new Map([
     ["title", (item) => item.resolved_title ?? "Untitled"],
     ["url", (item) => item.resolved_url ?? "Missing URL"],
     ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
-    ["tags", (item) => tagsToNoteContent(multiWordTagConversion, item.tags)],
+    ["tags", (item) => tagsToNoteContent(tagNormalizer, item.tags)],
   ]);
 
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {
