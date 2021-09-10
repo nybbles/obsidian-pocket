@@ -1,8 +1,14 @@
+import update, { Spec } from "immutability-helper";
+import { CallbackId, CallbackRegistry } from "./Types";
+import { getUniqueId } from "./utils";
+
 export interface PocketSettings {
   "item-note-template"?: string;
   "item-notes-folder"?: string;
   "multi-word-tag-converter"?: string;
 }
+
+export type OnSettingsChangeCallback = () => Promise<void>;
 
 export type LoadPocketSettingsFn = () => Promise<PocketSettings>;
 export type SavePocketSettingsFn = (settings: PocketSettings) => Promise<void>;
@@ -13,13 +19,20 @@ export interface SettingsManagerParams {
 }
 
 export class SettingsManager {
-  settings: PocketSettings;
-  loadSettings: LoadPocketSettingsFn;
-  saveSettings: SavePocketSettingsFn;
+  private settings: PocketSettings;
+  private loadSettings: LoadPocketSettingsFn;
+  private saveSettings: SavePocketSettingsFn;
+
+  private onSettingsChangeCallbacks: Map<
+    keyof PocketSettings,
+    CallbackRegistry<OnSettingsChangeCallback>
+  >;
 
   constructor({ loadSettings, saveSettings }: SettingsManagerParams) {
     this.loadSettings = loadSettings;
     this.saveSettings = saveSettings;
+
+    this.onSettingsChangeCallbacks = new Map();
   }
 
   async load() {
@@ -31,10 +44,38 @@ export class SettingsManager {
     await this.saveSettings(this.settings);
   }
 
-  async onSettingsChange(newSettings: PocketSettings) {
-    this.save(newSettings);
-    // TODO: let subscribers know that settings changed
+  getSetting(key: keyof PocketSettings) {
+    return this.settings[key];
   }
 
-  // TODO: Allow for subscription to changes, just like in PocketItemStore
+  async updateSetting(key: keyof PocketSettings, newValue: any) {
+    this.settings = update(this.settings, { [key]: { $set: newValue } });
+    await Promise.all([
+      this.save(this.settings),
+      this.handleOnSettingsChange(key),
+    ]);
+  }
+
+  subscribeOnSettingsChange(
+    key: keyof PocketSettings,
+    callback: OnSettingsChangeCallback
+  ): CallbackId {
+    const callbackId = getUniqueId();
+    const callbackRegistry =
+      this.onSettingsChangeCallbacks.get(key) ?? new Map();
+    callbackRegistry.set(callbackId, callback);
+    return callbackId;
+  }
+
+  unsubscribeOnSettingsChange(key: keyof PocketSettings, cbId: CallbackId) {
+    const callbackRegistry = this.onSettingsChangeCallbacks.get(key);
+    callbackRegistry.delete(cbId);
+  }
+
+  private async handleOnSettingsChange(key: keyof PocketSettings) {
+    const callbackRegistry =
+      this.onSettingsChangeCallbacks.get(key) ?? new Map();
+    const cbExecs = Array.from(callbackRegistry.values()).map((cb) => cb());
+    await Promise.all(cbExecs);
+  }
 }

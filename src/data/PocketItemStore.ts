@@ -1,6 +1,7 @@
 import { IDBPDatabase, IDBPObjectStore, openDB } from "idb";
 import log from "loglevel";
 import { Notice } from "obsidian";
+import { CallbackId, CallbackRegistry } from "src/Types";
 import { UpdateTimestamp } from "../pocket_api/PocketAPI";
 import {
   isDeletedPocketItem,
@@ -18,7 +19,6 @@ const METADATA_STORE_NAME = "metadata";
 const LAST_UPDATED_TIMESTAMP_KEY = "last_updated_timestamp";
 
 export type OnChangeCallback = () => Promise<void>;
-export type CallbackId = string;
 
 type IDBPPocketItemStoreRW = IDBPObjectStore<
   unknown,
@@ -29,7 +29,7 @@ type IDBPPocketItemStoreRW = IDBPObjectStore<
 
 export class PocketItemStore {
   db: IDBPDatabase;
-  onChangeCallbacks: Map<CallbackId, OnChangeCallback>;
+  onChangeCallbacks: CallbackRegistry<OnChangeCallback>;
 
   static isItemValid = (item: SavedPocketItem) =>
     !item.resolved_title && !item.resolved_url;

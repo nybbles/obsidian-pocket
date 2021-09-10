@@ -16,7 +16,7 @@ import { SettingsManager } from "./SettingsManager";
 import { ensureFolderExists } from "./utils";
 
 const getItemNotesFolder = (settingsManager: SettingsManager) =>
-  settingsManager.settings["item-notes-folder"] ?? "/";
+  settingsManager.getSetting("item-notes-folder") ?? "/";
 
 export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
   if (!item.resolved_title && !item.resolved_url) {
@@ -149,7 +149,8 @@ export const createOrOpenItemNote =
     } else {
       try {
         // If there is a template specified, load the template and apply it.
-        const templateSetting = settingsManager.settings["item-note-template"];
+        const templateSetting =
+          settingsManager.getSetting("item-note-template");
         const templateContents = templateSetting
           ? await loadTemplate(vault, metadataCache)(templateSetting)
           : "";

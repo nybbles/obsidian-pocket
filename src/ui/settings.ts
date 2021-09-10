@@ -92,13 +92,9 @@ const addItemNoteTemplateSetting = (
     )
     .addText((text) => {
       text.setPlaceholder("Example: Templates/Pocket item note");
-      text.setValue(settingsManager.settings["item-note-template"]);
+      text.setValue(settingsManager.getSetting("item-note-template"));
       text.onChange(async (newValue) => {
-        await settingsManager.onSettingsChange(
-          update(settingsManager.settings, {
-            "item-note-template": { $set: newValue },
-          })
-        );
+        await settingsManager.updateSetting("item-note-template", newValue);
       });
     });
 
@@ -113,13 +109,9 @@ const addItemNotesLocationSetting = (
     .setDesc("Choose the folder for creating and finding Pocket item notes")
     .addText(async (text) => {
       text.setPlaceholder("Example: Pocket item notes/");
-      text.setValue(settingsManager.settings["item-notes-folder"]);
+      text.setValue(settingsManager.getSetting("item-notes-folder"));
       text.onChange(async (newValue) => {
-        await settingsManager.onSettingsChange(
-          update(settingsManager.settings, {
-            "item-notes-folder": { $set: newValue },
-          })
-        );
+        await settingsManager.updateSetting("item-notes-folder", newValue);
       });
     });
 
@@ -154,14 +146,13 @@ const addMultiWordTagConverterSetting = (
       );
 
       dropdown.setValue(
-        settingsManager.settings["multi-word-tag-converter"] || "snake-case"
+        settingsManager.getSetting("multi-word-tag-converter") || "snake-case"
       );
 
       dropdown.onChange(async (newValue) => {
-        await settingsManager.onSettingsChange(
-          update(settingsManager.settings, {
-            "multi-word-tag-converter": { $set: newValue },
-          })
+        await settingsManager.updateSetting(
+          "multi-word-tag-converter",
+          newValue
         );
       });
     });
