@@ -37,9 +37,27 @@ You can also sync your Pocket items using an Obsidian command: "Sync Pocket list
 ### Opening and using the Pocket list
 
 Once the Pocket list is downloaded and stored, open the command palette and
-search for "Pocket" to see the list of available commands. The single command
-currently available is "Open Pocket list". The Pocket list is shown in a
-screenshot above.
+search for "Pocket" to see the list of available commands. The command to open
+the Pocket list is "Open Pocket list". The Pocket list is shown in a screenshot
+above.
+
+### Pocket tags in Obsidian
+
+Pocket tags are synced and presented in the Pocket list. Pocket supports tags
+with spaces in them, whereas Obsidian does not. The way that obsidian-pocket
+handles Pocket tags with spaces can be configured in the "Multi-word Pocket tag
+converter options" setting shown in the screenshot above.
+
+The available options are:
+
+- Snake case ('#tag with spaces' becomes #tag_with_spaces)
+- Camel case ('#tag with spaces' becomes #TagWithSpaces)
+- Do nothing ('#tag with spaces' remains unchanged)
+
+These settings only affect the Pocket tags displayed in the Pocket list, and the
+tags that are inserted into a Pocket item note if you have `{{tags}}` in your
+Pocket item note template (see below for using templates for Pocket item
+notes). They do not affect already-existing Obsidian tags or Pocket tags.
 
 ### Notes for Pocket items
 
