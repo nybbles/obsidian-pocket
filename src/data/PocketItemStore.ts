@@ -10,7 +10,6 @@ import {
   SavedPocketItem,
 } from "../pocket_api/PocketAPITypes";
 import { getUniqueId } from "../utils";
-import { ViewName } from "../ui/ViewManager";
 
 const DATABASE_NAME = "pocket_db";
 const ITEM_STORE_NAME = "items";
@@ -30,7 +29,7 @@ type IDBPPocketItemStoreRW = IDBPObjectStore<
 
 export class PocketItemStore {
   db: IDBPDatabase;
-  onChangeCallbacks: Map<ViewName, OnChangeCallback>;
+  onChangeCallbacks: Map<CallbackId, OnChangeCallback>;
 
   static isItemValid = (item: SavedPocketItem) =>
     !item.resolved_title && !item.resolved_url;
