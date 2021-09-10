@@ -13,6 +13,7 @@ import {
   SavedPocketItem,
 } from "./pocket_api/PocketAPITypes";
 import { SettingsManager } from "./SettingsManager";
+import { MultiWordTagConversion, multiWordTagConversions } from "./Tags";
 import { ensureFolderExists } from "./utils";
 
 const getItemNotesFolder = (settingsManager: SettingsManager) =>
@@ -86,28 +87,41 @@ const loadTemplate =
 
 const TAG_NOTE_CONTENT_SEPARATOR = ", ";
 
-const tagsToNoteContent = (tags: PocketTags) => {
+const tagsToNoteContent = (
+  multiWordTagConversion: MultiWordTagConversion,
+  tags: PocketTags
+) => {
   if (!tags) {
     return "";
   }
 
+  const multiWordTagConverter = multiWordTagConversions.get(
+    multiWordTagConversion
+  );
   const tagList = pocketTagsToPocketTagList(tags);
-  return tagList.map((x) => `#${x.tag}`).join(TAG_NOTE_CONTENT_SEPARATOR);
+  return tagList
+    .map((x) => `#${multiWordTagConverter(x.tag)}`)
+    .join(TAG_NOTE_CONTENT_SEPARATOR);
 };
-
-type SubstitutionFn = (item: SavedPocketItem) => string;
-
-const substitutions: Map<string, SubstitutionFn> = new Map([
-  ["title", (item) => item.resolved_title ?? "Untitled"],
-  ["url", (item) => item.resolved_url ?? "Missing URL"],
-  ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
-  ["tags", (item) => tagsToNoteContent(item.tags)],
-]);
 
 const generateInitialItemNoteContents = (
   templateContents: TemplateContents,
-  pocketItem: SavedPocketItem
+  pocketItem: SavedPocketItem,
+  settingsManager: SettingsManager
 ): string => {
+  type SubstitutionFn = (item: SavedPocketItem) => string;
+
+  const multiWordTagConversion = settingsManager.getSetting(
+    "multi-word-tag-converter"
+  ) as MultiWordTagConversion;
+
+  const substitutions: Map<string, SubstitutionFn> = new Map([
+    ["title", (item) => item.resolved_title ?? "Untitled"],
+    ["url", (item) => item.resolved_url ?? "Missing URL"],
+    ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
+    ["tags", (item) => tagsToNoteContent(multiWordTagConversion, item.tags)],
+  ]);
+
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {
     const [variableName, substitutionFn] = currentValue;
     const regex = new RegExp(`{{${variableName}}}`, "gi");
@@ -160,7 +174,11 @@ export const createOrOpenItemNote =
 
         const newItemNote = await vault.create(
           fullpath,
-          generateInitialItemNoteContents(templateContents, pocketItem)
+          generateInitialItemNoteContents(
+            templateContents,
+            pocketItem,
+            settingsManager
+          )
         );
 
         log.debug("Opening item note now");

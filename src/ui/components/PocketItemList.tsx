@@ -5,7 +5,8 @@ import { PocketItemStore } from "src/data/PocketItemStore";
 import { createOrOpenItemNote, doesItemNoteExist } from "src/ItemNote";
 import PocketSync from "src/main";
 import { SavedPocketItem } from "src/pocket_api/PocketAPITypes";
-import { openSearchForTag } from "src/Tags";
+import { PocketSettings } from "src/SettingsManager";
+import { MultiWordTagConversion, openSearchForTag } from "src/Tags";
 import { PocketItem } from "./PocketItem";
 
 const styles = stylesheet`
@@ -29,7 +30,15 @@ export const PocketItemList = ({
   metadataCache,
   plugin,
 }: PocketItemListProps) => {
+  const settingsManager = plugin.settingsManager;
+
   const [items, setItems] = useState<SavedPocketItem[]>([]);
+  const [multiWordTagConversion, setMultiWordTagConversion] =
+    useState<MultiWordTagConversion>(
+      settingsManager.getSetting(
+        "multi-word-tag-converter"
+      ) as MultiWordTagConversion
+    );
 
   // Load all items on initial render
   useEffect(() => {
@@ -56,11 +65,22 @@ export const PocketItemList = ({
     };
   }, [itemStore]);
 
+  // Subscribe to updates to multi-word tag converter setting
+  useEffect(() => {
+    const setting: keyof PocketSettings = "multi-word-tag-converter";
+    const cbId = settingsManager.subscribeOnSettingsChange(setting, async () =>
+      setMultiWordTagConversion(
+        settingsManager.getSetting(setting) as MultiWordTagConversion
+      )
+    );
+    return () => settingsManager.unsubscribeOnSettingsChange(setting, cbId);
+  }, [settingsManager]);
+
   if (items.length === 0) {
     return <>No items synced!</>;
   } else {
     const createOrOpen = createOrOpenItemNote(
-      plugin.settingsManager,
+      settingsManager,
       plugin.app.workspace,
       plugin.app.vault,
       plugin.app.metadataCache
@@ -72,9 +92,10 @@ export const PocketItemList = ({
           <li key={item.item_id} className={styles.item}>
             <PocketItem
               item={item}
+              multiWordTagConversion={multiWordTagConversion}
               doesItemNoteExist={doesItemNoteExist(
                 metadataCache,
-                plugin.settingsManager
+                settingsManager
               )}
               createOrOpenItemNote={createOrOpen}
               openSearchForTag={openSearchForTag(plugin.app)}

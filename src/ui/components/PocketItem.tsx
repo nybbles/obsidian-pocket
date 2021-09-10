@@ -13,7 +13,7 @@ import {
   pocketTagsToPocketTagList,
   SavedPocketItem,
 } from "../../pocket_api/PocketAPITypes";
-import { OpenSearchForTagFn } from "src/Tags";
+import { MultiWordTagConversion, OpenSearchForTagFn } from "src/Tags";
 
 const styles = stylesheet`
   .item {
@@ -65,6 +65,7 @@ const PocketItemNoteLink = ({
 
 export type PocketItemProps = {
   item: SavedPocketItem;
+  multiWordTagConversion: MultiWordTagConversion;
   doesItemNoteExist: DoesItemNoteExistFn;
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
   openSearchForTag: OpenSearchForTagFn;
@@ -78,6 +79,7 @@ enum PocketItemClickAction {
 
 export const PocketItem = ({
   item,
+  multiWordTagConversion,
   doesItemNoteExist,
   createOrOpenItemNote,
   openSearchForTag,
@@ -141,6 +143,7 @@ export const PocketItem = ({
       {pocketTags && (
         <PocketItemTagList
           tags={pocketTags}
+          multiWordTagConversion={multiWordTagConversion}
           openSearchForTag={openSearchForTag}
         />
       )}

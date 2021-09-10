@@ -1,7 +1,12 @@
 import { stylesheet } from "astroturf";
 import React from "react";
-import { OpenSearchForTagFn } from "src/Tags";
+import {
+  MultiWordTagConversion,
+  multiWordTagConversions,
+  OpenSearchForTagFn,
+} from "src/Tags";
 import { PocketTag } from "src/pocket_api/PocketAPITypes";
+import log from "loglevel";
 
 const styles = stylesheet`
   .itemTagList {
@@ -21,30 +26,38 @@ const styles = stylesheet`
 
 export type PocketItemTagListProps = {
   tags: PocketTag[];
+  multiWordTagConversion: MultiWordTagConversion;
   openSearchForTag: OpenSearchForTagFn;
 };
 
 export const PocketItemTagList = ({
   tags,
+  multiWordTagConversion,
   openSearchForTag,
 }: PocketItemTagListProps) => {
+  const multiWordTagConverter = multiWordTagConversions.get(
+    multiWordTagConversion
+  );
   return (
     <ul className={styles.itemTagList}>
-      {tags.map((x) => (
-        <li key={x.tag}>
-          <a
-            href={`#${x.tag}`}
-            className={"tag"}
-            target="_blank"
-            rel="noopener"
-            onClick={() => {
-              openSearchForTag(`#${x.tag}`);
-            }}
-          >
-            {`#${x.tag}`}
-          </a>
-        </li>
-      ))}
+      {tags.map((x) => {
+        const tag = `#${multiWordTagConverter(x.tag)}`;
+        return (
+          <li key={tag}>
+            <a
+              href={tag}
+              className={"tag"}
+              target="_blank"
+              rel="noopener"
+              onClick={() => {
+                openSearchForTag(tag);
+              }}
+            >
+              {tag}
+            </a>
+          </li>
+        );
+      })}
     </ul>
   );
 };

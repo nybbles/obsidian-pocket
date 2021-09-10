@@ -1,11 +1,13 @@
-import update, { Spec } from "immutability-helper";
+import update from "immutability-helper";
+import log from "loglevel";
+import { MultiWordTagConversion } from "./Tags";
 import { CallbackId, CallbackRegistry } from "./Types";
 import { getUniqueId } from "./utils";
 
 export interface PocketSettings {
   "item-note-template"?: string;
   "item-notes-folder"?: string;
-  "multi-word-tag-converter"?: string;
+  "multi-word-tag-converter"?: MultiWordTagConversion;
 }
 
 export type OnSettingsChangeCallback = () => Promise<void>;
@@ -64,6 +66,7 @@ export class SettingsManager {
     const callbackRegistry =
       this.onSettingsChangeCallbacks.get(key) ?? new Map();
     callbackRegistry.set(callbackId, callback);
+    this.onSettingsChangeCallbacks.set(key, callbackRegistry);
     return callbackId;
   }
 
