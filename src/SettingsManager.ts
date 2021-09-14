@@ -10,6 +10,10 @@ export interface PocketSettings {
   "multi-word-tag-converter"?: MultiWordTagConversion;
 }
 
+const DEFAULT_POCKET_SETTINGS: PocketSettings = {
+  "multi-word-tag-converter": "snake-case",
+};
+
 export type OnSettingsChangeCallback = () => Promise<void>;
 
 export type LoadPocketSettingsFn = () => Promise<PocketSettings>;
@@ -47,7 +51,7 @@ export class SettingsManager {
   }
 
   getSetting(key: keyof PocketSettings) {
-    return this.settings[key];
+    return this.settings[key] ?? DEFAULT_POCKET_SETTINGS[key];
   }
 
   async updateSetting(key: keyof PocketSettings, newValue: any) {
