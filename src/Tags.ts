@@ -11,7 +11,13 @@ export const openSearchForTag =
     globalSearch.openGlobalSearch(`tag:${tag}`);
   };
 
-export type MultiWordTagConversion = "snake-case" | "camel-case" | "do-nothing";
+const multiWordTagConversionTypes = [
+  "snake-case",
+  "camel-case",
+  "do-nothing",
+] as const;
+export type MultiWordTagConversion = typeof multiWordTagConversionTypes[number];
+
 export type MultiWordTagConversionFn = (tag: string) => string;
 export const multiWordTagConversions: Map<
   MultiWordTagConversion,
@@ -42,6 +48,11 @@ export interface TagNormalizationChoiceParams {
 export const getTagNormalizer = ({
   multiWordTagConversion,
 }: TagNormalizationChoiceParams): TagNormalizationFn => {
+  if (!multiWordTagConversionTypes.includes(multiWordTagConversion)) {
+    throw new Error(
+      `Invalid multi-word tag conversion type: ${multiWordTagConversion}`
+    );
+  }
   const multiWordTagConverter = multiWordTagConversions.get(
     multiWordTagConversion
   );
