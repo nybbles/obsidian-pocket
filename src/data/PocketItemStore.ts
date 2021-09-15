@@ -90,8 +90,10 @@ export class PocketItemStore {
     return this.db.getAll(ITEM_STORE_NAME);
   };
 
-  getAllItemsBySortId = async (): Promise<SavedPocketItem[]> => {
-    return this.db.getAllFromIndex(ITEM_STORE_NAME, "sort_id");
+  getAllItemsByTimeUpdated = async (): Promise<SavedPocketItem[]> => {
+    return (
+      await this.db.getAllFromIndex(ITEM_STORE_NAME, "time_updated")
+    ).reverse();
   };
 
   deleteItem = async (
@@ -150,7 +152,7 @@ export class PocketItemStore {
 }
 
 export const openPocketItemStore = async (): Promise<PocketItemStore> => {
-  const dbVersion = 3;
+  const dbVersion = 4;
   const db = await openDB(DATABASE_NAME, dbVersion, {
     upgrade: async (db, oldVersion, newVersion, tx) => {
       if (oldVersion !== newVersion) {
@@ -161,12 +163,14 @@ export const openPocketItemStore = async (): Promise<PocketItemStore> => {
 
       switch (oldVersion) {
         case 0:
-          const itemStore = db.createObjectStore(ITEM_STORE_NAME, {
+          db.createObjectStore(ITEM_STORE_NAME, {
             keyPath: "item_id",
           });
-          const metadataStore = db.createObjectStore(METADATA_STORE_NAME);
+          db.createObjectStore(METADATA_STORE_NAME);
         case 1:
-          itemStore.createIndex("sort_id", "sort_id", { unique: false });
+          tx.objectStore(ITEM_STORE_NAME).createIndex("sort_id", "sort_id", {
+            unique: false,
+          });
         case 2:
           const itemsExist =
             (await tx.objectStore(ITEM_STORE_NAME).count()) !== 0;
@@ -180,6 +184,14 @@ export const openPocketItemStore = async (): Promise<PocketItemStore> => {
               0
             );
           }
+        case 3:
+          tx.objectStore(ITEM_STORE_NAME).createIndex(
+            "time_updated",
+            "time_updated",
+            {
+              unique: false,
+            }
+          );
       }
     },
   });
