@@ -48,7 +48,7 @@ export const PocketItemList = ({
   useEffect(() => {
     var subscribed = true;
     const fetch = async () => {
-      const allItems = await itemStore.getAllItemsBySortId();
+      const allItems = await itemStore.getAllItemsByTimeUpdated();
       subscribed && setItems(allItems);
     };
     fetch();
@@ -61,7 +61,7 @@ export const PocketItemList = ({
   // Subscribe to updates to item store after initial render
   useEffect(() => {
     const cbId = itemStore.subscribeOnChange(async () => {
-      const updatedItems = await itemStore.getAllItemsBySortId();
+      const updatedItems = await itemStore.getAllItemsByTimeUpdated();
       setItems(updatedItems);
     });
     return () => {
