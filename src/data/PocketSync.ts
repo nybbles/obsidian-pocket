@@ -6,7 +6,8 @@ import { PocketItemStore } from "./PocketItemStore";
 export const doPocketSync = async (
   itemStore: PocketItemStore,
   pocketAPI: PocketAPI,
-  accessInfo: AccessInfo
+  accessInfo: AccessInfo,
+  pocketSyncTag?: string
 ) => {
   const lastUpdateTimestamp = await itemStore.getLastUpdateTimestamp();
 
@@ -14,7 +15,8 @@ export const doPocketSync = async (
 
   const getPocketItemsResponse = await pocketAPI.getPocketItems(
     accessInfo.accessToken,
-    lastUpdateTimestamp
+    lastUpdateTimestamp,
+    pocketSyncTag
   );
 
   new Notice(
