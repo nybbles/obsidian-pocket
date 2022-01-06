@@ -1,6 +1,6 @@
 {
   "name": "obsidian-pocket-plugin",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "This is a plugin for Obsidian (https://obsidian.md) that allows for easy access to your Pocket (https://getpocket.com) list.",
   "main": "main.js",
   "scripts": {
