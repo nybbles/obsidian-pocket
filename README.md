@@ -34,6 +34,11 @@ within Obsidian.
 
 You can also sync your Pocket items using an Obsidian command: "Sync Pocket list".
 
+You can either sync all Pocket items or just Pocket items with a particular tag
+that you specify, using the "Pocket sync tag" setting. Leave it blank to sync
+all Pocket items, or specify a Pocket tag to limit your sync to just Pocket
+items with that tag.
+
 ### Opening and using the Pocket list
 
 Once the Pocket list is downloaded and stored, open the command palette and
