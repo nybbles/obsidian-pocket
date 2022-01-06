@@ -48,7 +48,13 @@ export default class PocketSync extends Plugin {
       return;
     }
 
-    this.pendingSync = doPocketSync(this.itemStore, this.pocketAPI, accessInfo);
+    const pocketSyncTag = this.settingsManager.getSetting("pocket-sync-tag");
+    this.pendingSync = doPocketSync(
+      this.itemStore,
+      this.pocketAPI,
+      accessInfo,
+      pocketSyncTag
+    );
     try {
       await this.pendingSync;
     } finally {

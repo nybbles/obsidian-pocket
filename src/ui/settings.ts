@@ -158,6 +158,27 @@ const addMultiWordTagConverterSetting = (
     });
 };
 
+const SYNC_TAG_CTA = "Pocket sync tag";
+const SYNC_TAG_DESC = `Specify a Pocket tag to sync, e.g. adding 'obsidian' here
+will result in only Pocket items tagged with 'obsidian' being synced. If this
+setting is left blank, all Pocket items will be synced.`;
+
+const addPocketSyncTagSetting = (
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
+) => {
+  new Setting(containerEl)
+    .setName(SYNC_TAG_CTA)
+    .setDesc(SYNC_TAG_DESC)
+    .addText((text) => {
+      text.setPlaceholder("Specify a tag to limit syncs");
+      text.setValue(settingsManager.getSetting("pocket-sync-tag"));
+      text.onChange(async (newValue) => {
+        await settingsManager.updateSetting("pocket-sync-tag", newValue);
+      });
+    });
+};
+
 export class PocketSettingTab extends PluginSettingTab {
   plugin: PocketSync;
   settingsManager: SettingsManager;
@@ -178,5 +199,6 @@ export class PocketSettingTab extends PluginSettingTab {
     addItemNoteTemplateSetting(this.settingsManager, containerEl);
     addItemNotesLocationSetting(this.settingsManager, containerEl);
     addMultiWordTagConverterSetting(this.settingsManager, containerEl);
+    addPocketSyncTagSetting(this.settingsManager, containerEl);
   }
 }

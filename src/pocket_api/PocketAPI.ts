@@ -53,7 +53,8 @@ export type GetRequestToken = (
 export type GetAccessToken = () => Promise<AccessTokenResponse>;
 export type GetPocketItems = (
   accessToken: AccessToken,
-  lastUpdateTimestamp?: UpdateTimestamp
+  lastUpdateTimestamp?: UpdateTimestamp,
+  pocketSyncTag?: string
 ) => Promise<TimestampedPocketGetItemsResponse>;
 
 export interface PocketAPI {
@@ -120,7 +121,8 @@ export type TimestampedPocketGetItemsResponse = {
 
 export const getPocketItems: GetPocketItems = async (
   accessToken,
-  lastUpdateTimestamp?
+  lastUpdateTimestamp?,
+  pocketSyncTag?
 ) => {
   const GET_ITEMS_URL = "https://getpocket.com/v3/get";
   const nextTimestamp = Math.floor(Date.now() / 1000);
@@ -132,6 +134,7 @@ export const getPocketItems: GetPocketItems = async (
       ? new Number(lastUpdateTimestamp).toString()
       : null,
     detailType: "complete",
+    tag: pocketSyncTag,
   };
 
   if (!!lastUpdateTimestamp) {
