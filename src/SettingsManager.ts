@@ -1,5 +1,4 @@
 import update from "immutability-helper";
-import log from "loglevel";
 import { MultiWordTagConversion } from "./Tags";
 import { CallbackId, CallbackRegistry } from "./Types";
 import { getUniqueId } from "./utils";
@@ -8,6 +7,7 @@ export interface PocketSettings {
   "item-note-template"?: string;
   "item-notes-folder"?: string;
   "multi-word-tag-converter"?: MultiWordTagConversion;
+  "pocket-sync-tag"?: string;
 }
 
 const DEFAULT_POCKET_SETTINGS: PocketSettings = {
