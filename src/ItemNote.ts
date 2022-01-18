@@ -40,6 +40,7 @@ export const linkpathForSavedPocketItem = (item: SavedPocketItem) =>
 
 export type GetItemNoteFn = (item: SavedPocketItem) => TFile | null;
 
+// TODO: Make this function resolve item notes by URL first, then title.
 const getItemNote =
   (
     metadataCache: MetadataCache,

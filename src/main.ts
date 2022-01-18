@@ -8,6 +8,11 @@ import {
 } from "./data/PocketItemStore";
 import { doPocketSync } from "./data/PocketSync";
 import {
+  closeURLToPocketItemNoteIndex,
+  openURLToPocketItemNoteIndex,
+  URLToPocketItemNoteIndex,
+} from "./data/URLToPocketItemNoteIndex";
+import {
   buildPocketAPI,
   PocketAPI,
   Username as PocketUsername,
@@ -28,6 +33,7 @@ import { ViewManager } from "./ui/ViewManager";
 
 export default class PocketSync extends Plugin {
   itemStore: PocketItemStore;
+  urlToItemNoteIndex: URLToPocketItemNoteIndex;
   appEl: HTMLDivElement;
   viewManager: ViewManager;
   pocketUsername: PocketUsername | null;
@@ -90,6 +96,19 @@ export default class PocketSync extends Plugin {
     this.itemStore = await openPocketItemStore();
     log.debug("Pocket item store opened");
 
+    log.debug("Opening URL to Pocket item note index");
+    let eventRefs = undefined;
+    [this.urlToItemNoteIndex, eventRefs] = await openURLToPocketItemNoteIndex(
+      this.app.metadataCache,
+      this.app.vault
+    );
+
+    for (let eventRef of eventRefs) {
+      this.registerEvent(eventRef);
+    }
+
+    log.debug("URL to Pocket item note index opened");
+
     this.addCommands();
     this.addSettingTab(
       new PocketSettingTab(this.app, this, this.settingsManager)
@@ -149,6 +168,9 @@ export default class PocketSync extends Plugin {
       ReactDOM.unmountComponentAtNode(this.appEl);
       this.appEl.detach();
     }
+
+    log.debug("Closing URL to Pocket item note index");
+    closeURLToPocketItemNoteIndex(this.urlToItemNoteIndex);
 
     log.debug("Closing Pocket item store");
     closePocketItemStore(this.itemStore);
