@@ -8,7 +8,6 @@ import {
 } from "./data/PocketItemStore";
 import { doPocketSync } from "./data/PocketSync";
 import {
-  closeURLToPocketItemNoteIndex,
   openURLToPocketItemNoteIndex,
   URLToPocketItemNoteIndex,
 } from "./data/URLToPocketItemNoteIndex";
@@ -168,9 +167,6 @@ export default class PocketSync extends Plugin {
       ReactDOM.unmountComponentAtNode(this.appEl);
       this.appEl.detach();
     }
-
-    log.debug("Closing URL to Pocket item note index");
-    closeURLToPocketItemNoteIndex(this.urlToItemNoteIndex);
 
     log.debug("Closing Pocket item store");
     closePocketItemStore(this.itemStore);
