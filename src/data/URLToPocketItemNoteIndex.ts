@@ -9,6 +9,8 @@ type URLToPocketItemNoteEntry = {
   pocket_item_note_path: string;
 };
 
+const URL_FRONT_MATTER_KEY = "URL";
+
 export class URLToPocketItemNoteIndex {
   // db: IDBPDatabase;
   metadataCache: MetadataCache;
@@ -19,43 +21,45 @@ export class URLToPocketItemNoteIndex {
     this.vault = vault;
   }
 
-  // TODO: How to handle when a URL is removed from frontmatter? Need to remove
-  // the entry from the index. How to detect that has happened?
-
-  // TODO: How to handle a file rename? The file content is unchanged, but the
-  // path should change now. Maybe it would get handled by default if we always
-  // overwrite the index entry for a URL with the newest seen path.
-
-  // TODO: Handle file delete by deleting the cache entry with matching path or
-  // URL. If path, how to get the URL? Should we build an index by path?
-
-  // TODO: Write a function that takes a TFile (or path? or TAbstractFile?) and
-  // determines whether the file frontmatter contains a URL field, then add that
-  // entry to the index.
-
   attachFileChangeListeners = (): EventRef[] => {
-    const eventRefs = [];
-    eventRefs.push(
-      this.metadataCache.on("changed", (file) => {
-        // Covers file creation, metadata changes, file content changes
-        log.warn(`metadata cache/changed: ${file.path} --> ${file.name}`);
-
-        // TODO: Need to cover: file deletion, file rename,
-      })
-    );
-
-    return eventRefs;
+    return [
+      this.metadataCache.on("changed", async (file) => {
+        await this.removeEntriesForFilePath(file.path);
+        await this.indexURLForFilePath(file.path);
+      }),
+      this.vault.on("rename", async (file, oldPath) => {
+        await this.removeEntriesForFilePath(oldPath);
+        await this.indexURLForFilePath(file.path);
+      }),
+      this.vault.on("delete", async (file) => {
+        await this.removeEntriesForFilePath(file.path);
+      }),
+    ];
   };
 
-  detachFileChangeListeners = () => {
-    this.metadataCache.off("changed", () => {});
+  addEntry = async (
+    url: string,
+    pocket_item_note_path: string
+  ): Promise<void> => {
+    // TODO: Implement
   };
 
-  addURLToItemNoteEntry = async (): Promise<void> => {};
+  indexURLForFilePath = async (filePath: string): Promise<void> => {
+    const fileURL =
+      this.metadataCache.getCache(filePath).frontmatter?.[URL_FRONT_MATTER_KEY];
+    if (!fileURL) {
+      return;
+    }
+    this.addEntry(fileURL, filePath);
+  };
+  removeEntriesForFilePath = async (filePath: string): Promise<void> => {
+    // TODO: Implement
+  };
 
   lookupItemNoteForURL = async (
     url: string
   ): Promise<URLToPocketItemNoteEntry | undefined> => {
+    // TODO: Implement
     return undefined;
   };
 }
@@ -71,7 +75,3 @@ export const openURLToPocketItemNoteIndex = async (
   const eventRefs = urlToPocketItemNoteIndex.attachFileChangeListeners();
   return [urlToPocketItemNoteIndex, eventRefs];
 };
-
-export const closeURLToPocketItemNoteIndex = (
-  urlToPocketItemNoteIndex: URLToPocketItemNoteIndex
-) => urlToPocketItemNoteIndex.detachFileChangeListeners();
