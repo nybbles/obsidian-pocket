@@ -6,6 +6,7 @@ const POCKET_IDB_VERISION = 4;
 
 export const ITEM_STORE_NAME = "items";
 export const METADATA_STORE_NAME = "metadata";
+export const URL_TO_ITEM_NOTE_STORE_NAME = "url_to_item_notes";
 
 export type PocketIDB = IDBPDatabase;
 

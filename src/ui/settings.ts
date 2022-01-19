@@ -75,6 +75,7 @@ const addClearLocalPocketDataButton = (
       button.onClick(async () => {
         await plugin.metadataStore.clearDatabase();
         await plugin.itemStore.clearDatabase();
+        await plugin.urlToItemNoteIndex.clearDatabase();
         new Notice("Cleared locally-stored Pocket data");
       });
     });

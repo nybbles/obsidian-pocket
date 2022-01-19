@@ -93,7 +93,11 @@ export default class PocketSync extends Plugin {
 
     // Set up Pocket IDB and dependent stores
     log.debug("Opening Pocket IDB");
-    this.pocketIDB = await openPocketIDB([PocketItemStore.upgradeDatabase]);
+    this.pocketIDB = await openPocketIDB([
+      PocketItemStore.upgradeDatabase,
+      MetadataStore.upgradeDatabase,
+      URLToPocketItemNoteIndex.upgradeDatabase,
+    ]);
     log.debug("Pocket IDB opened");
 
     log.debug("Opening Pocket item store");
@@ -107,6 +111,7 @@ export default class PocketSync extends Plugin {
     log.debug("Opening URL to Pocket item note index");
     let eventRefs = undefined;
     [this.urlToItemNoteIndex, eventRefs] = await openURLToPocketItemNoteIndex(
+      this.pocketIDB,
       this.app.metadataCache,
       this.app.vault
     );

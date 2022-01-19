@@ -1,8 +1,11 @@
 import { IDBPDatabase } from "idb";
 import log from "loglevel";
 import { EventRef, MetadataCache, Vault } from "obsidian";
-
-const URL_TO_ITEM_NOTE_STORE_NAME = "url_to_item_notes";
+import {
+  PocketIDB,
+  PocketIDBUpgradeFn,
+  URL_TO_ITEM_NOTE_STORE_NAME,
+} from "./PocketIDB";
 
 type URLToPocketItemNoteEntry = {
   url: string;
@@ -12,11 +15,12 @@ type URLToPocketItemNoteEntry = {
 const URL_FRONT_MATTER_KEY = "URL";
 
 export class URLToPocketItemNoteIndex {
-  // db: IDBPDatabase;
+  db: PocketIDB;
   metadataCache: MetadataCache;
   vault: Vault;
 
-  constructor(metadataCache: MetadataCache, vault: Vault) {
+  constructor(db: PocketIDB, metadataCache: MetadataCache, vault: Vault) {
+    this.db = db;
     this.metadataCache = metadataCache;
     this.vault = vault;
   }
@@ -62,13 +66,40 @@ export class URLToPocketItemNoteIndex {
     // TODO: Implement
     return undefined;
   };
+
+  clearDatabase = async () => {
+    this.db.clear(URL_TO_ITEM_NOTE_STORE_NAME);
+  };
+
+  static upgradeDatabase: PocketIDBUpgradeFn = async (
+    db,
+    oldVersion,
+    newVersion,
+    tx
+  ) => {
+    switch (oldVersion) {
+      case 4:
+        db.createObjectStore(URL_TO_ITEM_NOTE_STORE_NAME, {
+          keyPath: "url",
+        });
+        tx.objectStore(URL_TO_ITEM_NOTE_STORE_NAME).createIndex(
+          "file_path",
+          "file_path",
+          {
+            unique: false,
+          }
+        );
+    }
+  };
 }
 
 export const openURLToPocketItemNoteIndex = async (
+  db: PocketIDB,
   metadataCache: MetadataCache,
   vault: Vault
 ): Promise<[URLToPocketItemNoteIndex, EventRef[]]> => {
   const urlToPocketItemNoteIndex = new URLToPocketItemNoteIndex(
+    db,
     metadataCache,
     vault
   );
