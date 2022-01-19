@@ -1,4 +1,4 @@
-import { IDBPDatabase, IDBPObjectStore, openDB } from "idb";
+import { IDBPObjectStore } from "idb";
 import log from "loglevel";
 import { Notice } from "obsidian";
 import { CallbackId, CallbackRegistry } from "src/Types";
@@ -11,8 +11,8 @@ import {
   SavedPocketItem,
 } from "../pocket_api/PocketAPITypes";
 import { getUniqueId } from "../utils";
+import { PocketIDB, PocketIDBUpgradeFn } from "./PocketIDB";
 
-const DATABASE_NAME = "pocket_db";
 const ITEM_STORE_NAME = "items";
 
 const METADATA_STORE_NAME = "metadata";
@@ -28,13 +28,13 @@ type IDBPPocketItemStoreRW = IDBPObjectStore<
 >;
 
 export class PocketItemStore {
-  db: IDBPDatabase;
+  db: PocketIDB;
   onChangeCallbacks: CallbackRegistry<OnChangeCallback>;
 
   static isItemValid = (item: SavedPocketItem) =>
     !item.resolved_title && !item.resolved_url;
 
-  constructor(db: IDBPDatabase) {
+  constructor(db: PocketIDB) {
     this.db = db;
     this.onChangeCallbacks = new Map();
   }
@@ -149,54 +149,44 @@ export class PocketItemStore {
     await this.db.clear(METADATA_STORE_NAME);
     await this.handleOnChange();
   };
-}
 
-export const openPocketItemStore = async (): Promise<PocketItemStore> => {
-  const dbVersion = 4;
-  const db = await openDB(DATABASE_NAME, dbVersion, {
-    upgrade: async (db, oldVersion, newVersion, tx) => {
-      if (oldVersion !== newVersion) {
-        log.info(
-          `Upgrading Pocket item store to version ${newVersion} from version ${oldVersion}`
-        );
-      }
+  static upgradeDatabase: PocketIDBUpgradeFn = async (
+    db,
+    oldVersion,
+    newVersion,
+    tx
+  ) => {
+    switch (oldVersion) {
+      case 0:
+        db.createObjectStore(ITEM_STORE_NAME, {
+          keyPath: "item_id",
+        });
+        db.createObjectStore(METADATA_STORE_NAME);
+      case 1:
+        tx.objectStore(ITEM_STORE_NAME).createIndex("sort_id", "sort_id", {
+          unique: false,
+        });
+      case 2:
+        const itemsExist =
+          (await tx.objectStore(ITEM_STORE_NAME).count()) !== 0;
+        const databaseBeingCreated = oldVersion === 0;
+        const resetFetchTimestamp = itemsExist && !databaseBeingCreated;
 
-      switch (oldVersion) {
-        case 0:
-          db.createObjectStore(ITEM_STORE_NAME, {
-            keyPath: "item_id",
-          });
-          db.createObjectStore(METADATA_STORE_NAME);
-        case 1:
-          tx.objectStore(ITEM_STORE_NAME).createIndex("sort_id", "sort_id", {
-            unique: false,
-          });
-        case 2:
-          const itemsExist =
-            (await tx.objectStore(ITEM_STORE_NAME).count()) !== 0;
-          const databaseBeingCreated = oldVersion === 0;
-          const resetFetchTimestamp = itemsExist && !databaseBeingCreated;
-
-          if (resetFetchTimestamp) {
-            await tx.objectStore(METADATA_STORE_NAME).clear();
-            new Notice(
-              "Next Pocket sync will fetch full details of Pocket items, including tags",
-              0
-            );
-          }
-        case 3:
-          tx.objectStore(ITEM_STORE_NAME).createIndex(
-            "time_updated",
-            "time_updated",
-            {
-              unique: false,
-            }
+        if (resetFetchTimestamp) {
+          await tx.objectStore(METADATA_STORE_NAME).clear();
+          new Notice(
+            "Next Pocket sync will fetch full details of Pocket items, including tags",
+            0
           );
-      }
-    },
-  });
-  return new PocketItemStore(db);
-};
-
-export const closePocketItemStore = (pocketItemStore: PocketItemStore) =>
-  pocketItemStore.db.close();
+        }
+      case 3:
+        tx.objectStore(ITEM_STORE_NAME).createIndex(
+          "time_updated",
+          "time_updated",
+          {
+            unique: false,
+          }
+        );
+    }
+  };
+}

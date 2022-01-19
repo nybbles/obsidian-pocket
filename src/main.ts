@@ -1,11 +1,8 @@
 import log from "loglevel";
 import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
-import {
-  closePocketItemStore,
-  openPocketItemStore,
-  PocketItemStore,
-} from "./data/PocketItemStore";
+import { openPocketIDB, PocketIDB } from "./data/PocketIDB";
+import { PocketItemStore } from "./data/PocketItemStore";
 import { doPocketSync } from "./data/PocketSync";
 import {
   openURLToPocketItemNoteIndex,
@@ -31,6 +28,7 @@ import { PocketSettingTab } from "./ui/settings";
 import { ViewManager } from "./ui/ViewManager";
 
 export default class PocketSync extends Plugin {
+  pocketIDB: PocketIDB;
   itemStore: PocketItemStore;
   urlToItemNoteIndex: URLToPocketItemNoteIndex;
   appEl: HTMLDivElement;
@@ -90,9 +88,13 @@ export default class PocketSync extends Plugin {
 
     this.pocketAPI = buildPocketAPI();
 
-    // Set up Pocket item store
+    // Set up Pocket IDB and dependent stores
+    log.debug("Opening Pocket IDB");
+    this.pocketIDB = await openPocketIDB([PocketItemStore.upgradeDatabase]);
+    log.debug("Pocket IDB opened");
+
     log.debug("Opening Pocket item store");
-    this.itemStore = await openPocketItemStore();
+    this.itemStore = new PocketItemStore(this.pocketIDB);
     log.debug("Pocket item store opened");
 
     log.debug("Opening URL to Pocket item note index");
