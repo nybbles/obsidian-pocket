@@ -1,7 +1,8 @@
 import log from "loglevel";
 import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
-import { openPocketIDB, PocketIDB } from "./data/PocketIDB";
+import { MetadataStore } from "./data/MetadataStore";
+import { closePocketIDB, openPocketIDB, PocketIDB } from "./data/PocketIDB";
 import { PocketItemStore } from "./data/PocketItemStore";
 import { doPocketSync } from "./data/PocketSync";
 import {
@@ -30,6 +31,7 @@ import { ViewManager } from "./ui/ViewManager";
 export default class PocketSync extends Plugin {
   pocketIDB: PocketIDB;
   itemStore: PocketItemStore;
+  metadataStore: MetadataStore;
   urlToItemNoteIndex: URLToPocketItemNoteIndex;
   appEl: HTMLDivElement;
   viewManager: ViewManager;
@@ -54,6 +56,7 @@ export default class PocketSync extends Plugin {
     const pocketSyncTag = this.settingsManager.getSetting("pocket-sync-tag");
     this.pendingSync = doPocketSync(
       this.itemStore,
+      this.metadataStore,
       this.pocketAPI,
       accessInfo,
       pocketSyncTag
@@ -96,6 +99,10 @@ export default class PocketSync extends Plugin {
     log.debug("Opening Pocket item store");
     this.itemStore = new PocketItemStore(this.pocketIDB);
     log.debug("Pocket item store opened");
+
+    log.debug("Opening metadata store");
+    this.metadataStore = new MetadataStore(this.pocketIDB);
+    log.debug("metadata store opened");
 
     log.debug("Opening URL to Pocket item note index");
     let eventRefs = undefined;
@@ -170,8 +177,8 @@ export default class PocketSync extends Plugin {
       this.appEl.detach();
     }
 
-    log.debug("Closing Pocket item store");
-    closePocketItemStore(this.itemStore);
+    log.debug("Closing Pocket IDB");
+    closePocketIDB(this.pocketIDB);
     this.itemStore = null;
 
     this.pocketAPI = null;

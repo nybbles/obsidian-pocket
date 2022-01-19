@@ -1,8 +1,7 @@
 import { stylesheet } from "astroturf";
-import update from "immutability-helper";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import { PocketSettings, SettingsManager } from "src/SettingsManager";
+import { SettingsManager } from "src/SettingsManager";
 import PocketSync from "../main";
 import {
   clearPocketAccessInfo,
@@ -74,6 +73,7 @@ const addClearLocalPocketDataButton = (
     .addButton((button) => {
       button.setButtonText(CLEAR_LOCAL_POCKET_DATA_CTA);
       button.onClick(async () => {
+        await plugin.metadataStore.clearDatabase();
         await plugin.itemStore.clearDatabase();
         new Notice("Cleared locally-stored Pocket data");
       });

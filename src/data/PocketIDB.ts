@@ -4,6 +4,9 @@ import log from "loglevel";
 const POCKET_IDB_DATABASE_NAME = "pocket_db";
 const POCKET_IDB_VERISION = 4;
 
+export const ITEM_STORE_NAME = "items";
+export const METADATA_STORE_NAME = "metadata";
+
 export type PocketIDB = IDBPDatabase;
 
 export type PocketIDBUpgradeFn = (
@@ -33,6 +36,6 @@ export const openPocketIDB = async (
   return db;
 };
 
-export const closePocketIDB = (pocketIDB: IDBPDatabase) => {
+export const closePocketIDB = (pocketIDB: PocketIDB) => {
   pocketIDB.close();
 };
