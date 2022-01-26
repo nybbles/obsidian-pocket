@@ -110,17 +110,25 @@ const generateInitialItemNoteContents = (
 ): string => {
   type SubstitutionFn = (item: SavedPocketItem) => string;
 
-  const tagNormalizer = getTagNormalizer({
-    multiWordTagConversion: settingsManager.getSetting(
-      "multi-word-tag-converter"
-    ) as MultiWordTagConversion,
-  });
+  const multiWordTagConversion = settingsManager.getSetting(
+    "multi-word-tag-converter"
+  ) as MultiWordTagConversion;
+
+  const hashtagSubstitutor = (addHashtag: boolean) => (tags: PocketTags) =>
+    tagsToNoteContent(
+      getTagNormalizer({
+        multiWordTagConversion: multiWordTagConversion,
+        addHashtag: addHashtag,
+      }),
+      tags
+    );
 
   const substitutions: Map<string, SubstitutionFn> = new Map([
     ["title", (item) => item.resolved_title ?? "Untitled"],
     ["url", (item) => item.resolved_url ?? "Missing URL"],
     ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
-    ["tags", (item) => tagsToNoteContent(tagNormalizer, item.tags)],
+    ["tags", (item) => hashtagSubstitutor(true)(item.tags)],
+    ["tags-no-hash", (item) => hashtagSubstitutor(false)(item.tags)],
   ]);
 
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {
