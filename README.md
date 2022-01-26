@@ -55,7 +55,7 @@ converter options" setting shown in the screenshot above.
 
 The available options are:
 
-- Snake case ('#tag with spaces' becomes #tag_with_spaces)
+- (Enabled by default) Snake case ('#tag with spaces' becomes #tag_with_spaces)
 - Camel case ('#tag with spaces' becomes #TagWithSpaces)
 - Do nothing ('#tag with spaces' remains unchanged)
 
@@ -87,12 +87,13 @@ Templates for Pocket notes work similar to any other template in Obsidian, see
 [here](https://help.obsidian.md/Plugins/Templates), except that only the
 following variables are supported:
 
-| Variable name | What it means                                       |
-| ------------- | --------------------------------------------------- |
-| `{{title}}`   | The title of the Pocket item                        |
-| `{{url}}`     | The URL of the Pocket item                          |
-| `{{excerpt}}` | The excerpt extracted by Pocket for the Pocket item |
-| `{{tags}}`    | The Pocket tags for the Pocket item                 |
+| Variable name      | What it means                                           |
+| ------------------ | ------------------------------------------------------- |
+| `{{title}}`        | The title of the Pocket item                            |
+| `{{url}}`          | The URL of the Pocket item                              |
+| `{{excerpt}}`      | The excerpt extracted by Pocket for the Pocket item     |
+| `{{tags-no-hash}}` | The Pocket tags for the Pocket item                     |
+| `{{tags}}`         | The Pocket tags for the Pocket item, with "#" prepended |
 
 Here's an example template that will put this metadata into the [YAML
 frontmatter](https://help.obsidian.md/Advanced+topics/YAML+front+matter) of the
@@ -102,7 +103,7 @@ note for the Pocket item:
 ---
 Title: {{title}}
 URL: {{url}}
-Tags: {{tags}}
+Tags: [{{tags-no-hash}}]
 Excerpt: >
     {{excerpt}}
 ---
@@ -112,16 +113,19 @@ Excerpt: >
 
 If you had saved [this
 URL](https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/)
-to Pocket, synced it to Obsidian using this plugin and then created a note for
-the corresponding Pocket item with the above template, your note would start off
-containing the following:
+to Pocket with the tag "Carbon removal", synced it to Obsidian using this plugin
+and then created a note for the corresponding Pocket item with the above
+template, your note would start off containing the following:
 
 ```
 ---
 Title: Carbon removal hype is becoming a dangerous distraction
 URL: https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/
+Tags: [carbon_removal]
 Excerpt: In February, oil giant Shell trumpeted a scenario in which the world pulls global warming back to 1.5 ˚C by 2100, even as natural gas, oil, and coal continue to generate huge shares of the world’s energy.
 ---
+https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/
+#carbon_removal
 ```
 
 ## Feature requests, bug reports and PRs
