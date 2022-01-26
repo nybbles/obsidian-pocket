@@ -98,6 +98,7 @@ export const PocketItemList = ({
               item={item}
               tagNormalizer={getTagNormalizer({
                 multiWordTagConversion: multiWordTagConversion,
+                addHashtag: true,
               })}
               doesItemNoteExist={doesItemNoteExist(
                 metadataCache,
