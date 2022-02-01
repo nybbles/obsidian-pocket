@@ -2,7 +2,7 @@ import { IDBPDatabase, IDBPTransaction, openDB } from "idb";
 import log from "loglevel";
 
 const POCKET_IDB_DATABASE_NAME = "pocket_db";
-const POCKET_IDB_VERISION = 4;
+const POCKET_IDB_VERISION = 5;
 
 export const ITEM_STORE_NAME = "items";
 export const METADATA_STORE_NAME = "metadata";

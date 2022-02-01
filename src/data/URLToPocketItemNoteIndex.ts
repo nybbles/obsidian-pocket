@@ -1,4 +1,4 @@
-import { IDBPDatabase } from "idb";
+import { IDBPObjectStore } from "idb";
 import log from "loglevel";
 import { EventRef, MetadataCache, Vault } from "obsidian";
 import {
@@ -9,10 +9,19 @@ import {
 
 type URLToPocketItemNoteEntry = {
   url: string;
-  pocket_item_note_path: string;
+  file_path: string;
 };
 
+type IDBPURLToPocketItemNoteIndexRW = IDBPObjectStore<
+  unknown,
+  ["url_to_item_notes"],
+  "url_to_item_notes",
+  "readwrite"
+>;
+
 const URL_FRONT_MATTER_KEY = "URL";
+const KEY_PATH = "url";
+const FILE_PATH_INDEX_PATH = "file_path";
 
 export class URLToPocketItemNoteIndex {
   db: PocketIDB;
@@ -28,43 +37,83 @@ export class URLToPocketItemNoteIndex {
   attachFileChangeListeners = (): EventRef[] => {
     return [
       this.metadataCache.on("changed", async (file) => {
-        await this.removeEntriesForFilePath(file.path);
-        await this.indexURLForFilePath(file.path);
+        log.debug(`Handling change event for ${file.path}`);
+        const tx = this.db.transaction(
+          URL_TO_ITEM_NOTE_STORE_NAME,
+          "readwrite"
+        );
+        await this.removeEntriesForFilePath(tx.store, file.path);
+        await this.indexURLForFilePath(tx.store, file.path);
+        await tx.done;
       }),
       this.vault.on("rename", async (file, oldPath) => {
-        await this.removeEntriesForFilePath(oldPath);
-        await this.indexURLForFilePath(file.path);
+        log.debug(`Handling rename event ${oldPath} --> ${file.path}`);
+        const tx = this.db.transaction(
+          URL_TO_ITEM_NOTE_STORE_NAME,
+          "readwrite"
+        );
+        await this.removeEntriesForFilePath(tx.store, oldPath);
+        await this.indexURLForFilePath(tx.store, file.path);
+        await tx.done;
       }),
       this.vault.on("delete", async (file) => {
-        await this.removeEntriesForFilePath(file.path);
+        log.debug(`Handling delete event ${file.path}`);
+        const tx = this.db.transaction(
+          URL_TO_ITEM_NOTE_STORE_NAME,
+          "readwrite"
+        );
+        await this.removeEntriesForFilePath(tx.store, file.path);
+        await tx.done;
       }),
     ];
   };
 
   addEntry = async (
+    store: IDBPURLToPocketItemNoteIndexRW,
     url: string,
-    pocket_item_note_path: string
+    filePath: string
   ): Promise<void> => {
-    // TODO: Implement
+    await store.put({ url: url, file_path: filePath });
   };
 
-  indexURLForFilePath = async (filePath: string): Promise<void> => {
+  indexURLForFilePath = async (
+    store: IDBPURLToPocketItemNoteIndexRW,
+    filePath: string
+  ): Promise<void> => {
     const fileURL =
       this.metadataCache.getCache(filePath).frontmatter?.[URL_FRONT_MATTER_KEY];
     if (!fileURL) {
+      log.debug(`No URL found for ${filePath}, skipping indexing`);
       return;
     }
-    this.addEntry(fileURL, filePath);
+    log.debug(`Indexing URL ${fileURL} for ${filePath}`);
+    this.addEntry(store, fileURL, filePath);
   };
-  removeEntriesForFilePath = async (filePath: string): Promise<void> => {
-    // TODO: Implement
+
+  removeEntriesForFilePath = async (
+    store: IDBPURLToPocketItemNoteIndexRW,
+    filePath: string
+  ): Promise<void> => {
+    log.debug(`Removing URLToPocketItemNote index entries for ${filePath}`);
+
+    let entriesForFilePath = await store
+      .index(FILE_PATH_INDEX_PATH)
+      .openCursor(filePath);
+
+    const deletes = [];
+
+    while (entriesForFilePath) {
+      deletes.push(entriesForFilePath.delete());
+      entriesForFilePath = await entriesForFilePath.continue();
+    }
+
+    await Promise.all(deletes);
   };
 
   lookupItemNoteForURL = async (
     url: string
   ): Promise<URLToPocketItemNoteEntry | undefined> => {
-    // TODO: Implement
-    return undefined;
+    return this.db.get(URL_TO_ITEM_NOTE_STORE_NAME, url);
   };
 
   clearDatabase = async () => {
@@ -80,11 +129,11 @@ export class URLToPocketItemNoteIndex {
     switch (oldVersion) {
       case 4:
         db.createObjectStore(URL_TO_ITEM_NOTE_STORE_NAME, {
-          keyPath: "url",
+          keyPath: KEY_PATH,
         });
         tx.objectStore(URL_TO_ITEM_NOTE_STORE_NAME).createIndex(
-          "file_path",
-          "file_path",
+          FILE_PATH_INDEX_PATH,
+          FILE_PATH_INDEX_PATH,
           {
             unique: false,
           }
