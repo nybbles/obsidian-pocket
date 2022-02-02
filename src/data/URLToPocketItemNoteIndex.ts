@@ -7,7 +7,7 @@ import {
   URL_TO_ITEM_NOTE_STORE_NAME,
 } from "./PocketIDB";
 
-type URLToPocketItemNoteEntry = {
+export type URLToPocketItemNoteEntry = {
   url: string;
   file_path: string;
 };
@@ -122,6 +122,10 @@ export class URLToPocketItemNoteIndex {
     );
 
     return result;
+  };
+
+  getAllIndexEntries = async (): Promise<URLToPocketItemNoteEntry[]> => {
+    return this.db.getAll(URL_TO_ITEM_NOTE_STORE_NAME);
   };
 
   clearDatabase = async () => {

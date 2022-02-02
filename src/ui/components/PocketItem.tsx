@@ -1,10 +1,10 @@
 import { stylesheet } from "astroturf";
-import { Platform, TFile, Vault } from "obsidian";
-import React, { MouseEvent, useEffect, useState } from "react";
-import { URLToPocketItemNoteIndex } from "src/data/URLToPocketItemNoteIndex";
+import log from "loglevel";
+import { Platform } from "obsidian";
+import React, { MouseEvent, useState } from "react";
 import {
   CreateOrOpenItemNoteFn,
-  DoesItemNoteExistFn,
+  GetItemNoteFn,
   linkpathForSavedPocketItem,
 } from "src/ItemNote";
 import { OpenSearchForTagFn, TagNormalizationFn } from "src/Tags";
@@ -15,7 +15,6 @@ import {
   pocketTagsToPocketTagList,
   SavedPocketItem,
 } from "../../pocket_api/PocketAPITypes";
-import log from "loglevel";
 
 const styles = stylesheet`
   .item {
@@ -63,8 +62,8 @@ const PocketItemNoteLink = ({ title, noteExists, onClick }: NoteLinkProps) => {
 
 export type PocketItemProps = {
   item: SavedPocketItem;
-  vault: Vault;
-  urlToPocketItemNoteIndex: URLToPocketItemNoteIndex;
+  itemNoteExistsInitial: boolean;
+  getItemNote: GetItemNoteFn;
   tagNormalizer: TagNormalizationFn;
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
   openSearchForTag: OpenSearchForTagFn;
@@ -78,22 +77,23 @@ enum PocketItemClickAction {
 
 export const PocketItem = ({
   item,
-  vault,
-  urlToPocketItemNoteIndex,
+  itemNoteExistsInitial,
+  getItemNote,
   tagNormalizer,
   createOrOpenItemNote,
   openSearchForTag,
 }: PocketItemProps) => {
-  const [notePath, setNotePath] = useState<string | null>();
+  const [itemNoteExists, setItemNoteExists] = useState<boolean>(
+    itemNoteExistsInitial
+  );
 
-  // get note path on initial render
+  // TODO: Remove this and subscribe only on subsequent updates
+  /*
   useEffect(() => {
     var subscribed = true;
     const fetch = async () => {
-      const entry = await urlToPocketItemNoteIndex.lookupItemNoteForURL(
-        item.resolved_url
-      );
-      subscribed && setNotePath(entry?.file_path);
+      const result = await getItemNote(item);
+      subscribed && setItemNoteExists(!!result);
     };
     fetch();
 
@@ -101,6 +101,7 @@ export const PocketItem = ({
       subscribed = false;
     };
   }, []);
+  */
 
   // TODO: Subscribe to updates to URL to item note index after initial render
   /*
@@ -115,11 +116,6 @@ export const PocketItem = ({
   }, [itemStore]);
   */
 
-  const pocketItemNote = !!notePath
-    ? vault.getAbstractFileByPath(notePath)
-    : null;
-
-  const pocketItemNoteExists = !!pocketItemNote;
   const title = linkpathForSavedPocketItem(item);
 
   const navigateToPocketURL = () => {
@@ -154,7 +150,7 @@ export const PocketItem = ({
       <span className={styles.itemTitle}>
         <PocketItemNoteLink
           title={title}
-          noteExists={pocketItemNoteExists}
+          noteExists={itemNoteExists}
           onClick={async (event) => {
             const start = performance.now();
             const clickAction = getPocketItemClickAction(event);

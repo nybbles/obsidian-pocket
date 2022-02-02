@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import React from "react";
-import { PocketItemList } from "./components/PocketItemList";
 import PocketSync from "../main";
+import { PocketItemList } from "./components/PocketItemList";
 
 export const POCKET_ITEM_LIST_VIEW_TYPE = "pocket_item_list";
 
@@ -35,6 +35,7 @@ export class PocketItemListView extends ItemView {
         <PocketItemList
           itemStore={this.plugin.itemStore}
           metadataCache={this.app.metadataCache}
+          urlToPocketItemNoteIndex={this.plugin.urlToItemNoteIndex}
           plugin={this.plugin}
         />
       </div>

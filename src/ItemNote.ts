@@ -7,7 +7,10 @@ import {
   Vault,
   Workspace,
 } from "obsidian";
-import { URLToPocketItemNoteIndex } from "./data/URLToPocketItemNoteIndex";
+import {
+  URLToPocketItemNoteEntry,
+  URLToPocketItemNoteIndex,
+} from "./data/URLToPocketItemNoteIndex";
 import {
   PocketTags,
   pocketTagsToPocketTagList,
@@ -39,23 +42,67 @@ const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
 export const linkpathForSavedPocketItem = (item: SavedPocketItem) =>
   sanitizeTitle(displayTextForSavedPocketItem(item));
 
-export type GetItemNoteFn = (item: SavedPocketItem) => Promise<TFile | null>;
-
-const getItemNote =
+export const getAllItemNotes =
   (
-    vault: Vault,
-    metadataCache: MetadataCache,
     urlToPocketItemNoteIndex: URLToPocketItemNoteIndex,
-    settingsManager: SettingsManager
+    resolveItemNote: ResolveItemNoteFn
+  ) =>
+  async (items: SavedPocketItem[]) => {
+    const urlToItemNoteEntries =
+      await urlToPocketItemNoteIndex.getAllIndexEntries();
+    const urlToItemNoteLookup: { [url: string]: string } = {};
+
+    for (const entry of urlToItemNoteEntries) {
+      urlToItemNoteLookup[entry.url] = entry.file_path;
+    }
+
+    const result = [];
+    for (const item of items) {
+      const filePathByURL = urlToItemNoteLookup[item.resolved_url];
+      const entry = !!filePathByURL
+        ? { url: item.resolved_url, file_path: filePathByURL }
+        : null;
+      const foo = resolveItemNote(item, entry);
+      result.push(foo);
+    }
+
+    return result;
+  };
+
+export type GetItemNoteFn = (item: SavedPocketItem) => Promise<TFile | null>;
+export const getItemNote =
+  (
+    urlToPocketItemNoteIndex: URLToPocketItemNoteIndex,
+    resolveItemNote: ResolveItemNoteFn
   ): GetItemNoteFn =>
   async (item) => {
-    // Try to resolve by URL
     const byURL = await urlToPocketItemNoteIndex.lookupItemNoteForURL(
       item.resolved_url
     );
 
-    if (!!byURL) {
-      const file = vault.getAbstractFileByPath(byURL.file_path);
+    return resolveItemNote(item, byURL);
+  };
+
+export type ResolveItemNoteFn = (
+  item: SavedPocketItem,
+  urlToPocketItemNoteEntry?: URLToPocketItemNoteEntry
+) => TFile | null;
+
+export const resolveItemNote =
+  (
+    vault: Vault,
+    metadataCache: MetadataCache,
+    settingsManager: SettingsManager
+  ): ResolveItemNoteFn =>
+  (
+    item: SavedPocketItem,
+    urlToPocketItemNoteEntry?: URLToPocketItemNoteEntry
+  ) => {
+    // Try to resolve by URL
+    if (!!urlToPocketItemNoteEntry) {
+      const file = vault.getAbstractFileByPath(
+        urlToPocketItemNoteEntry.file_path
+      );
       if (file instanceof TFile) {
         return file;
       } else {
@@ -84,10 +131,8 @@ export const doesItemNoteExist: DoesItemNoteExistFnFactory =
   (vault, metadataCache, urlToPocketItemNoteIndex, settingsManager) =>
   async (item: SavedPocketItem) => {
     const result = await getItemNote(
-      vault,
-      metadataCache,
       urlToPocketItemNoteIndex,
-      settingsManager
+      resolveItemNote(vault, metadataCache, settingsManager)
     )(item);
     return !!result;
   };
@@ -198,10 +243,8 @@ export const createOrOpenItemNote =
   async (pocketItem) => {
     const start = performance.now();
     const itemNote = await getItemNote(
-      vault,
-      metadataCache,
       urlToPocketItemNoteIndex,
-      settingsManager
+      resolveItemNote(vault, metadataCache, settingsManager)
     )(pocketItem);
     const itemNoteExists = !!itemNote;
     log.warn(`getItemNote took ${performance.now() - start} ms`);
