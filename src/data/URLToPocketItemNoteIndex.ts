@@ -112,8 +112,16 @@ export class URLToPocketItemNoteIndex {
 
   lookupItemNoteForURL = async (
     url: string
-  ): Promise<URLToPocketItemNoteEntry | undefined> => {
-    return this.db.get(URL_TO_ITEM_NOTE_STORE_NAME, url);
+  ): Promise<URLToPocketItemNoteEntry | null> => {
+    const start = performance.now();
+    const result = this.db.get(URL_TO_ITEM_NOTE_STORE_NAME, url);
+    log.warn(
+      `urlToPocketItemNoteIndex.lookupItemNoteForURL took ${
+        performance.now() - start
+      } ms`
+    );
+
+    return result;
   };
 
   clearDatabase = async () => {

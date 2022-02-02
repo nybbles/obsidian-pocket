@@ -87,7 +87,8 @@ export const PocketItemList = ({
       settingsManager,
       plugin.app.workspace,
       plugin.app.vault,
-      plugin.app.metadataCache
+      plugin.app.metadataCache,
+      plugin.urlToItemNoteIndex
     );
 
     return (
@@ -96,14 +97,12 @@ export const PocketItemList = ({
           <li key={item.item_id} className={styles.item}>
             <PocketItem
               item={item}
+              vault={plugin.app.vault}
+              urlToPocketItemNoteIndex={plugin.urlToItemNoteIndex}
               tagNormalizer={getTagNormalizer({
                 multiWordTagConversion: multiWordTagConversion,
                 addHashtag: true,
               })}
-              doesItemNoteExist={doesItemNoteExist(
-                metadataCache,
-                settingsManager
-              )}
               createOrOpenItemNote={createOrOpen}
               openSearchForTag={openSearchForTag(plugin.app)}
             />

@@ -1,6 +1,7 @@
 import { stylesheet } from "astroturf";
-import { Platform } from "obsidian";
-import React, { MouseEvent } from "react";
+import { Platform, TFile, Vault } from "obsidian";
+import React, { MouseEvent, useEffect, useState } from "react";
+import { URLToPocketItemNoteIndex } from "src/data/URLToPocketItemNoteIndex";
 import {
   CreateOrOpenItemNoteFn,
   DoesItemNoteExistFn,
@@ -14,6 +15,7 @@ import {
   pocketTagsToPocketTagList,
   SavedPocketItem,
 } from "../../pocket_api/PocketAPITypes";
+import log from "loglevel";
 
 const styles = stylesheet`
   .item {
@@ -43,30 +45,27 @@ const styles = stylesheet`
 `;
 
 type NoteLinkProps = {
-  linkpath: string;
-  linkpathExists: boolean;
+  title: string;
+  noteExists: boolean;
   onClick: (event: MouseEvent) => Promise<void>;
 };
 
-const PocketItemNoteLink = ({
-  linkpath,
-  linkpathExists,
-  onClick,
-}: NoteLinkProps) => {
+const PocketItemNoteLink = ({ title, noteExists, onClick }: NoteLinkProps) => {
   return (
     <a
-      className={`internal-link ${linkpathExists ? "" : "is-unresolved"}`}
+      className={`internal-link ${noteExists ? "" : "is-unresolved"}`}
       onClick={onClick}
     >
-      {linkpath}
+      {title}
     </a>
   );
 };
 
 export type PocketItemProps = {
   item: SavedPocketItem;
+  vault: Vault;
+  urlToPocketItemNoteIndex: URLToPocketItemNoteIndex;
   tagNormalizer: TagNormalizationFn;
-  doesItemNoteExist: DoesItemNoteExistFn;
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
   openSearchForTag: OpenSearchForTagFn;
 };
@@ -79,13 +78,49 @@ enum PocketItemClickAction {
 
 export const PocketItem = ({
   item,
+  vault,
+  urlToPocketItemNoteIndex,
   tagNormalizer,
-  doesItemNoteExist,
   createOrOpenItemNote,
   openSearchForTag,
 }: PocketItemProps) => {
-  const linkpath = linkpathForSavedPocketItem(item);
-  const linkpathExists = doesItemNoteExist(item);
+  const [notePath, setNotePath] = useState<string | null>();
+
+  // get note path on initial render
+  useEffect(() => {
+    var subscribed = true;
+    const fetch = async () => {
+      const entry = await urlToPocketItemNoteIndex.lookupItemNoteForURL(
+        item.resolved_url
+      );
+      subscribed && setNotePath(entry?.file_path);
+    };
+    fetch();
+
+    return () => {
+      subscribed = false;
+    };
+  }, []);
+
+  // TODO: Subscribe to updates to URL to item note index after initial render
+  /*
+  useEffect(() => {
+    const cbId = itemStore.subscribeOnChange(async () => {
+      const updatedItems = await itemStore.getAllItemsByTimeUpdated();
+      setItems(updatedItems);
+    });
+    return () => {
+      itemStore.unsubscribeOnChange(cbId);
+    };
+  }, [itemStore]);
+  */
+
+  const pocketItemNote = !!notePath
+    ? vault.getAbstractFileByPath(notePath)
+    : null;
+
+  const pocketItemNoteExists = !!pocketItemNote;
+  const title = linkpathForSavedPocketItem(item);
 
   const navigateToPocketURL = () => {
     openBrowserWindow(item.resolved_url);
@@ -118,22 +153,35 @@ export const PocketItem = ({
     <div className={styles.item}>
       <span className={styles.itemTitle}>
         <PocketItemNoteLink
-          linkpath={linkpath}
-          linkpathExists={linkpathExists}
+          title={title}
+          noteExists={pocketItemNoteExists}
           onClick={async (event) => {
+            const start = performance.now();
             const clickAction = getPocketItemClickAction(event);
+            log.warn(
+              `getPocketItemClickAction took ${performance.now() - start} ms`
+            );
             switch (clickAction) {
               case PocketItemClickAction.NavigateToPocketURL:
                 navigateToPocketURL();
                 break;
               case PocketItemClickAction.CreateOrOpenItemNote:
+                const createOrOpenStart = performance.now();
                 await createOrOpenItemNote(item);
+                log.warn(
+                  `createOrOpenItemNote took ${
+                    performance.now() - createOrOpenStart
+                  } ms`
+                );
+
                 break;
               case PocketItemClickAction.Noop:
                 break;
               default:
                 throw new Error(`Unknown PocketItemClickAction ${clickAction}`);
             }
+            const duration = performance.now() - start;
+            log.warn(`item note onClick took ${duration} ms`);
           }}
         />
       </span>
