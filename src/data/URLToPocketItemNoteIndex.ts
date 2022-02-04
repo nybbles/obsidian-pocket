@@ -100,7 +100,7 @@ export class URLToPocketItemNoteIndex {
   ): Promise<URL> => {
     const fileURL =
       this.metadataCache.getCache(filePath).frontmatter?.[URL_FRONT_MATTER_KEY];
-    if (!fileURL) {
+    if (!fileURL || typeof fileURL != "string") {
       log.debug(`No URL found for ${filePath}, skipping indexing`);
       return;
     }
