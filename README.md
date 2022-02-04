@@ -101,7 +101,7 @@ note for the Pocket item:
 
 ```
 ---
-Title: {{title}}
+Title: "{{title}}"
 URL: {{url}}
 Tags: [{{tags-no-hash}}]
 Excerpt: >
@@ -119,7 +119,7 @@ template, your note would start off containing the following:
 
 ```
 ---
-Title: Carbon removal hype is becoming a dangerous distraction
+Title: "Carbon removal hype is becoming a dangerous distraction"
 URL: https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/
 Tags: [carbon_removal]
 Excerpt: In February, oil giant Shell trumpeted a scenario in which the world pulls global warming back to 1.5 ˚C by 2100, even as natural gas, oil, and coal continue to generate huge shares of the world’s energy.
@@ -127,6 +127,9 @@ Excerpt: In February, oil giant Shell trumpeted a scenario in which the world pu
 https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/
 #carbon_removal
 ```
+
+Note that in the example template, the title is quoted so that the YAML
+frontmatter is valid, even if the Pocket item has a title with colons in it.
 
 ## Feature requests, bug reports and PRs
 
