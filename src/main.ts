@@ -207,16 +207,24 @@ export default class PocketSync extends Plugin {
     this.addCommand({
       id: "open-pocket-list",
       name: "Open Pocket list",
-      callback: () => {
-        this.openPocketList();
+      callback: async () => {
+        await this.openPocketList();
       },
     });
 
     this.addCommand({
       id: "sync-pocket-list",
       name: "Sync Pocket list",
-      callback: () => {
-        this.syncPocketItems();
+      callback: async () => {
+        await this.syncPocketItems();
+      },
+    });
+
+    this.addCommand({
+      id: "index-all-files-by-URL",
+      name: "Index all files by URL",
+      callback: async () => {
+        await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
       },
     });
   };

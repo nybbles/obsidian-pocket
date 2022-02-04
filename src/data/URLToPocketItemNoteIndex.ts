@@ -44,13 +44,12 @@ export class URLToPocketItemNoteIndex {
     this.vault = vault;
     this.onChangeCallbacks = new Map();
   }
+  private handleOnChangeForURLs = async (urls: Set<URL>) =>
+    await Promise.all(
+      Array.from(urls.values()).map((url) => this.handleOnChange(url))
+    );
 
   attachFileChangeListeners = (): EventRef[] => {
-    const handleOnChangeForURLs = async (urls: Set<URL>) =>
-      await Promise.all(
-        Array.from(urls.values()).map((url) => this.handleOnChange(url))
-      );
-
     const removeEntriesAndIndexForFilePath = async (filePath: string) => {
       const tx = this.db.transaction(URL_TO_ITEM_NOTE_STORE_NAME, "readwrite");
       const updatedURLs = await this.removeEntriesForFilePath(
@@ -59,7 +58,7 @@ export class URLToPocketItemNoteIndex {
       );
       updatedURLs.add(await this.indexURLForFilePath(tx.store, filePath));
       await tx.done;
-      await handleOnChangeForURLs(updatedURLs);
+      await this.handleOnChangeForURLs(updatedURLs);
     };
 
     return [
@@ -82,7 +81,7 @@ export class URLToPocketItemNoteIndex {
           file.path
         );
         await tx.done;
-        await handleOnChangeForURLs(updatedURLs);
+        await this.handleOnChangeForURLs(updatedURLs);
       }),
     ];
   };
@@ -106,8 +105,38 @@ export class URLToPocketItemNoteIndex {
       return;
     }
     log.debug(`Indexing URL ${fileURL} for ${filePath}`);
-    this.addEntry(store, fileURL, filePath);
+    await this.addEntry(store, fileURL, filePath);
     return fileURL;
+  };
+
+  indexURLsForAllFilePaths = async () => {
+    const allFilesToURLs = this.vault
+      .getMarkdownFiles()
+      .map((file) => [
+        file,
+        this.metadataCache.getFileCache(file).frontmatter?.[
+          URL_FRONT_MATTER_KEY
+        ],
+      ])
+      .filter(([file, url]) => !!url && typeof url == "string");
+
+    const indexedURLs: Set<URL> = new Set();
+    const addedEntries = [];
+    const tx = this.db.transaction(URL_TO_ITEM_NOTE_STORE_NAME, "readwrite");
+    for (const [file, url] of allFilesToURLs) {
+      const existingEntry = !!(await tx.store.get(url));
+      if (existingEntry) {
+        continue;
+      } else {
+        log.debug(`Indexing URL ${url} for ${file.path}`);
+        addedEntries.push(this.addEntry(tx.store, url, file.path));
+        indexedURLs.add(url);
+      }
+    }
+    await Promise.all(addedEntries);
+    await tx.done;
+
+    await this.handleOnChangeForURLs(indexedURLs);
   };
 
   private removeEntriesForFilePath = async (
