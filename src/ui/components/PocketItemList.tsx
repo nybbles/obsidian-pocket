@@ -60,7 +60,7 @@ export const PocketItemList = ({
       ) as MultiWordTagConversion
     );
 
-  // Load all items and item notes on initial render
+  // Load all items and check item notes' existence on initial render
   useEffect(() => {
     var subscribed = true;
     const fetch = async () => {

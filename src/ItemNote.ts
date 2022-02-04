@@ -62,8 +62,7 @@ export const getAllItemNotes =
       const entry = !!filePathByURL
         ? { url: item.resolved_url, file_path: filePathByURL }
         : null;
-      const foo = resolveItemNote(item, entry);
-      result.push(foo);
+      result.push(resolveItemNote(item, entry));
     }
 
     return result;
@@ -241,13 +240,11 @@ export const createOrOpenItemNote =
     urlToPocketItemNoteIndex: URLToPocketItemNoteIndex
   ): CreateOrOpenItemNoteFn =>
   async (pocketItem) => {
-    const start = performance.now();
     const itemNote = await getItemNote(
       urlToPocketItemNoteIndex,
       resolveItemNote(vault, metadataCache, settingsManager)
     )(pocketItem);
     const itemNoteExists = !!itemNote;
-    log.warn(`getItemNote took ${performance.now() - start} ms`);
 
     if (itemNoteExists) {
       await openItemNote(workspace, itemNote);

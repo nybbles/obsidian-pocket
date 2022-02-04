@@ -87,6 +87,8 @@ export const PocketItem = ({
   openSearchForTag,
 }: PocketItemProps) => {
   const [itemNoteExists, setItemNoteExists] = useState<boolean>(
+    // item note exists initial state fetched in bulk for all items, to be
+    // performant.
     itemNoteExistsInitial
   );
 
@@ -140,32 +142,19 @@ export const PocketItem = ({
           title={title}
           noteExists={itemNoteExists}
           onClick={async (event) => {
-            const start = performance.now();
             const clickAction = getPocketItemClickAction(event);
-            log.warn(
-              `getPocketItemClickAction took ${performance.now() - start} ms`
-            );
             switch (clickAction) {
               case PocketItemClickAction.NavigateToPocketURL:
                 navigateToPocketURL();
                 break;
               case PocketItemClickAction.CreateOrOpenItemNote:
-                const createOrOpenStart = performance.now();
                 await createOrOpenItemNote(item);
-                log.warn(
-                  `createOrOpenItemNote took ${
-                    performance.now() - createOrOpenStart
-                  } ms`
-                );
-
                 break;
               case PocketItemClickAction.Noop:
                 break;
               default:
                 throw new Error(`Unknown PocketItemClickAction ${clickAction}`);
             }
-            const duration = performance.now() - start;
-            log.warn(`item note onClick took ${duration} ms`);
           }}
         />
       </span>

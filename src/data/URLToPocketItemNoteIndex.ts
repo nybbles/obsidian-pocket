@@ -46,42 +46,30 @@ export class URLToPocketItemNoteIndex {
   }
 
   attachFileChangeListeners = (): EventRef[] => {
+    const handleOnChangeForURLs = async (urls: Set<URL>) =>
+      await Promise.all(
+        Array.from(urls.values()).map((url) => this.handleOnChange(url))
+      );
+
+    const removeEntriesAndIndexForFilePath = async (filePath: string) => {
+      const tx = this.db.transaction(URL_TO_ITEM_NOTE_STORE_NAME, "readwrite");
+      const updatedURLs = await this.removeEntriesForFilePath(
+        tx.store,
+        filePath
+      );
+      updatedURLs.add(await this.indexURLForFilePath(tx.store, filePath));
+      await tx.done;
+      await handleOnChangeForURLs(updatedURLs);
+    };
+
     return [
       this.metadataCache.on("changed", async (file) => {
         log.debug(`Handling change event for ${file.path}`);
-        const tx = this.db.transaction(
-          URL_TO_ITEM_NOTE_STORE_NAME,
-          "readwrite"
-        );
-        const updatedURLs = await this.removeEntriesForFilePath(
-          tx.store,
-          file.path
-        );
-        updatedURLs.add(await this.indexURLForFilePath(tx.store, file.path));
-        await tx.done;
-        await Promise.all(
-          Array.from(updatedURLs.values()).map((url) =>
-            this.handleOnChange(url)
-          )
-        );
+        await removeEntriesAndIndexForFilePath(file.path);
       }),
       this.vault.on("rename", async (file, oldPath) => {
         log.debug(`Handling rename event ${oldPath} --> ${file.path}`);
-        const tx = this.db.transaction(
-          URL_TO_ITEM_NOTE_STORE_NAME,
-          "readwrite"
-        );
-        const updatedURLs = await this.removeEntriesForFilePath(
-          tx.store,
-          file.path
-        );
-        updatedURLs.add(await this.indexURLForFilePath(tx.store, file.path));
-        await tx.done;
-        await Promise.all(
-          Array.from(updatedURLs.values()).map((url) =>
-            this.handleOnChange(url)
-          )
-        );
+        await removeEntriesAndIndexForFilePath(file.path);
       }),
       this.vault.on("delete", async (file) => {
         log.debug(`Handling delete event ${file.path}`);
@@ -94,11 +82,7 @@ export class URLToPocketItemNoteIndex {
           file.path
         );
         await tx.done;
-        await Promise.all(
-          Array.from(updatedURLs.values()).map((url) =>
-            this.handleOnChange(url)
-          )
-        );
+        await handleOnChangeForURLs(updatedURLs);
       }),
     ];
   };
@@ -151,28 +135,18 @@ export class URLToPocketItemNoteIndex {
 
   lookupItemNoteForURL = async (
     url: URL
-  ): Promise<URLToPocketItemNoteEntry | null> => {
-    const start = performance.now();
-    const result = this.db.get(URL_TO_ITEM_NOTE_STORE_NAME, url);
-    log.warn(
-      `urlToPocketItemNoteIndex.lookupItemNoteForURL took ${
-        performance.now() - start
-      } ms`
-    );
+  ): Promise<URLToPocketItemNoteEntry | null> =>
+    this.db.get(URL_TO_ITEM_NOTE_STORE_NAME, url);
 
-    return result;
-  };
-
-  getAllIndexEntries = async (): Promise<URLToPocketItemNoteEntry[]> => {
-    return this.db.getAll(URL_TO_ITEM_NOTE_STORE_NAME);
-  };
+  getAllIndexEntries = async (): Promise<URLToPocketItemNoteEntry[]> =>
+    this.db.getAll(URL_TO_ITEM_NOTE_STORE_NAME);
 
   subscribeOnChange = (url: URL, cb: OnChangeCallback) => {
-    const callbackId = getUniqueId();
     if (!this.onChangeCallbacks.has(url)) {
       this.onChangeCallbacks.set(url, new Map());
     }
     const callbackRegistry = this.onChangeCallbacks.get(url);
+    const callbackId = getUniqueId();
     callbackRegistry.set(callbackId, cb);
     return callbackId;
   };
