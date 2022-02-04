@@ -1,7 +1,8 @@
 import { stylesheet } from "astroturf";
 import log from "loglevel";
 import { Platform } from "obsidian";
-import React, { MouseEvent, useState } from "react";
+import React, { MouseEvent, useEffect, useState } from "react";
+import { URLToPocketItemNoteIndex } from "src/data/URLToPocketItemNoteIndex";
 import {
   CreateOrOpenItemNoteFn,
   GetItemNoteFn,
@@ -63,6 +64,7 @@ const PocketItemNoteLink = ({ title, noteExists, onClick }: NoteLinkProps) => {
 export type PocketItemProps = {
   item: SavedPocketItem;
   itemNoteExistsInitial: boolean;
+  urlToPocketItemNoteIndex: URLToPocketItemNoteIndex;
   getItemNote: GetItemNoteFn;
   tagNormalizer: TagNormalizationFn;
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
@@ -78,6 +80,7 @@ enum PocketItemClickAction {
 export const PocketItem = ({
   item,
   itemNoteExistsInitial,
+  urlToPocketItemNoteIndex,
   getItemNote,
   tagNormalizer,
   createOrOpenItemNote,
@@ -87,34 +90,19 @@ export const PocketItem = ({
     itemNoteExistsInitial
   );
 
-  // TODO: Remove this and subscribe only on subsequent updates
-  /*
+  // Subscribe to updates to URL to item note index after initial render
   useEffect(() => {
-    var subscribed = true;
-    const fetch = async () => {
-      const result = await getItemNote(item);
-      subscribed && setItemNoteExists(!!result);
-    };
-    fetch();
-
+    const cbId = urlToPocketItemNoteIndex.subscribeOnChange(
+      item.resolved_url,
+      async () => {
+        const file = await getItemNote(item);
+        setItemNoteExists(!!file);
+      }
+    );
     return () => {
-      subscribed = false;
+      urlToPocketItemNoteIndex.unsubscribeOnChange(item.resolved_url, cbId);
     };
-  }, []);
-  */
-
-  // TODO: Subscribe to updates to URL to item note index after initial render
-  /*
-  useEffect(() => {
-    const cbId = itemStore.subscribeOnChange(async () => {
-      const updatedItems = await itemStore.getAllItemsByTimeUpdated();
-      setItems(updatedItems);
-    });
-    return () => {
-      itemStore.unsubscribeOnChange(cbId);
-    };
-  }, [itemStore]);
-  */
+  }, [urlToPocketItemNoteIndex]);
 
   const title = linkpathForSavedPocketItem(item);
 

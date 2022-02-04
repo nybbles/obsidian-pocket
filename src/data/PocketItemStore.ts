@@ -1,6 +1,6 @@
 import { IDBPObjectStore } from "idb";
 import log from "loglevel";
-import { CallbackId, CallbackRegistry } from "src/Types";
+import { CallbackId, CallbackRegistry } from "src/CallbackRegistry";
 import {
   isDeletedPocketItem,
   isSavedPocketItem,
@@ -22,7 +22,7 @@ type IDBPPocketItemStoreRW = IDBPObjectStore<
 
 export class PocketItemStore {
   db: PocketIDB;
-  onChangeCallbacks: CallbackRegistry<OnChangeCallback>;
+  onChangeCallbacks: CallbackRegistry<CallbackId, OnChangeCallback>;
 
   static isItemValid = (item: SavedPocketItem) =>
     !item.resolved_title && !item.resolved_url;

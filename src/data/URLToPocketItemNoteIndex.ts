@@ -1,6 +1,8 @@
 import { IDBPObjectStore } from "idb";
 import log from "loglevel";
 import { EventRef, MetadataCache, Vault } from "obsidian";
+import { CallbackId, CallbackRegistry } from "src/CallbackRegistry";
+import { getUniqueId } from "src/utils";
 import {
   PocketIDB,
   PocketIDBUpgradeFn,
@@ -12,12 +14,16 @@ export type URLToPocketItemNoteEntry = {
   file_path: string;
 };
 
+export type OnChangeCallback = () => Promise<void>;
+
 type IDBPURLToPocketItemNoteIndexRW = IDBPObjectStore<
   unknown,
   ["url_to_item_notes"],
   "url_to_item_notes",
   "readwrite"
 >;
+
+export type URL = string;
 
 const URL_FRONT_MATTER_KEY = "URL";
 const KEY_PATH = "url";
@@ -27,11 +33,16 @@ export class URLToPocketItemNoteIndex {
   db: PocketIDB;
   metadataCache: MetadataCache;
   vault: Vault;
+  onChangeCallbacks: CallbackRegistry<
+    URL,
+    CallbackRegistry<CallbackId, OnChangeCallback>
+  >;
 
   constructor(db: PocketIDB, metadataCache: MetadataCache, vault: Vault) {
     this.db = db;
     this.metadataCache = metadataCache;
     this.vault = vault;
+    this.onChangeCallbacks = new Map();
   }
 
   attachFileChangeListeners = (): EventRef[] => {
@@ -42,9 +53,17 @@ export class URLToPocketItemNoteIndex {
           URL_TO_ITEM_NOTE_STORE_NAME,
           "readwrite"
         );
-        await this.removeEntriesForFilePath(tx.store, file.path);
-        await this.indexURLForFilePath(tx.store, file.path);
+        const updatedURLs = await this.removeEntriesForFilePath(
+          tx.store,
+          file.path
+        );
+        updatedURLs.add(await this.indexURLForFilePath(tx.store, file.path));
         await tx.done;
+        await Promise.all(
+          Array.from(updatedURLs.values()).map((url) =>
+            this.handleOnChange(url)
+          )
+        );
       }),
       this.vault.on("rename", async (file, oldPath) => {
         log.debug(`Handling rename event ${oldPath} --> ${file.path}`);
@@ -52,9 +71,17 @@ export class URLToPocketItemNoteIndex {
           URL_TO_ITEM_NOTE_STORE_NAME,
           "readwrite"
         );
-        await this.removeEntriesForFilePath(tx.store, oldPath);
-        await this.indexURLForFilePath(tx.store, file.path);
+        const updatedURLs = await this.removeEntriesForFilePath(
+          tx.store,
+          file.path
+        );
+        updatedURLs.add(await this.indexURLForFilePath(tx.store, file.path));
         await tx.done;
+        await Promise.all(
+          Array.from(updatedURLs.values()).map((url) =>
+            this.handleOnChange(url)
+          )
+        );
       }),
       this.vault.on("delete", async (file) => {
         log.debug(`Handling delete event ${file.path}`);
@@ -62,24 +89,32 @@ export class URLToPocketItemNoteIndex {
           URL_TO_ITEM_NOTE_STORE_NAME,
           "readwrite"
         );
-        await this.removeEntriesForFilePath(tx.store, file.path);
+        const updatedURLs = await this.removeEntriesForFilePath(
+          tx.store,
+          file.path
+        );
         await tx.done;
+        await Promise.all(
+          Array.from(updatedURLs.values()).map((url) =>
+            this.handleOnChange(url)
+          )
+        );
       }),
     ];
   };
 
   addEntry = async (
     store: IDBPURLToPocketItemNoteIndexRW,
-    url: string,
+    url: URL,
     filePath: string
   ): Promise<void> => {
     await store.put({ url: url, file_path: filePath });
   };
 
-  indexURLForFilePath = async (
+  private indexURLForFilePath = async (
     store: IDBPURLToPocketItemNoteIndexRW,
     filePath: string
-  ): Promise<void> => {
+  ): Promise<URL> => {
     const fileURL =
       this.metadataCache.getCache(filePath).frontmatter?.[URL_FRONT_MATTER_KEY];
     if (!fileURL) {
@@ -88,12 +123,13 @@ export class URLToPocketItemNoteIndex {
     }
     log.debug(`Indexing URL ${fileURL} for ${filePath}`);
     this.addEntry(store, fileURL, filePath);
+    return fileURL;
   };
 
-  removeEntriesForFilePath = async (
+  private removeEntriesForFilePath = async (
     store: IDBPURLToPocketItemNoteIndexRW,
     filePath: string
-  ): Promise<void> => {
+  ): Promise<Set<URL>> => {
     log.debug(`Removing URLToPocketItemNote index entries for ${filePath}`);
 
     let entriesForFilePath = await store
@@ -101,17 +137,20 @@ export class URLToPocketItemNoteIndex {
       .openCursor(filePath);
 
     const deletes = [];
+    const updatedURLs: Set<URL> = new Set();
 
     while (entriesForFilePath) {
+      updatedURLs.add(entriesForFilePath.value.url);
       deletes.push(entriesForFilePath.delete());
       entriesForFilePath = await entriesForFilePath.continue();
     }
 
     await Promise.all(deletes);
+    return updatedURLs;
   };
 
   lookupItemNoteForURL = async (
-    url: string
+    url: URL
   ): Promise<URLToPocketItemNoteEntry | null> => {
     const start = performance.now();
     const result = this.db.get(URL_TO_ITEM_NOTE_STORE_NAME, url);
@@ -128,8 +167,44 @@ export class URLToPocketItemNoteIndex {
     return this.db.getAll(URL_TO_ITEM_NOTE_STORE_NAME);
   };
 
+  subscribeOnChange = (url: URL, cb: OnChangeCallback) => {
+    const callbackId = getUniqueId();
+    if (!this.onChangeCallbacks.has(url)) {
+      this.onChangeCallbacks.set(url, new Map());
+    }
+    const callbackRegistry = this.onChangeCallbacks.get(url);
+    callbackRegistry.set(callbackId, cb);
+    return callbackId;
+  };
+
+  unsubscribeOnChange = (url: URL, cbId: CallbackId) => {
+    if (!this.onChangeCallbacks.has(url)) {
+      return;
+    }
+    const callbackRegistry = this.onChangeCallbacks.get(url);
+    callbackRegistry.delete(cbId);
+    if (callbackRegistry.size == 0) {
+      this.onChangeCallbacks.delete(url);
+    }
+  };
+
+  private handleOnChange = async (url: URL) => {
+    const callbacks = this.onChangeCallbacks.get(url)?.values();
+    if (!callbacks) {
+      return;
+    }
+
+    const cbExecs = Array.from(callbacks).map((cb) => cb());
+    await Promise.all(cbExecs);
+  };
+
   clearDatabase = async () => {
-    this.db.clear(URL_TO_ITEM_NOTE_STORE_NAME);
+    await this.db.clear(URL_TO_ITEM_NOTE_STORE_NAME);
+    await Promise.all(
+      Array.from(this.onChangeCallbacks.keys()).map((url) =>
+        this.handleOnChange(url)
+      )
+    );
   };
 
   static upgradeDatabase: PocketIDBUpgradeFn = async (

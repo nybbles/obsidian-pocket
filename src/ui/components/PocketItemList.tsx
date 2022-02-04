@@ -1,5 +1,4 @@
 import { stylesheet } from "astroturf";
-import log from "loglevel";
 import { MetadataCache } from "obsidian";
 import React, { useEffect, useState } from "react";
 import { PocketItemStore } from "src/data/PocketItemStore";
@@ -123,14 +122,14 @@ export const PocketItemList = ({
     return (
       <ul className={styles.list}>
         {items.map((item, idx) => {
-          log.warn(itemNotesExist[idx]);
           return (
             <li key={item.item_id} className={styles.item}>
               <PocketItem
                 item={item}
                 itemNoteExistsInitial={!!itemNotesExist[idx]}
+                urlToPocketItemNoteIndex={urlToPocketItemNoteIndex}
                 getItemNote={getItemNote(
-                  plugin.urlToItemNoteIndex,
+                  urlToPocketItemNoteIndex,
                   resolveItemNote
                 )}
                 tagNormalizer={getTagNormalizer({

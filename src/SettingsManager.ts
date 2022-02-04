@@ -1,6 +1,6 @@
 import update from "immutability-helper";
+import { CallbackId, CallbackRegistry } from "./CallbackRegistry";
 import { MultiWordTagConversion } from "./Tags";
-import { CallbackId, CallbackRegistry } from "./Types";
 import { getUniqueId } from "./utils";
 
 export interface PocketSettings {
@@ -31,7 +31,7 @@ export class SettingsManager {
 
   private onSettingsChangeCallbacks: Map<
     keyof PocketSettings,
-    CallbackRegistry<OnSettingsChangeCallback>
+    CallbackRegistry<CallbackId, OnSettingsChangeCallback>
   >;
 
   constructor({ loadSettings, saveSettings }: SettingsManagerParams) {
