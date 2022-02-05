@@ -113,7 +113,8 @@ export default class PocketSync extends Plugin {
     [this.urlToItemNoteIndex, eventRefs] = await openURLToPocketItemNoteIndex(
       this.pocketIDB,
       this.app.metadataCache,
-      this.app.vault
+      this.app.vault,
+      this.settingsManager
     );
 
     for (let eventRef of eventRefs) {

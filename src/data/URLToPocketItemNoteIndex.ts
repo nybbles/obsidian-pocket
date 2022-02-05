@@ -2,6 +2,7 @@ import { IDBPObjectStore } from "idb";
 import log from "loglevel";
 import { EventRef, MetadataCache, Vault } from "obsidian";
 import { CallbackId, CallbackRegistry } from "src/CallbackRegistry";
+import { SettingsManager } from "src/SettingsManager";
 import { getUniqueId } from "src/utils";
 import {
   PocketIDB,
@@ -25,7 +26,6 @@ type IDBPURLToPocketItemNoteIndexRW = IDBPObjectStore<
 
 export type URL = string;
 
-const URL_FRONT_MATTER_KEY = "URL";
 const KEY_PATH = "url";
 const FILE_PATH_INDEX_PATH = "file_path";
 
@@ -33,15 +33,23 @@ export class URLToPocketItemNoteIndex {
   db: PocketIDB;
   metadataCache: MetadataCache;
   vault: Vault;
+  settingsManager: SettingsManager;
   onChangeCallbacks: CallbackRegistry<
     URL,
     CallbackRegistry<CallbackId, OnChangeCallback>
   >;
 
-  constructor(db: PocketIDB, metadataCache: MetadataCache, vault: Vault) {
+  constructor(
+    db: PocketIDB,
+    metadataCache: MetadataCache,
+    vault: Vault,
+    settingsManager: SettingsManager
+  ) {
     this.db = db;
     this.metadataCache = metadataCache;
     this.vault = vault;
+    this.settingsManager = settingsManager;
+
     this.onChangeCallbacks = new Map();
   }
   private handleOnChangeForURLs = async (urls: Set<URL>) =>
@@ -98,8 +106,11 @@ export class URLToPocketItemNoteIndex {
     store: IDBPURLToPocketItemNoteIndexRW,
     filePath: string
   ): Promise<URL> => {
+    const frontMatterURLKey = this.settingsManager.getSetting(
+      "frontmatter-url-key"
+    );
     const fileURL =
-      this.metadataCache.getCache(filePath).frontmatter?.[URL_FRONT_MATTER_KEY];
+      this.metadataCache.getCache(filePath).frontmatter?.[frontMatterURLKey];
     if (!fileURL || typeof fileURL != "string") {
       log.debug(`No URL found for ${filePath}, skipping indexing`);
       return;
@@ -110,13 +121,14 @@ export class URLToPocketItemNoteIndex {
   };
 
   indexURLsForAllFilePaths = async () => {
+    const frontMatterURLKey = this.settingsManager.getSetting(
+      "frontmatter-url-key"
+    );
     const allFilesToURLs = this.vault
       .getMarkdownFiles()
       .map((file) => [
         file,
-        this.metadataCache.getFileCache(file).frontmatter?.[
-          URL_FRONT_MATTER_KEY
-        ],
+        this.metadataCache.getFileCache(file).frontmatter?.[frontMatterURLKey],
       ])
       .filter(([file, url]) => !!url && typeof url == "string");
 
@@ -235,12 +247,14 @@ export class URLToPocketItemNoteIndex {
 export const openURLToPocketItemNoteIndex = async (
   db: PocketIDB,
   metadataCache: MetadataCache,
-  vault: Vault
+  vault: Vault,
+  settingsManager: SettingsManager
 ): Promise<[URLToPocketItemNoteIndex, EventRef[]]> => {
   const urlToPocketItemNoteIndex = new URLToPocketItemNoteIndex(
     db,
     metadataCache,
-    vault
+    vault,
+    settingsManager
   );
   const eventRefs = urlToPocketItemNoteIndex.attachFileChangeListeners();
   return [urlToPocketItemNoteIndex, eventRefs];
