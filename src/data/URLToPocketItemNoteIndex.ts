@@ -120,7 +120,7 @@ export class URLToPocketItemNoteIndex {
     return fileURL;
   };
 
-  indexURLsForAllFilePaths = async () => {
+  indexURLsForAllFilePaths = async (): Promise<number> => {
     const frontMatterURLKey = this.settingsManager.getSetting(
       "frontmatter-url-key"
     );
@@ -149,6 +149,7 @@ export class URLToPocketItemNoteIndex {
     await tx.done;
 
     await this.handleOnChangeForURLs(indexedURLs);
+    return indexedURLs.size;
   };
 
   private removeEntriesForFilePath = async (

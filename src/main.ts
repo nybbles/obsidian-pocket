@@ -225,7 +225,11 @@ export default class PocketSync extends Plugin {
       id: "index-all-files-by-URL",
       name: "Index all files by URL",
       callback: async () => {
-        await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
+        const notice = new Notice("Indexing URLs for Pocket item notes");
+        const nIndexedURLs =
+          await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
+        notice.hide();
+        new Notice(`Found ${nIndexedURLs} new URLs`);
       },
     });
   };
