@@ -117,6 +117,10 @@ export default class PocketSync extends Plugin {
       this.settingsManager
     );
 
+    // always index on startup, because it could be that Pocket item notes were
+    // created on a different app, or indexing was never run
+    await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
+
     for (let eventRef of eventRefs) {
       this.registerEvent(eventRef);
     }
