@@ -28,6 +28,8 @@ import { createReactApp } from "./ui/ReactApp";
 import { PocketSettingTab } from "./ui/settings";
 import { ViewManager } from "./ui/ViewManager";
 
+const URL_INDEXING_DELAY_MS = 1000;
+
 export default class PocketSync extends Plugin {
   pocketIDB: PocketIDB;
   itemStore: PocketItemStore;
@@ -117,10 +119,6 @@ export default class PocketSync extends Plugin {
       this.settingsManager
     );
 
-    // always index on startup, because it could be that Pocket item notes were
-    // created on a different app, or indexing was never run
-    await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
-
     for (let eventRef of eventRefs) {
       this.registerEvent(eventRef);
     }
@@ -163,6 +161,13 @@ export default class PocketSync extends Plugin {
       POCKET_ITEM_LIST_VIEW_TYPE,
       (leaf) => new PocketItemListView(leaf, this)
     );
+
+    // always index on startup, because it could be that Pocket item notes were
+    // created on a different app, or indexing was never run. need to wait until
+    // metadata cache is initialized.
+    setTimeout(async () => {
+      await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
+    }, URL_INDEXING_DELAY_MS);
   }
 
   // Mount React app
