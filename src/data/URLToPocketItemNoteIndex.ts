@@ -52,6 +52,7 @@ export class URLToPocketItemNoteIndex {
 
     this.onChangeCallbacks = new Map();
   }
+
   private handleOnChangeForURLs = async (urls: Set<URL>) =>
     await Promise.all(
       Array.from(urls.values()).map((url) => this.handleOnChange(url))
