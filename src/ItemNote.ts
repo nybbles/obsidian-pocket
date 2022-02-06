@@ -8,6 +8,10 @@ import {
   Workspace,
 } from "obsidian";
 import {
+  URLToPocketItemNoteEntry,
+  URLToPocketItemNoteIndex,
+} from "./data/URLToPocketItemNoteIndex";
+import {
   PocketTags,
   pocketTagsToPocketTagList,
   SavedPocketItem,
@@ -38,28 +42,99 @@ const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
 export const linkpathForSavedPocketItem = (item: SavedPocketItem) =>
   sanitizeTitle(displayTextForSavedPocketItem(item));
 
-export type GetItemNoteFn = (item: SavedPocketItem) => TFile | null;
-
-const getItemNote =
+export const getAllItemNotes =
   (
+    urlToPocketItemNoteIndex: URLToPocketItemNoteIndex,
+    resolveItemNote: ResolveItemNoteFn
+  ) =>
+  async (items: SavedPocketItem[]) => {
+    const urlToItemNoteEntries =
+      await urlToPocketItemNoteIndex.getAllIndexEntries();
+    const urlToItemNoteLookup: { [url: string]: string } = {};
+
+    for (const entry of urlToItemNoteEntries) {
+      urlToItemNoteLookup[entry.url] = entry.file_path;
+    }
+
+    const result = [];
+    for (const item of items) {
+      const filePathByURL = urlToItemNoteLookup[item.resolved_url];
+      const entry = !!filePathByURL
+        ? { url: item.resolved_url, file_path: filePathByURL }
+        : null;
+      result.push(resolveItemNote(item, entry));
+    }
+
+    return result;
+  };
+
+export type GetItemNoteFn = (item: SavedPocketItem) => Promise<TFile | null>;
+export const getItemNote =
+  (
+    urlToPocketItemNoteIndex: URLToPocketItemNoteIndex,
+    resolveItemNote: ResolveItemNoteFn
+  ): GetItemNoteFn =>
+  async (item) => {
+    const byURL = await urlToPocketItemNoteIndex.lookupItemNoteForURL(
+      item.resolved_url
+    );
+
+    return resolveItemNote(item, byURL);
+  };
+
+export type ResolveItemNoteFn = (
+  item: SavedPocketItem,
+  urlToPocketItemNoteEntry?: URLToPocketItemNoteEntry
+) => TFile | null;
+
+export const resolveItemNote =
+  (
+    vault: Vault,
     metadataCache: MetadataCache,
     settingsManager: SettingsManager
-  ): GetItemNoteFn =>
-  (item) => {
+  ): ResolveItemNoteFn =>
+  (
+    item: SavedPocketItem,
+    urlToPocketItemNoteEntry?: URLToPocketItemNoteEntry
+  ) => {
+    // Try to resolve by URL
+    if (!!urlToPocketItemNoteEntry) {
+      const file = vault.getAbstractFileByPath(
+        urlToPocketItemNoteEntry.file_path
+      );
+      if (file instanceof TFile) {
+        return file;
+      } else {
+        throw new Error(
+          `got non-file result from vault for URL ${item.resolved_url}`
+        );
+      }
+    }
+
+    // Fall back to resolving by title
     const itemNotesFolder = getItemNotesFolder(settingsManager);
     const linkpath = linkpathForSavedPocketItem(item);
+
     return metadataCache.getFirstLinkpathDest(linkpath, itemNotesFolder);
   };
 
 export type DoesItemNoteExistFnFactory = (
+  vault: Vault,
   metadataCache: MetadataCache,
+  urlToPocketItemNoteIndex: URLToPocketItemNoteIndex,
   settingsManager: SettingsManager
 ) => DoesItemNoteExistFn;
-export type DoesItemNoteExistFn = (item: SavedPocketItem) => boolean;
+export type DoesItemNoteExistFn = (item: SavedPocketItem) => Promise<boolean>;
 
 export const doesItemNoteExist: DoesItemNoteExistFnFactory =
-  (metadataCache, settingsManager) => (item: SavedPocketItem) =>
-    !!getItemNote(metadataCache, settingsManager)(item);
+  (vault, metadataCache, urlToPocketItemNoteIndex, settingsManager) =>
+  async (item: SavedPocketItem) => {
+    const result = await getItemNote(
+      urlToPocketItemNoteIndex,
+      resolveItemNote(vault, metadataCache, settingsManager)
+    )(item);
+    return !!result;
+  };
 
 type TemplateContents = string | null;
 
@@ -161,10 +236,14 @@ export const createOrOpenItemNote =
     settingsManager: SettingsManager,
     workspace: Workspace,
     vault: Vault,
-    metadataCache: MetadataCache
+    metadataCache: MetadataCache,
+    urlToPocketItemNoteIndex: URLToPocketItemNoteIndex
   ): CreateOrOpenItemNoteFn =>
   async (pocketItem) => {
-    const itemNote = getItemNote(metadataCache, settingsManager)(pocketItem);
+    const itemNote = await getItemNote(
+      urlToPocketItemNoteIndex,
+      resolveItemNote(vault, metadataCache, settingsManager)
+    )(pocketItem);
     const itemNoteExists = !!itemNote;
 
     if (itemNoteExists) {

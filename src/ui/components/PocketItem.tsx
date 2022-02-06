@@ -1,9 +1,11 @@
 import { stylesheet } from "astroturf";
+import log from "loglevel";
 import { Platform } from "obsidian";
-import React, { MouseEvent } from "react";
+import React, { MouseEvent, useEffect, useState } from "react";
+import { URLToPocketItemNoteIndex } from "src/data/URLToPocketItemNoteIndex";
 import {
   CreateOrOpenItemNoteFn,
-  DoesItemNoteExistFn,
+  GetItemNoteFn,
   linkpathForSavedPocketItem,
 } from "src/ItemNote";
 import { OpenSearchForTagFn, TagNormalizationFn } from "src/Tags";
@@ -43,30 +45,28 @@ const styles = stylesheet`
 `;
 
 type NoteLinkProps = {
-  linkpath: string;
-  linkpathExists: boolean;
+  title: string;
+  noteExists: boolean;
   onClick: (event: MouseEvent) => Promise<void>;
 };
 
-const PocketItemNoteLink = ({
-  linkpath,
-  linkpathExists,
-  onClick,
-}: NoteLinkProps) => {
+const PocketItemNoteLink = ({ title, noteExists, onClick }: NoteLinkProps) => {
   return (
     <a
-      className={`internal-link ${linkpathExists ? "" : "is-unresolved"}`}
+      className={`internal-link ${noteExists ? "" : "is-unresolved"}`}
       onClick={onClick}
     >
-      {linkpath}
+      {title}
     </a>
   );
 };
 
 export type PocketItemProps = {
   item: SavedPocketItem;
+  itemNoteExistsInitial: boolean;
+  urlToPocketItemNoteIndex: URLToPocketItemNoteIndex;
+  getItemNote: GetItemNoteFn;
   tagNormalizer: TagNormalizationFn;
-  doesItemNoteExist: DoesItemNoteExistFn;
   createOrOpenItemNote: CreateOrOpenItemNoteFn;
   openSearchForTag: OpenSearchForTagFn;
 };
@@ -79,13 +79,34 @@ enum PocketItemClickAction {
 
 export const PocketItem = ({
   item,
+  itemNoteExistsInitial,
+  urlToPocketItemNoteIndex,
+  getItemNote,
   tagNormalizer,
-  doesItemNoteExist,
   createOrOpenItemNote,
   openSearchForTag,
 }: PocketItemProps) => {
-  const linkpath = linkpathForSavedPocketItem(item);
-  const linkpathExists = doesItemNoteExist(item);
+  const [itemNoteExists, setItemNoteExists] = useState<boolean>(
+    // item note exists initial state fetched in bulk for all items, to be
+    // performant.
+    itemNoteExistsInitial
+  );
+
+  // Subscribe to updates to URL to item note index after initial render
+  useEffect(() => {
+    const cbId = urlToPocketItemNoteIndex.subscribeOnChange(
+      item.resolved_url,
+      async () => {
+        const file = await getItemNote(item);
+        setItemNoteExists(!!file);
+      }
+    );
+    return () => {
+      urlToPocketItemNoteIndex.unsubscribeOnChange(item.resolved_url, cbId);
+    };
+  }, [urlToPocketItemNoteIndex]);
+
+  const title = linkpathForSavedPocketItem(item);
 
   const navigateToPocketURL = () => {
     openBrowserWindow(item.resolved_url);
@@ -118,8 +139,8 @@ export const PocketItem = ({
     <div className={styles.item}>
       <span className={styles.itemTitle}>
         <PocketItemNoteLink
-          linkpath={linkpath}
-          linkpathExists={linkpathExists}
+          title={title}
+          noteExists={itemNoteExists}
           onClick={async (event) => {
             const clickAction = getPocketItemClickAction(event);
             switch (clickAction) {

@@ -1,8 +1,7 @@
 import { stylesheet } from "astroturf";
-import update from "immutability-helper";
 import log from "loglevel";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import { PocketSettings, SettingsManager } from "src/SettingsManager";
+import { DEFAULT_POCKET_SETTINGS, SettingsManager } from "src/SettingsManager";
 import PocketSync from "../main";
 import {
   clearPocketAccessInfo,
@@ -74,7 +73,9 @@ const addClearLocalPocketDataButton = (
     .addButton((button) => {
       button.setButtonText(CLEAR_LOCAL_POCKET_DATA_CTA);
       button.onClick(async () => {
+        await plugin.metadataStore.clearDatabase();
         await plugin.itemStore.clearDatabase();
+        await plugin.urlToItemNoteIndex.clearDatabase();
         new Notice("Cleared locally-stored Pocket data");
       });
     });
@@ -174,7 +175,33 @@ const addPocketSyncTagSetting = (
       text.setPlaceholder("Specify a tag to limit syncs");
       text.setValue(settingsManager.getSetting("pocket-sync-tag"));
       text.onChange(async (newValue) => {
+        if (newValue.length == 0) {
+          newValue = null;
+        }
         await settingsManager.updateSetting("pocket-sync-tag", newValue);
+      });
+    });
+};
+
+const FRONT_MATTER_URL_KEY_CTA = "Front matter URL key";
+const FRONT_MATTER_URL_KEY_DESC = `Specify the key in the front matter to use
+when matching Pocket items to Obsidian notes.`;
+
+const addFrontMatterURLKeySetting = (
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
+) => {
+  new Setting(containerEl)
+    .setName(FRONT_MATTER_URL_KEY_CTA)
+    .setDesc(FRONT_MATTER_URL_KEY_DESC)
+    .addText((text) => {
+      text.setPlaceholder(DEFAULT_POCKET_SETTINGS["frontmatter-url-key"]);
+      text.setValue(settingsManager.getSetting("frontmatter-url-key"));
+      text.onChange(async (newValue) => {
+        if (newValue.length == 0) {
+          newValue = null;
+        }
+        await settingsManager.updateSetting("frontmatter-url-key", newValue);
       });
     });
 };
@@ -200,5 +227,6 @@ export class PocketSettingTab extends PluginSettingTab {
     addItemNotesLocationSetting(this.settingsManager, containerEl);
     addMultiWordTagConverterSetting(this.settingsManager, containerEl);
     addPocketSyncTagSetting(this.settingsManager, containerEl);
+    addFrontMatterURLKeySetting(this.settingsManager, containerEl);
   }
 }

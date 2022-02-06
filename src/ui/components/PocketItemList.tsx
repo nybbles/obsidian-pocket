@@ -2,7 +2,13 @@ import { stylesheet } from "astroturf";
 import { MetadataCache } from "obsidian";
 import React, { useEffect, useState } from "react";
 import { PocketItemStore } from "src/data/PocketItemStore";
-import { createOrOpenItemNote, doesItemNoteExist } from "src/ItemNote";
+import { URLToPocketItemNoteIndex } from "src/data/URLToPocketItemNoteIndex";
+import {
+  createOrOpenItemNote,
+  getAllItemNotes,
+  getItemNote,
+  resolveItemNote as resolveItemNoteFactory,
+} from "src/ItemNote";
 import PocketSync from "src/main";
 import { SavedPocketItem } from "src/pocket_api/PocketAPITypes";
 import { PocketSettings } from "src/SettingsManager";
@@ -26,17 +32,27 @@ const styles = stylesheet`
 export type PocketItemListProps = {
   itemStore: PocketItemStore;
   metadataCache: MetadataCache;
+  urlToPocketItemNoteIndex: URLToPocketItemNoteIndex;
   plugin: PocketSync;
 };
 
 export const PocketItemList = ({
   itemStore,
   metadataCache,
+  urlToPocketItemNoteIndex,
   plugin,
 }: PocketItemListProps) => {
   const settingsManager = plugin.settingsManager;
 
+  const resolveItemNote = resolveItemNoteFactory(
+    plugin.app.vault,
+    metadataCache,
+    settingsManager
+  );
+
   const [items, setItems] = useState<SavedPocketItem[]>([]);
+  const [itemNotesExist, setItemNotesExist] = useState<boolean[]>([]);
+
   const [multiWordTagConversion, setMultiWordTagConversion] =
     useState<MultiWordTagConversion>(
       settingsManager.getSetting(
@@ -44,12 +60,24 @@ export const PocketItemList = ({
       ) as MultiWordTagConversion
     );
 
-  // Load all items on initial render
+  // Load all items and check item notes' existence on initial render
   useEffect(() => {
     var subscribed = true;
     const fetch = async () => {
       const allItems = await itemStore.getAllItemsByTimeUpdated();
-      subscribed && setItems(allItems);
+      const allItemNotesExist = (
+        await getAllItemNotes(
+          urlToPocketItemNoteIndex,
+          resolveItemNote
+        )(allItems)
+      ).map((x) => !!x);
+
+      if (!subscribed) {
+        return;
+      }
+
+      setItemNotesExist(allItemNotesExist);
+      setItems(allItems);
     };
     fetch();
 
@@ -87,28 +115,33 @@ export const PocketItemList = ({
       settingsManager,
       plugin.app.workspace,
       plugin.app.vault,
-      plugin.app.metadataCache
+      plugin.app.metadataCache,
+      plugin.urlToItemNoteIndex
     );
 
     return (
       <ul className={styles.list}>
-        {items.map((item) => (
-          <li key={item.item_id} className={styles.item}>
-            <PocketItem
-              item={item}
-              tagNormalizer={getTagNormalizer({
-                multiWordTagConversion: multiWordTagConversion,
-                addHashtag: true,
-              })}
-              doesItemNoteExist={doesItemNoteExist(
-                metadataCache,
-                settingsManager
-              )}
-              createOrOpenItemNote={createOrOpen}
-              openSearchForTag={openSearchForTag(plugin.app)}
-            />
-          </li>
-        ))}
+        {items.map((item, idx) => {
+          return (
+            <li key={item.item_id} className={styles.item}>
+              <PocketItem
+                item={item}
+                itemNoteExistsInitial={!!itemNotesExist[idx]}
+                urlToPocketItemNoteIndex={urlToPocketItemNoteIndex}
+                getItemNote={getItemNote(
+                  urlToPocketItemNoteIndex,
+                  resolveItemNote
+                )}
+                tagNormalizer={getTagNormalizer({
+                  multiWordTagConversion: multiWordTagConversion,
+                  addHashtag: true,
+                })}
+                createOrOpenItemNote={createOrOpen}
+                openSearchForTag={openSearchForTag(plugin.app)}
+              />
+            </li>
+          );
+        })}
       </ul>
     );
   }

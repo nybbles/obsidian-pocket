@@ -1,8 +1,6 @@
-import { IDBPDatabase, IDBPObjectStore, openDB } from "idb";
+import { IDBPObjectStore } from "idb";
 import log from "loglevel";
-import { Notice } from "obsidian";
-import { CallbackId, CallbackRegistry } from "src/Types";
-import { UpdateTimestamp } from "../pocket_api/PocketAPI";
+import { CallbackId, CallbackRegistry } from "src/CallbackRegistry";
 import {
   isDeletedPocketItem,
   isSavedPocketItem,
@@ -11,12 +9,7 @@ import {
   SavedPocketItem,
 } from "../pocket_api/PocketAPITypes";
 import { getUniqueId } from "../utils";
-
-const DATABASE_NAME = "pocket_db";
-const ITEM_STORE_NAME = "items";
-
-const METADATA_STORE_NAME = "metadata";
-const LAST_UPDATED_TIMESTAMP_KEY = "last_updated_timestamp";
+import { ITEM_STORE_NAME, PocketIDB, PocketIDBUpgradeFn } from "./PocketIDB";
 
 export type OnChangeCallback = () => Promise<void>;
 
@@ -28,21 +21,18 @@ type IDBPPocketItemStoreRW = IDBPObjectStore<
 >;
 
 export class PocketItemStore {
-  db: IDBPDatabase;
-  onChangeCallbacks: CallbackRegistry<OnChangeCallback>;
+  db: PocketIDB;
+  onChangeCallbacks: CallbackRegistry<CallbackId, OnChangeCallback>;
 
   static isItemValid = (item: SavedPocketItem) =>
     !item.resolved_title && !item.resolved_url;
 
-  constructor(db: IDBPDatabase) {
+  constructor(db: PocketIDB) {
     this.db = db;
     this.onChangeCallbacks = new Map();
   }
 
-  mergeUpdates = async (
-    lastUpdateTimestamp: UpdateTimestamp,
-    items: PocketItemRecord
-  ): Promise<void> => {
+  mergeUpdates = async (items: PocketItemRecord): Promise<void> => {
     log.debug("Applying updates to Pocket item store");
 
     const tx = this.db.transaction(ITEM_STORE_NAME, "readwrite");
@@ -62,7 +52,6 @@ export class PocketItemStore {
 
     // Wait on all changes, update timestamp, then trigger registered onChange handlers
     log.debug("Updates applied to Pocket item store");
-    this.setLastUpdateTimestamp(lastUpdateTimestamp);
     log.debug("Running Pocket item store onChange handlers");
     await this.handleOnChange();
   };
@@ -105,28 +94,6 @@ export class PocketItemStore {
     triggerOnChangeHandlers && (await this.handleOnChange());
   };
 
-  // This Unix timestamp is the last time that the Pocket item store was synced
-  // via the Pocket API. It is used in subsequent requests to only get updates
-  // since the timestamp. If the timestamp is null, it means that no requests
-  // have been done so far.
-
-  setLastUpdateTimestamp = async (
-    timestamp: UpdateTimestamp,
-    triggerOnChangeHandlers?: boolean
-  ): Promise<void> => {
-    log.debug("Updating update timestamp in Pocket item store");
-    await this.db.put(
-      METADATA_STORE_NAME,
-      timestamp,
-      LAST_UPDATED_TIMESTAMP_KEY
-    );
-    triggerOnChangeHandlers && (await this.handleOnChange());
-  };
-
-  getLastUpdateTimestamp = async (): Promise<UpdateTimestamp | null> => {
-    return this.db.get(METADATA_STORE_NAME, LAST_UPDATED_TIMESTAMP_KEY);
-  };
-
   subscribeOnChange = (cb: OnChangeCallback): CallbackId => {
     const callbackId = getUniqueId();
     this.onChangeCallbacks.set(callbackId, cb);
@@ -146,57 +113,33 @@ export class PocketItemStore {
 
   clearDatabase = async () => {
     await this.db.clear(ITEM_STORE_NAME);
-    await this.db.clear(METADATA_STORE_NAME);
     await this.handleOnChange();
   };
-}
 
-export const openPocketItemStore = async (): Promise<PocketItemStore> => {
-  const dbVersion = 4;
-  const db = await openDB(DATABASE_NAME, dbVersion, {
-    upgrade: async (db, oldVersion, newVersion, tx) => {
-      if (oldVersion !== newVersion) {
-        log.info(
-          `Upgrading Pocket item store to version ${newVersion} from version ${oldVersion}`
-        );
-      }
+  static upgradeDatabase: PocketIDBUpgradeFn = async (
+    db,
+    oldVersion,
+    newVersion,
+    tx
+  ) => {
+    switch (oldVersion) {
+      case 0:
+        db.createObjectStore(ITEM_STORE_NAME, {
+          keyPath: "item_id",
+        });
+      case 1:
+        tx.objectStore(ITEM_STORE_NAME).createIndex("sort_id", "sort_id", {
+          unique: false,
+        });
 
-      switch (oldVersion) {
-        case 0:
-          db.createObjectStore(ITEM_STORE_NAME, {
-            keyPath: "item_id",
-          });
-          db.createObjectStore(METADATA_STORE_NAME);
-        case 1:
-          tx.objectStore(ITEM_STORE_NAME).createIndex("sort_id", "sort_id", {
+      case 3:
+        tx.objectStore(ITEM_STORE_NAME).createIndex(
+          "time_updated",
+          "time_updated",
+          {
             unique: false,
-          });
-        case 2:
-          const itemsExist =
-            (await tx.objectStore(ITEM_STORE_NAME).count()) !== 0;
-          const databaseBeingCreated = oldVersion === 0;
-          const resetFetchTimestamp = itemsExist && !databaseBeingCreated;
-
-          if (resetFetchTimestamp) {
-            await tx.objectStore(METADATA_STORE_NAME).clear();
-            new Notice(
-              "Next Pocket sync will fetch full details of Pocket items, including tags",
-              0
-            );
           }
-        case 3:
-          tx.objectStore(ITEM_STORE_NAME).createIndex(
-            "time_updated",
-            "time_updated",
-            {
-              unique: false,
-            }
-          );
-      }
-    },
-  });
-  return new PocketItemStore(db);
-};
-
-export const closePocketItemStore = (pocketItemStore: PocketItemStore) =>
-  pocketItemStore.db.close();
+        );
+    }
+  };
+}

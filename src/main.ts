@@ -1,12 +1,14 @@
 import log from "loglevel";
 import { Notice, Plugin } from "obsidian";
 import ReactDOM from "react-dom";
-import {
-  closePocketItemStore,
-  openPocketItemStore,
-  PocketItemStore,
-} from "./data/PocketItemStore";
+import { MetadataStore } from "./data/MetadataStore";
+import { closePocketIDB, openPocketIDB, PocketIDB } from "./data/PocketIDB";
+import { PocketItemStore } from "./data/PocketItemStore";
 import { doPocketSync } from "./data/PocketSync";
+import {
+  openURLToPocketItemNoteIndex,
+  URLToPocketItemNoteIndex,
+} from "./data/URLToPocketItemNoteIndex";
 import {
   buildPocketAPI,
   PocketAPI,
@@ -26,8 +28,13 @@ import { createReactApp } from "./ui/ReactApp";
 import { PocketSettingTab } from "./ui/settings";
 import { ViewManager } from "./ui/ViewManager";
 
+const URL_INDEXING_DELAY_MS = 1000;
+
 export default class PocketSync extends Plugin {
+  pocketIDB: PocketIDB;
   itemStore: PocketItemStore;
+  metadataStore: MetadataStore;
+  urlToItemNoteIndex: URLToPocketItemNoteIndex;
   appEl: HTMLDivElement;
   viewManager: ViewManager;
   pocketUsername: PocketUsername | null;
@@ -51,6 +58,7 @@ export default class PocketSync extends Plugin {
     const pocketSyncTag = this.settingsManager.getSetting("pocket-sync-tag");
     this.pendingSync = doPocketSync(
       this.itemStore,
+      this.metadataStore,
       this.pocketAPI,
       accessInfo,
       pocketSyncTag
@@ -85,10 +93,37 @@ export default class PocketSync extends Plugin {
 
     this.pocketAPI = buildPocketAPI();
 
-    // Set up Pocket item store
+    // Set up Pocket IDB and dependent stores
+    log.debug("Opening Pocket IDB");
+    this.pocketIDB = await openPocketIDB([
+      PocketItemStore.upgradeDatabase,
+      MetadataStore.upgradeDatabase,
+      URLToPocketItemNoteIndex.upgradeDatabase,
+    ]);
+    log.debug("Pocket IDB opened");
+
     log.debug("Opening Pocket item store");
-    this.itemStore = await openPocketItemStore();
+    this.itemStore = new PocketItemStore(this.pocketIDB);
     log.debug("Pocket item store opened");
+
+    log.debug("Opening metadata store");
+    this.metadataStore = new MetadataStore(this.pocketIDB);
+    log.debug("metadata store opened");
+
+    log.debug("Opening URL to Pocket item note index");
+    let eventRefs = undefined;
+    [this.urlToItemNoteIndex, eventRefs] = await openURLToPocketItemNoteIndex(
+      this.pocketIDB,
+      this.app.metadataCache,
+      this.app.vault,
+      this.settingsManager
+    );
+
+    for (let eventRef of eventRefs) {
+      this.registerEvent(eventRef);
+    }
+
+    log.debug("URL to Pocket item note index opened");
 
     this.addCommands();
     this.addSettingTab(
@@ -126,6 +161,13 @@ export default class PocketSync extends Plugin {
       POCKET_ITEM_LIST_VIEW_TYPE,
       (leaf) => new PocketItemListView(leaf, this)
     );
+
+    // always index on startup, because it could be that Pocket item notes were
+    // created on a different app, or indexing was never run. need to wait until
+    // metadata cache is initialized.
+    setTimeout(async () => {
+      await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
+    }, URL_INDEXING_DELAY_MS);
   }
 
   // Mount React app
@@ -150,8 +192,8 @@ export default class PocketSync extends Plugin {
       this.appEl.detach();
     }
 
-    log.debug("Closing Pocket item store");
-    closePocketItemStore(this.itemStore);
+    log.debug("Closing Pocket IDB");
+    closePocketIDB(this.pocketIDB);
     this.itemStore = null;
 
     this.pocketAPI = null;
@@ -175,16 +217,28 @@ export default class PocketSync extends Plugin {
     this.addCommand({
       id: "open-pocket-list",
       name: "Open Pocket list",
-      callback: () => {
-        this.openPocketList();
+      callback: async () => {
+        await this.openPocketList();
       },
     });
 
     this.addCommand({
       id: "sync-pocket-list",
       name: "Sync Pocket list",
-      callback: () => {
-        this.syncPocketItems();
+      callback: async () => {
+        await this.syncPocketItems();
+      },
+    });
+
+    this.addCommand({
+      id: "index-all-files-by-URL",
+      name: "Index all files by URL",
+      callback: async () => {
+        const notice = new Notice("Indexing URLs for Pocket item notes");
+        const nIndexedURLs =
+          await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
+        notice.hide();
+        new Notice(`Found ${nIndexedURLs} new URLs`);
       },
     });
   };

@@ -1,6 +1,6 @@
 import update from "immutability-helper";
+import { CallbackId, CallbackRegistry } from "./CallbackRegistry";
 import { MultiWordTagConversion } from "./Tags";
-import { CallbackId, CallbackRegistry } from "./Types";
 import { getUniqueId } from "./utils";
 
 export interface PocketSettings {
@@ -8,10 +8,12 @@ export interface PocketSettings {
   "item-notes-folder"?: string;
   "multi-word-tag-converter"?: MultiWordTagConversion;
   "pocket-sync-tag"?: string;
+  "frontmatter-url-key"?: string;
 }
 
-const DEFAULT_POCKET_SETTINGS: PocketSettings = {
+export const DEFAULT_POCKET_SETTINGS: PocketSettings = {
   "multi-word-tag-converter": "snake-case",
+  "frontmatter-url-key": "URL",
 };
 
 export type OnSettingsChangeCallback = () => Promise<void>;
@@ -31,7 +33,7 @@ export class SettingsManager {
 
   private onSettingsChangeCallbacks: Map<
     keyof PocketSettings,
-    CallbackRegistry<OnSettingsChangeCallback>
+    CallbackRegistry<CallbackId, OnSettingsChangeCallback>
   >;
 
   constructor({ loadSettings, saveSettings }: SettingsManagerParams) {
