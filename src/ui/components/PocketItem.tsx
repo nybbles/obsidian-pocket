@@ -19,8 +19,8 @@ import {
 
 const styles = stylesheet`
   .item {
-    color: black;
-    border: 1px solid black;
+    color: var(--background-modifier-border);
+    border: 1px solid var(--background-modifier-border);
     display: block;
 
     padding: 4px 8px;
