@@ -46,6 +46,10 @@ search for "Pocket" to see the list of available commands. The command to open
 the Pocket list is "Open Pocket list". The Pocket list is shown in a screenshot
 above.
 
+The Pocket list can be used to browse through the items you've saved to Pocket
+and to create a note for any Pocket item by clicking on its title. You can also
+go directly to the URL for the Pocket item. See below for more details.
+
 ### Pocket tags in Obsidian
 
 Pocket tags are synced and presented in the Pocket list. Pocket supports tags
@@ -68,18 +72,34 @@ notes). They do not affect already-existing Obsidian tags or Pocket tags.
 
 Click on any Pocket item's title to create a note (or navigate to an existing
 note) for that Pocket item. Notes for Pocket items will be created in the Pocket
-item notes folder, which can be configured in settings.
+item notes folder, which can be configured in settings. If no Pocket item notes
+folder is set, then Pocket item notes will be created in the root folder.
+
+A template for new Pocket item notes can be specified in settings.
 
 Open the Pocket item URL in your browser using Meta+click for Linux and Mac OS
 (e.g. command+click on Mac OS) and using Alt+click for Windows.
 
-Meta+click (e.g. command+click on Mac OS) to open the Pocket item URL in your browser.
+Notes in Obisidan are matched to Pocket items based on a specific tag in their
+[frontmatter](https://help.obsidian.md/Advanced+topics/YAML+front+matter). The
+tag that is used is "URL" by default, but can be changed in settings.
 
-Notes in Obisidan are matched to Pocket items based on their name. If you find
-this setup limiting, please file a feature request (see bottom of this README
-for how to do that).
+This means that while Pocket item notes are created by default in the Pocket
+items notes folder, they can be moved elsewhere and/or renamed without breaking
+the connection to the Pocket item with matching URL. It also means that you can
+create notes with the URL frontmatter and they will be automatically connected
+to the relevant Pocket item note with the matching URL, although the Pocket item
+template would not be used in that case.
 
-A template for new Pocket item notes can be specified in settings.
+Use the "Index all files by URL" command to ensure that `obsidian-pocket` knows
+about all files that contain a frontmatter tag for URL, thereby allow it to
+match those notes to Pocket items. This index is maintained by `obsidian-pocket`
+automatically, so you should not need to run it.
+
+An Obsidian note can be matched to a Pocket item if it is in the Pocket item
+notes folder and has the same title as the Pocket item. This only happens as a
+fallback when there is no Obsidian note with a frontmatter tag for URL that
+matches the Pocket item.
 
 ## Using templates for Pocket notes
 
