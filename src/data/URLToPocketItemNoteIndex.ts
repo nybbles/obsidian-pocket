@@ -230,18 +230,20 @@ export class URLToPocketItemNoteIndex {
     newVersion,
     tx
   ) => {
-    switch (oldVersion) {
-      case 4:
-        db.createObjectStore(URL_TO_ITEM_NOTE_STORE_NAME, {
-          keyPath: KEY_PATH,
-        });
-        tx.objectStore(URL_TO_ITEM_NOTE_STORE_NAME).createIndex(
-          FILE_PATH_INDEX_PATH,
-          FILE_PATH_INDEX_PATH,
-          {
-            unique: false,
-          }
-        );
+    if (
+      oldVersion <= 5 &&
+      !db.objectStoreNames.contains(URL_TO_ITEM_NOTE_STORE_NAME)
+    ) {
+      db.createObjectStore(URL_TO_ITEM_NOTE_STORE_NAME, {
+        keyPath: KEY_PATH,
+      });
+      tx.objectStore(URL_TO_ITEM_NOTE_STORE_NAME).createIndex(
+        FILE_PATH_INDEX_PATH,
+        FILE_PATH_INDEX_PATH,
+        {
+          unique: false,
+        }
+      );
     }
   };
 }
