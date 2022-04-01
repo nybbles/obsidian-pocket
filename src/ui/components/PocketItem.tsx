@@ -1,5 +1,4 @@
 import { stylesheet } from "astroturf";
-import log from "loglevel";
 import { Platform } from "obsidian";
 import React, { MouseEvent, useEffect, useState } from "react";
 import { URLToPocketItemNoteIndex } from "src/data/URLToPocketItemNoteIndex";
@@ -10,7 +9,11 @@ import {
 } from "src/ItemNote";
 import { OpenSearchForTagFn, TagNormalizationFn } from "src/Tags";
 import { PocketItemTagList } from "src/ui/components/PocketItemTagList";
-import { getPlatform, openBrowserWindow } from "src/utils";
+import {
+  getPlatform,
+  getPocketItemPocketURL,
+  openBrowserWindow,
+} from "src/utils";
 import {
   PocketTag,
   pocketTagsToPocketTagList,
@@ -25,14 +28,29 @@ const styles = stylesheet`
 
     padding: 4px 8px;
   }
+
   .item > span {
     display: block;
   }
 
+  .header {
+    flex-grow: 1;
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+
+    /* emulating the not-well-supported behavior of flexbox gap */
+    --gap: 8px;
+    margin: 0 calc(-1 * var(--gap)) 0 0;
+    width: calc(100% + var(--gap));
+  }
+
+  .header > * {
+    margin: 0 var(--gap) 0 0;
+  }
+
   .itemTitle {
     font-weight: 600;
-    flex-grow: 1;
-    width: 100%;
   }
 
   .itemExcerpt {
@@ -41,6 +59,10 @@ const styles = stylesheet`
     flex-grow: 1;
     width: 100%;
     color: var(--text-normal);
+  }
+
+  .externalLink {
+    display: inline-block;
   }
 `;
 
@@ -58,6 +80,21 @@ const PocketItemNoteLink = ({ title, noteExists, onClick }: NoteLinkProps) => {
     >
       {title}
     </a>
+  );
+};
+
+type ExternalLinkProps = {
+  title: string;
+  url: string;
+};
+
+const PocketItemExternalLink = ({ title, url }: ExternalLinkProps) => {
+  return (
+    <div className={styles.externalLink}>
+      <a onClick={() => openBrowserWindow(url)} href={url}>
+        {title}
+      </a>
+    </div>
   );
 };
 
@@ -108,7 +145,7 @@ export const PocketItem = ({
 
   const title = linkpathForSavedPocketItem(item);
 
-  const navigateToPocketURL = () => {
+  const navigateToItemURL = () => {
     openBrowserWindow(item.resolved_url);
   };
 
@@ -137,25 +174,34 @@ export const PocketItem = ({
 
   return (
     <div className={styles.item}>
-      <span className={styles.itemTitle}>
-        <PocketItemNoteLink
-          title={title}
-          noteExists={itemNoteExists}
-          onClick={async (event) => {
-            const clickAction = getPocketItemClickAction(event);
-            switch (clickAction) {
-              case PocketItemClickAction.NavigateToPocketURL:
-                navigateToPocketURL();
-                break;
-              case PocketItemClickAction.CreateOrOpenItemNote:
-                await createOrOpenItemNote(item);
-                break;
-              case PocketItemClickAction.Noop:
-                break;
-              default:
-                throw new Error(`Unknown PocketItemClickAction ${clickAction}`);
-            }
-          }}
+      <span className={styles.header}>
+        <span className={styles.itemTitle}>
+          <PocketItemNoteLink
+            title={title}
+            noteExists={itemNoteExists}
+            onClick={async (event) => {
+              const clickAction = getPocketItemClickAction(event);
+              switch (clickAction) {
+                case PocketItemClickAction.NavigateToPocketURL:
+                  navigateToItemURL();
+                  break;
+                case PocketItemClickAction.CreateOrOpenItemNote:
+                  await createOrOpenItemNote(item);
+                  break;
+                case PocketItemClickAction.Noop:
+                  break;
+                default:
+                  throw new Error(
+                    `Unknown PocketItemClickAction ${clickAction}`
+                  );
+              }
+            }}
+          />
+        </span>
+        <PocketItemExternalLink title="Open" url={item.resolved_url} />
+        <PocketItemExternalLink
+          title="Open in Pocket"
+          url={getPocketItemPocketURL(item)}
         />
       </span>
       {item.excerpt && (

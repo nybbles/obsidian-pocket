@@ -22,7 +22,7 @@ import {
   MultiWordTagConversion,
   TagNormalizationFn,
 } from "./Tags";
-import { ensureFolderExists } from "./utils";
+import { ensureFolderExists, getPocketItemPocketURL } from "./utils";
 
 const getItemNotesFolder = (settingsManager: SettingsManager) =>
   settingsManager.getSetting("item-notes-folder") ?? "/";
@@ -204,6 +204,7 @@ const generateInitialItemNoteContents = (
     ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
     ["tags", (item) => hashtagSubstitutor(true)(item.tags)],
     ["tags-no-hash", (item) => hashtagSubstitutor(false)(item.tags)],
+    ["pocket-url", (item) => getPocketItemPocketURL(item)],
   ]);
 
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {

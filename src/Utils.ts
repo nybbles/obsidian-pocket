@@ -1,4 +1,5 @@
 import { Platform, Vault } from "obsidian";
+import { PocketItem } from "./pocket_api/PocketAPITypes";
 import { SupportedDesktopPlatform, SupportedPlatform } from "./Types";
 
 export const openBrowserWindow = (url: string) => window.location.assign(url);
@@ -41,3 +42,7 @@ export const getPlatform = (): SupportedPlatform =>
     : Platform.isIosApp
     ? "ios"
     : "android";
+
+export const getPocketItemPocketURL = (item: PocketItem): string => {
+  return `https://getpocket.com/read/${item.item_id}`;
+};
