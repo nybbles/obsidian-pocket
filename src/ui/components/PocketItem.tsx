@@ -34,14 +34,19 @@ const styles = stylesheet`
   }
 
   .header {
-    flex-grow: 1
+    flex-grow: 1;
     display: flex;
     justify-content: flex-start;
     width: 100%;
+
+    /* emulating the not-well-supported behavior of flexbox gap */
+    --gap: 8px;
+    margin: 0 calc(-1 * var(--gap)) 0 0;
+    width: calc(100% + var(--gap));
   }
 
-  .header > a {
-    padding-left: 8px;
+  .header > * {
+    margin: 0 var(--gap) 0 0;
   }
 
   .itemTitle {
@@ -54,6 +59,10 @@ const styles = stylesheet`
     flex-grow: 1;
     width: 100%;
     color: var(--text-normal);
+  }
+
+  .externalLink {
+    display: inline-block;
   }
 `;
 
@@ -81,9 +90,11 @@ type ExternalLinkProps = {
 
 const PocketItemExternalLink = ({ title, url }: ExternalLinkProps) => {
   return (
-    <a onClick={() => openBrowserWindow(url)} href={url}>
-      {title}
-    </a>
+    <div className={styles.externalLink}>
+      <a onClick={() => openBrowserWindow(url)} href={url}>
+        {title}
+      </a>
+    </div>
   );
 };
 
@@ -187,11 +198,11 @@ export const PocketItem = ({
             }}
           />
         </span>
+        <PocketItemExternalLink title="Open" url={item.resolved_url} />
         <PocketItemExternalLink
           title="Open in Pocket"
           url={getPocketItemPocketURL(item)}
         />
-        <PocketItemExternalLink title="Open Original" url={item.resolved_url} />
       </span>
       {item.excerpt && (
         <span className={styles.itemExcerpt}>{item.excerpt}</span>
