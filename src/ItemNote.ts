@@ -204,6 +204,13 @@ const generateInitialItemNoteContents = (
     ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
     ["tags", (item) => hashtagSubstitutor(true)(item.tags)],
     ["tags-no-hash", (item) => hashtagSubstitutor(false)(item.tags)],
+    [
+      "pocket-url",
+      (item) =>
+        item.item_id
+          ? `https://getpocket.com/read/${item.item_id}`
+          : "Missing Pocket URL",
+    ],
   ]);
 
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {

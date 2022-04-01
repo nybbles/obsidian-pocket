@@ -114,6 +114,7 @@ following variables are supported:
 | `{{excerpt}}`      | The excerpt extracted by Pocket for the Pocket item     |
 | `{{tags-no-hash}}` | The Pocket tags for the Pocket item                     |
 | `{{tags}}`         | The Pocket tags for the Pocket item, with "#" prepended |
+| `{{pocket-url}}`   | The URL to open the Pocket item in Pocket               |
 
 Here's an example template that will put this metadata into the [YAML
 frontmatter](https://help.obsidian.md/Advanced+topics/YAML+front+matter) of the
