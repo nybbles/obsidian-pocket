@@ -4,6 +4,7 @@ import {
   normalizePath,
   Notice,
   TFile,
+  TFolder,
   Vault,
   Workspace,
 } from "obsidian";
@@ -104,7 +105,22 @@ export const resolveItemNote =
       );
       if (file instanceof TFile) {
         return file;
+      } else if (file instanceof TFolder) {
+        log.warn(
+          `URL to Pocket item note index inconsistent: got folder instead of
+          file at path ${urlToPocketItemNoteEntry.file_path} for URL
+          ${item.resolved_url}. Was the Pocket item note moved while
+          obsidian-pocket was inactive?`
+        );
+      } else if (file === null) {
+        log.warn(
+          `URL to Pocket item note index inconsistent: could not find any file
+          at path ${urlToPocketItemNoteEntry.file_path} for URL
+          ${item.resolved_url}. Was the Pocket item note moved while
+          obsidian-pocket was inactive?`
+        );
       } else {
+        log.error(file);
         throw new Error(
           `got non-file result from vault for URL ${item.resolved_url}`
         );
@@ -205,6 +221,13 @@ const generateInitialItemNoteContents = (
     ["tags", (item) => hashtagSubstitutor(true)(item.tags)],
     ["tags-no-hash", (item) => hashtagSubstitutor(false)(item.tags)],
     ["pocket-url", (item) => getPocketItemPocketURL(item)],
+    [
+      "image",
+      (item) => {
+        const image_src = item.image?.src;
+        return image_src ? `![image](${image_src})` : "";
+      },
+    ],
   ]);
 
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {

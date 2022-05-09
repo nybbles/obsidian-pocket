@@ -24,12 +24,20 @@ export interface PocketTag {
 
 export type PocketTags = Record<string, PocketTag>;
 
+export interface Image {
+  height: number;
+  width: number;
+  item_id: string;
+  src: string;
+}
+
 export interface SavedPocketItem extends BasePocketItem {
   status: PocketItemStatus.Unread | PocketItemStatus.Archived;
   resolved_title: string;
   resolved_url: string;
   excerpt: string;
   tags: PocketTags;
+  image?: Image;
 }
 
 export const pocketTagsToPocketTagList = (tags: PocketTags): PocketTag[] =>
