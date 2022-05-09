@@ -31,7 +31,7 @@ export class PocketItemListView extends ItemView {
 
   getPortal() {
     return (
-      <div className={"markdown-preview-view"}>
+      <div className={"markdown-rendered"}>
         <PocketItemList
           itemStore={this.plugin.itemStore}
           metadataCache={this.app.metadataCache}
