@@ -75,6 +75,10 @@ type NoteLinkProps = {
 const PocketItemNoteLink = ({ title, noteExists, onClick }: NoteLinkProps) => {
   return (
     <a
+      data-href={title}
+      href={title}
+      target="_blank"
+      rel="noopener"
       className={`internal-link ${noteExists ? "" : "is-unresolved"}`}
       onClick={onClick}
     >
@@ -91,7 +95,7 @@ type ExternalLinkProps = {
 const PocketItemExternalLink = ({ title, url }: ExternalLinkProps) => {
   return (
     <div className={styles.externalLink}>
-      <a onClick={() => openBrowserWindow(url)}>{title}</a>
+      <a href={url}>{title}</a>
     </div>
   );
 };
