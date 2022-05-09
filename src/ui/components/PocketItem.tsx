@@ -91,9 +91,7 @@ type ExternalLinkProps = {
 const PocketItemExternalLink = ({ title, url }: ExternalLinkProps) => {
   return (
     <div className={styles.externalLink}>
-      <a onClick={() => openBrowserWindow(url)} href={url}>
-        {title}
-      </a>
+      <a onClick={() => openBrowserWindow(url)}>{title}</a>
     </div>
   );
 };
