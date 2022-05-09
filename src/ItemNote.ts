@@ -232,6 +232,19 @@ const openItemNote = async (workspace: Workspace, existingItemNote: TFile) => {
   await workspace.activeLeaf.openFile(existingItemNote);
 };
 
+const DEFAULT_TEMPLATE = `
+---
+Title: "{{title}}"
+URL: {{url}}
+Tags: [pocket, {{tags-no-hash}}]
+Excerpt: >
+    {{excerpt}}
+---
+{{url}}
+{{tags}}
+{{image}}
+`;
+
 export const createOrOpenItemNote =
   (
     settingsManager: SettingsManager,
@@ -256,7 +269,7 @@ export const createOrOpenItemNote =
           settingsManager.getSetting("item-note-template");
         const templateContents = templateSetting
           ? await loadTemplate(vault, metadataCache)(templateSetting)
-          : "";
+          : DEFAULT_TEMPLATE;
         const fullpath = fullpathForPocketItem(settingsManager, pocketItem);
 
         ensureFolderExists(vault, getItemNotesFolder(settingsManager));
