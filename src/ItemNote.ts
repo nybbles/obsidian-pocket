@@ -25,8 +25,10 @@ import {
 } from "./Tags";
 import { ensureFolderExists, getPocketItemPocketURL } from "./utils";
 
+const DEFAULT_ITEM_NOTES_FOLDER = "/";
+
 const getItemNotesFolder = (settingsManager: SettingsManager) =>
-  settingsManager.getSetting("item-notes-folder") ?? "/";
+  settingsManager.getSetting("item-notes-folder") ?? DEFAULT_ITEM_NOTES_FOLDER;
 
 export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
   if (!item.resolved_title && !item.resolved_url) {
