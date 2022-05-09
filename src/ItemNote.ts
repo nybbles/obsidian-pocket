@@ -221,6 +221,13 @@ const generateInitialItemNoteContents = (
     ["tags", (item) => hashtagSubstitutor(true)(item.tags)],
     ["tags-no-hash", (item) => hashtagSubstitutor(false)(item.tags)],
     ["pocket-url", (item) => getPocketItemPocketURL(item)],
+    [
+      "image",
+      (item) => {
+        const image_src = item.image?.src;
+        return image_src ? `![image](${image_src})` : "";
+      },
+    ],
   ]);
 
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {
