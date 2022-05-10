@@ -131,24 +131,6 @@ export const resolveItemNote =
     return;
   };
 
-export type DoesItemNoteExistFnFactory = (
-  vault: Vault,
-  metadataCache: MetadataCache,
-  urlToPocketItemNoteIndex: URLToPocketItemNoteIndex,
-  settingsManager: SettingsManager
-) => DoesItemNoteExistFn;
-export type DoesItemNoteExistFn = (item: SavedPocketItem) => Promise<boolean>;
-
-export const doesItemNoteExist: DoesItemNoteExistFnFactory =
-  (vault, metadataCache, urlToPocketItemNoteIndex, settingsManager) =>
-  async (item: SavedPocketItem) => {
-    const result = await getItemNote(
-      urlToPocketItemNoteIndex,
-      resolveItemNote(vault, metadataCache, settingsManager)
-    )(item);
-    return !!result;
-  };
-
 type TemplateContents = string | null;
 
 const loadTemplate =
