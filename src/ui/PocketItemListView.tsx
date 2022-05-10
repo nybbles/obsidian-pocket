@@ -34,8 +34,8 @@ export class PocketItemListView extends ItemView {
       <div className={"markdown-rendered"}>
         <PocketItemList
           itemStore={this.plugin.itemStore}
-          metadataCache={this.app.metadataCache}
           urlToPocketItemNoteIndex={this.plugin.urlToItemNoteIndex}
+          resolveItemNote={this.plugin.resolveItemNote}
           plugin={this.plugin}
         />
       </div>

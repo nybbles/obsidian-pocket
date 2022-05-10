@@ -10,6 +10,12 @@ import {
   URLToPocketItemNoteIndex,
 } from "./data/URLToPocketItemNoteIndex";
 import {
+  bulkCreateItemNotes,
+  getAllItemNotes,
+  resolveItemNote,
+  ResolveItemNoteFn,
+} from "./ItemNote";
+import {
   buildPocketAPI,
   PocketAPI,
   Username as PocketUsername,
@@ -42,6 +48,7 @@ export default class PocketSync extends Plugin {
   settingsManager: SettingsManager;
   pocketAPI: PocketAPI;
   pendingSync: Promise<void> | null = null;
+  resolveItemNote: ResolveItemNoteFn;
 
   async syncPocketItems() {
     const accessInfo = await loadPocketAccessInfo(this);
@@ -124,6 +131,8 @@ export default class PocketSync extends Plugin {
     }
 
     log.debug("URL to Pocket item note index opened");
+
+    this.resolveItemNote = resolveItemNote(this.app.vault);
 
     this.addCommands();
     this.addSettingTab(
@@ -239,6 +248,44 @@ export default class PocketSync extends Plugin {
           await this.urlToItemNoteIndex.indexURLsForAllFilePaths();
         notice.hide();
         new Notice(`Found ${nIndexedURLs} new URLs`);
+      },
+    });
+
+    this.addCommand({
+      id: "create-all-pocket-item-notes",
+      name: "Create all Pocket item notes",
+      callback: async () => {
+        const allPocketItems = await this.itemStore.getAllItems();
+        const pocketItemsWithoutNotes = (
+          await getAllItemNotes(
+            this.urlToItemNoteIndex,
+            this.resolveItemNote
+          )(allPocketItems)
+        )
+          .filter(({ itemNote }) => !itemNote)
+          .map(({ item }) => item);
+
+        new Notice(
+          `Found ${pocketItemsWithoutNotes.length} Pocket items without notes`
+        );
+        const creationNotice = new Notice(
+          `Creating all missing Pocket item notes...`,
+          0
+        );
+
+        try {
+          await bulkCreateItemNotes(
+            this.settingsManager,
+            this.app.vault,
+            this.app.metadataCache,
+            pocketItemsWithoutNotes
+          );
+          new Notice(`Done creating all missing Pocket item notes`);
+        } catch (err) {
+          new Notice("Failed to create all missing Pocket item notes");
+        } finally {
+          creationNotice.hide();
+        }
       },
     });
   };

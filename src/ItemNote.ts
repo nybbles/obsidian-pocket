@@ -28,7 +28,8 @@ import { ensureFolderExists, getPocketItemPocketURL } from "./utils";
 const DEFAULT_ITEM_NOTES_FOLDER = "/";
 
 const getItemNotesFolder = (settingsManager: SettingsManager) =>
-  settingsManager.getSetting("item-notes-folder") ?? DEFAULT_ITEM_NOTES_FOLDER;
+  settingsManager.getSetting("item-notes-folder").replace(/\/+$/, "") ??
+  DEFAULT_ITEM_NOTES_FOLDER;
 
 export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
   if (!item.resolved_title && !item.resolved_url) {
@@ -65,7 +66,7 @@ export const getAllItemNotes =
       const entry = !!filePathByURL
         ? { url: item.resolved_url, file_path: filePathByURL }
         : null;
-      result.push(resolveItemNote(item, entry));
+      result.push({ item: item, itemNote: resolveItemNote(item, entry) });
     }
 
     return result;
@@ -91,11 +92,7 @@ export type ResolveItemNoteFn = (
 ) => TFile | null;
 
 export const resolveItemNote =
-  (
-    vault: Vault,
-    metadataCache: MetadataCache,
-    settingsManager: SettingsManager
-  ): ResolveItemNoteFn =>
+  (vault: Vault): ResolveItemNoteFn =>
   (
     item: SavedPocketItem,
     urlToPocketItemNoteEntry?: URLToPocketItemNoteEntry
@@ -220,14 +217,32 @@ export type CreateOrOpenItemNoteFn = (
   pocketItem: SavedPocketItem
 ) => Promise<void>;
 
-const fullpathForPocketItem = (
+const findPathForNewPocketItem = (
   settingsManager: SettingsManager,
+  vault: Vault,
   pocketItem: SavedPocketItem
 ) => {
   const itemNotesFolder = getItemNotesFolder(settingsManager);
   const linkpath = linkpathForSavedPocketItem(pocketItem);
-  const fullpath = `${itemNotesFolder}/${linkpath}.md`;
-  return fullpath;
+
+  const candidatePath = `${itemNotesFolder}/${linkpath}.md`;
+  if (vault.getAbstractFileByPath(candidatePath) === null) {
+    return candidatePath;
+  }
+
+  const DUP_LIMIT = 1000;
+  let dupIdx = 1;
+  while (true) {
+    ++dupIdx;
+    const candidatePath = `${itemNotesFolder}/${linkpath} ${dupIdx}.md`;
+    if (vault.getAbstractFileByPath(candidatePath) === null) {
+      return candidatePath;
+    }
+
+    if (dupIdx > DUP_LIMIT) {
+      throw new Error("Could not find path for new pocket item");
+    }
+  }
 };
 
 const openItemNote = async (workspace: Workspace, existingItemNote: TFile) => {
@@ -247,6 +262,17 @@ Excerpt: >
 {{image}}
 `;
 
+const loadTemplateContents = async (
+  settingsManager: SettingsManager,
+  vault: Vault,
+  metadataCache: MetadataCache
+) => {
+  const templateSetting = settingsManager.getSetting("item-note-template");
+  return templateSetting
+    ? await loadTemplate(vault, metadataCache)(templateSetting)
+    : DEFAULT_TEMPLATE;
+};
+
 export const createOrOpenItemNote =
   (
     settingsManager: SettingsManager,
@@ -258,7 +284,7 @@ export const createOrOpenItemNote =
   async (pocketItem) => {
     const itemNote = await getItemNote(
       urlToPocketItemNoteIndex,
-      resolveItemNote(vault, metadataCache, settingsManager)
+      resolveItemNote(vault)
     )(pocketItem);
     const itemNoteExists = !!itemNote;
 
@@ -266,16 +292,20 @@ export const createOrOpenItemNote =
       await openItemNote(workspace, itemNote);
     } else {
       try {
-        // If there is a template specified, load the template and apply it.
-        const templateSetting =
-          settingsManager.getSetting("item-note-template");
-        const templateContents = templateSetting
-          ? await loadTemplate(vault, metadataCache)(templateSetting)
-          : DEFAULT_TEMPLATE;
-        const fullpath = fullpathForPocketItem(settingsManager, pocketItem);
-
         ensureFolderExists(vault, getItemNotesFolder(settingsManager));
 
+        // If there is a template specified, load the template and apply it.
+        const templateContents = await loadTemplateContents(
+          settingsManager,
+          vault,
+          metadataCache
+        );
+
+        const fullpath = findPathForNewPocketItem(
+          settingsManager,
+          vault,
+          pocketItem
+        );
         const newItemNote = await vault.create(
           fullpath,
           generateInitialItemNoteContents(
@@ -288,11 +318,54 @@ export const createOrOpenItemNote =
         log.debug("Opening item note now");
         await openItemNote(workspace, newItemNote);
       } catch (err) {
-        const fullpath = fullpathForPocketItem(settingsManager, pocketItem);
-        const errMsg = `Failed to create file for ${fullpath}`;
+        const errMsg = `Failed to create file for ${linkpathForSavedPocketItem(
+          pocketItem
+        )}`;
         log.error(errMsg, err);
         new Notice(errMsg);
         return;
       }
     }
   };
+
+export const bulkCreateItemNotes = async (
+  settingsManager: SettingsManager,
+  vault: Vault,
+  metadataCache: MetadataCache,
+  pocketItems: SavedPocketItem[]
+) => {
+  ensureFolderExists(vault, getItemNotesFolder(settingsManager));
+
+  const templateContents = await loadTemplateContents(
+    settingsManager,
+    vault,
+    metadataCache
+  );
+
+  const newPocketItemNotes = [];
+  for (const pocketItem of pocketItems) {
+    const fullpath = findPathForNewPocketItem(
+      settingsManager,
+      vault,
+      pocketItem
+    );
+    try {
+      const result = await vault.create(
+        fullpath,
+        generateInitialItemNoteContents(
+          templateContents,
+          pocketItem,
+          settingsManager
+        )
+      );
+      newPocketItemNotes.push(result);
+    } catch (err) {
+      const errMsg = `Failed to create file for ${linkpathForSavedPocketItem(
+        pocketItem
+      )}`;
+      log.error(errMsg, err);
+      new Notice(errMsg);
+    }
+  }
+  return Promise.all(newPocketItemNotes);
+};
