@@ -128,12 +128,7 @@ export const resolveItemNote =
         );
       }
     }
-
-    // Fall back to resolving by title
-    const itemNotesFolder = getItemNotesFolder(settingsManager);
-    const linkpath = linkpathForSavedPocketItem(item);
-
-    return metadataCache.getFirstLinkpathDest(linkpath, itemNotesFolder);
+    return;
   };
 
 export type DoesItemNoteExistFnFactory = (
