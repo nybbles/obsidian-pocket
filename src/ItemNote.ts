@@ -170,6 +170,12 @@ const tagsToNoteContent = (
   return tagList.map(tagNormalizer).join(TAG_NOTE_CONTENT_SEPARATOR);
 };
 
+// Ensure that "---" in title or excerpt does not mess up front matter
+const normalizeTitle = (excerpt: String) =>
+  excerpt.replace(/---./g, "").replace(/"/g, "'");
+const normalizeExcerpt = (excerpt: String) =>
+  `${excerpt.replace(/---./g, "")}`.replace(/\r?\n|\r/g, "\n    ");
+
 const generateInitialItemNoteContents = (
   templateContents: TemplateContents,
   pocketItem: SavedPocketItem,
@@ -191,9 +197,9 @@ const generateInitialItemNoteContents = (
     );
 
   const substitutions: Map<string, SubstitutionFn> = new Map([
-    ["title", (item) => item.resolved_title ?? "Untitled"],
+    ["title", (item) => normalizeTitle(item.resolved_title) ?? "Untitled"],
     ["url", (item) => item.resolved_url ?? "Missing URL"],
-    ["excerpt", (item) => item.excerpt ?? "Empty excerpt"],
+    ["excerpt", (item) => normalizeExcerpt(item.excerpt) ?? "Empty excerpt"],
     ["tags", (item) => hashtagSubstitutor(true)(item.tags)],
     ["tags-no-hash", (item) => hashtagSubstitutor(false)(item.tags)],
     ["pocket-url", (item) => getPocketItemPocketURL(item)],
