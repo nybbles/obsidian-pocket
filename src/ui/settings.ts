@@ -39,6 +39,25 @@ const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       });
     });
 
+const CREATE_ITEM_NOTES_ON_SYNC_CTA = "Create Pocket item notes on sync?";
+const addCreateItemNotesOnSyncOption = (
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
+) =>
+  new Setting(containerEl)
+    .setName(CREATE_ITEM_NOTES_ON_SYNC_CTA)
+    .setDesc(
+      "Create Pocket item notes automatically when new Pocket items are synced"
+    )
+    .addToggle((toggle) => {
+      toggle.setValue(
+        settingsManager.getSetting("create-item-notes-on-sync") as boolean
+      );
+      toggle.onChange((value) =>
+        settingsManager.updateSetting("create-item-notes-on-sync", value)
+      );
+    });
+
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 
 const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) =>
@@ -221,6 +240,7 @@ export class PocketSettingTab extends PluginSettingTab {
     containerEl.empty();
     addAuthButton(this.plugin, containerEl);
     addSyncButton(this.plugin, containerEl);
+    addCreateItemNotesOnSyncOption(this.settingsManager, containerEl);
     addLogoutButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
     addItemNoteTemplateSetting(this.settingsManager, containerEl);

@@ -76,6 +76,63 @@ export default class PocketSync extends Plugin {
     } finally {
       this.pendingSync = null;
     }
+
+    const shouldCreateAllItemNotes = this.settingsManager.getSetting(
+      "create-item-notes-on-sync"
+    ) as boolean;
+    if (shouldCreateAllItemNotes) {
+      await this.createAllPocketItemNotes();
+    }
+  }
+
+  async createAllPocketItemNotes() {
+    if (this.pendingBulkCreate) {
+      new Notice(
+        "Bulk creation of missing Pocket item notes already in progress"
+      );
+      return;
+    }
+
+    this.pendingBulkCreate = true;
+
+    const allPocketItems = await this.itemStore.getAllItems();
+    const pocketItemsWithoutNotes = (
+      await getAllItemNotes(
+        this.urlToItemNoteIndex,
+        this.resolveItemNote
+      )(allPocketItems)
+    )
+      .filter(({ itemNote }) => !itemNote)
+      .map(({ item }) => item);
+
+    new Notice(
+      `Found ${pocketItemsWithoutNotes.length} Pocket items without notes`
+    );
+
+    if (pocketItemsWithoutNotes.length === 0) {
+      new Notice("No Pocket item notes to be created");
+      return;
+    }
+
+    const creationNotice = new Notice(
+      `Creating all missing Pocket item notes...`,
+      0
+    );
+
+    try {
+      await bulkCreateItemNotes(
+        this.settingsManager,
+        this.app.vault,
+        this.app.metadataCache,
+        pocketItemsWithoutNotes
+      );
+      new Notice(`Done creating all missing Pocket item notes`);
+    } catch (err) {
+      new Notice("Failed to create all missing Pocket item notes");
+    } finally {
+      creationNotice.hide();
+      this.pendingBulkCreate = false;
+    }
   }
 
   async onload() {
@@ -257,47 +314,7 @@ export default class PocketSync extends Plugin {
       id: "create-all-pocket-item-notes",
       name: "Create all Pocket item notes",
       callback: async () => {
-        if (this.pendingBulkCreate) {
-          new Notice(
-            "Bulk creation of missing Pocket item notes already in progress"
-          );
-          return;
-        }
-
-        this.pendingBulkCreate = true;
-
-        const allPocketItems = await this.itemStore.getAllItems();
-        const pocketItemsWithoutNotes = (
-          await getAllItemNotes(
-            this.urlToItemNoteIndex,
-            this.resolveItemNote
-          )(allPocketItems)
-        )
-          .filter(({ itemNote }) => !itemNote)
-          .map(({ item }) => item);
-
-        new Notice(
-          `Found ${pocketItemsWithoutNotes.length} Pocket items without notes`
-        );
-        const creationNotice = new Notice(
-          `Creating all missing Pocket item notes...`,
-          0
-        );
-
-        try {
-          await bulkCreateItemNotes(
-            this.settingsManager,
-            this.app.vault,
-            this.app.metadataCache,
-            pocketItemsWithoutNotes
-          );
-          new Notice(`Done creating all missing Pocket item notes`);
-        } catch (err) {
-          new Notice("Failed to create all missing Pocket item notes");
-        } finally {
-          creationNotice.hide();
-          this.pendingBulkCreate = false;
-        }
+        await this.createAllPocketItemNotes();
       },
     });
   };
