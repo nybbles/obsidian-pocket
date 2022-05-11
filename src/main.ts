@@ -49,6 +49,7 @@ export default class PocketSync extends Plugin {
   pocketAPI: PocketAPI;
   pendingSync: Promise<void> | null = null;
   resolveItemNote: ResolveItemNoteFn;
+  pendingBulkCreate: boolean;
 
   async syncPocketItems() {
     const accessInfo = await loadPocketAccessInfo(this);
@@ -97,6 +98,7 @@ export default class PocketSync extends Plugin {
     await this.settingsManager.load();
 
     this.pendingSync = null;
+    this.pendingBulkCreate = false;
 
     this.pocketAPI = buildPocketAPI();
 
@@ -255,6 +257,15 @@ export default class PocketSync extends Plugin {
       id: "create-all-pocket-item-notes",
       name: "Create all Pocket item notes",
       callback: async () => {
+        if (this.pendingBulkCreate) {
+          new Notice(
+            "Bulk creation of missing Pocket item notes already in progress"
+          );
+          return;
+        }
+
+        this.pendingBulkCreate = true;
+
         const allPocketItems = await this.itemStore.getAllItems();
         const pocketItemsWithoutNotes = (
           await getAllItemNotes(
@@ -285,6 +296,7 @@ export default class PocketSync extends Plugin {
           new Notice("Failed to create all missing Pocket item notes");
         } finally {
           creationNotice.hide();
+          this.pendingBulkCreate = false;
         }
       },
     });
