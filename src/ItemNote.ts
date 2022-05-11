@@ -340,6 +340,8 @@ export const bulkCreateItemNotes = async (
   metadataCache: MetadataCache,
   pocketItems: SavedPocketItem[]
 ) => {
+  const MANY_ITEMS_THRESHOLD = 10;
+
   ensureFolderExists(vault, getItemNotesFolder(settingsManager));
 
   const templateContents = await loadTemplateContents(
@@ -348,8 +350,9 @@ export const bulkCreateItemNotes = async (
     metadataCache
   );
 
+  let partialCreationNotice: Notice | null = null;
   const newPocketItemNotes = [];
-  for (const pocketItem of pocketItems) {
+  for (const [index, pocketItem] of pocketItems.entries()) {
     const fullpath = findPathForNewPocketItem(
       settingsManager,
       vault,
@@ -365,7 +368,19 @@ export const bulkCreateItemNotes = async (
         )
       );
       newPocketItemNotes.push(result);
+
+      if (
+        pocketItems.length >= MANY_ITEMS_THRESHOLD &&
+        (index + 1) % MANY_ITEMS_THRESHOLD === 0
+      ) {
+        partialCreationNotice && partialCreationNotice.hide();
+        partialCreationNotice = new Notice(
+          `Created ${index + 1}/${pocketItems.length} Pocket item notes`,
+          0
+        );
+      }
     } catch (err) {
+      partialCreationNotice && partialCreationNotice.hide();
       const errMsg = `Failed to create file for ${linkpathForSavedPocketItem(
         pocketItem
       )}`;
@@ -373,5 +388,6 @@ export const bulkCreateItemNotes = async (
       new Notice(errMsg);
     }
   }
+  partialCreationNotice && partialCreationNotice.hide();
   return Promise.all(newPocketItemNotes);
 };
