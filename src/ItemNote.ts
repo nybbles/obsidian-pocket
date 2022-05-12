@@ -170,7 +170,8 @@ const tagsToNoteContent = (
   return tagList.map(tagNormalizer).join(TAG_NOTE_CONTENT_SEPARATOR);
 };
 
-// Ensure that "---" in title or excerpt does not mess up front matter
+// Ensure that "---" in title or excerpt, double-quotes in title and newlines in
+// excerpt do not mess up front matter
 const normalizeTitle = (excerpt: String) =>
   excerpt.replace(/---./g, "").replace(/"/g, "'");
 const normalizeExcerpt = (excerpt: String) =>
