@@ -1,5 +1,4 @@
 import { stylesheet } from "astroturf";
-import { MetadataCache } from "obsidian";
 import React, { useEffect, useState } from "react";
 import { PocketItemStore } from "src/data/PocketItemStore";
 import { URLToPocketItemNoteIndex } from "src/data/URLToPocketItemNoteIndex";
@@ -7,7 +6,7 @@ import {
   createOrOpenItemNote,
   getAllItemNotes,
   getItemNote,
-  resolveItemNote as resolveItemNoteFactory,
+  ResolveItemNoteFn,
 } from "src/ItemNote";
 import PocketSync from "src/main";
 import { SavedPocketItem } from "src/pocket_api/PocketAPITypes";
@@ -31,24 +30,18 @@ const styles = stylesheet`
 
 export type PocketItemListProps = {
   itemStore: PocketItemStore;
-  metadataCache: MetadataCache;
   urlToPocketItemNoteIndex: URLToPocketItemNoteIndex;
+  resolveItemNote: ResolveItemNoteFn;
   plugin: PocketSync;
 };
 
 export const PocketItemList = ({
   itemStore,
-  metadataCache,
   urlToPocketItemNoteIndex,
+  resolveItemNote,
   plugin,
 }: PocketItemListProps) => {
   const settingsManager = plugin.settingsManager;
-
-  const resolveItemNote = resolveItemNoteFactory(
-    plugin.app.vault,
-    metadataCache,
-    settingsManager
-  );
 
   const [items, setItems] = useState<SavedPocketItem[]>([]);
   const [itemNotesExist, setItemNotesExist] = useState<boolean[]>([]);
@@ -70,7 +63,7 @@ export const PocketItemList = ({
           urlToPocketItemNoteIndex,
           resolveItemNote
         )(allItems)
-      ).map((x) => !!x);
+      ).map(({ itemNote }) => !!itemNote);
 
       if (!subscribed) {
         return;

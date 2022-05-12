@@ -9,11 +9,13 @@ export interface PocketSettings {
   "multi-word-tag-converter"?: MultiWordTagConversion;
   "pocket-sync-tag"?: string;
   "frontmatter-url-key"?: string;
+  "create-item-notes-on-sync"?: boolean;
 }
 
 export const DEFAULT_POCKET_SETTINGS: PocketSettings = {
   "multi-word-tag-converter": "snake-case",
   "frontmatter-url-key": "URL",
+  "create-item-notes-on-sync": true,
 };
 
 export type OnSettingsChangeCallback = () => Promise<void>;
@@ -52,7 +54,7 @@ export class SettingsManager {
     await this.saveSettings(this.settings);
   }
 
-  getSetting(key: keyof PocketSettings) {
+  getSetting(key: keyof PocketSettings): any {
     return this.settings[key] ?? DEFAULT_POCKET_SETTINGS[key];
   }
 

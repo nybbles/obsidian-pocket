@@ -39,6 +39,25 @@ const addSyncButton = (plugin: PocketSync, containerEl: HTMLElement) =>
       });
     });
 
+const CREATE_ITEM_NOTES_ON_SYNC_CTA = "Create Pocket item notes on sync";
+const addCreateItemNotesOnSyncOption = (
+  settingsManager: SettingsManager,
+  containerEl: HTMLElement
+) =>
+  new Setting(containerEl)
+    .setName(CREATE_ITEM_NOTES_ON_SYNC_CTA)
+    .setDesc(
+      "Create Pocket item notes automatically when new Pocket items are synced"
+    )
+    .addToggle((toggle) => {
+      toggle.setValue(
+        settingsManager.getSetting("create-item-notes-on-sync") as boolean
+      );
+      toggle.onChange((value) =>
+        settingsManager.updateSetting("create-item-notes-on-sync", value)
+      );
+    });
+
 const LOG_OUT_OF_POCKET_CTA = "Disconnect your Pocket account";
 
 const addLogoutButton = (plugin: PocketSync, containerEl: HTMLElement) =>
@@ -69,7 +88,7 @@ const addClearLocalPocketDataButton = (
 ) =>
   new Setting(containerEl)
     .setName(CLEAR_LOCAL_POCKET_DATA_CTA)
-    .setDesc("Clears Pocket data stored locally by Pocket-obsidian plugin")
+    .setDesc("Clears Pocket data stored locally by obsidian-pocket plugin")
     .addButton((button) => {
       button.setButtonText(CLEAR_LOCAL_POCKET_DATA_CTA);
       button.onClick(async () => {
@@ -89,7 +108,13 @@ const addItemNoteTemplateSetting = (
   new Setting(containerEl)
     .setName(SET_ITEM_NOTE_TEMPLATE_CTA)
     .setDesc(
-      "Choose the file to use as a template when creating a new note from a Pocket item"
+      `Choose the file to use as a custom template when creating a new note from
+      a Pocket item, rather than using the default template provided by
+      obsidian-pocket.
+      
+      IMPORTANT: Please consider carefully whether it is worth the effort to
+      provide your own custom template, as the default one is complete and
+      tested to work properly with YAML front matter.`
     )
     .addText((text) => {
       text.setPlaceholder("Example: Templates/Pocket item note");
@@ -107,7 +132,9 @@ const addItemNotesLocationSetting = (
 ) =>
   new Setting(containerEl)
     .setName(SET_ITEM_NOTES_LOCATION_CTA)
-    .setDesc("Choose the folder for creating and finding Pocket item notes")
+    .setDesc(
+      "Choose the folder for creating new Pocket item notes. Pocket item notes will be created in the root folder by default."
+    )
     .addText(async (text) => {
       text.setPlaceholder("Example: Pocket item notes/");
       text.setValue(settingsManager.getSetting("item-notes-folder"));
@@ -185,7 +212,12 @@ const addPocketSyncTagSetting = (
 
 const FRONT_MATTER_URL_KEY_CTA = "Front matter URL key";
 const FRONT_MATTER_URL_KEY_DESC = `Specify the key in the front matter to use
-when matching Pocket items to Obsidian notes.`;
+when matching Pocket items to Obsidian notes. The default key is "URL".
+IMPORTANT: Please consider carefully whether it is worth the effort to customize
+this option, and make sure that the key specified here is the same one that is
+used in the Pocket item note template used to create your Pocket item notes.
+Failure to do so will result in Pocket item notes not being matched to their
+respective Pocket items.`;
 
 const addFrontMatterURLKeySetting = (
   settingsManager: SettingsManager,
@@ -220,13 +252,14 @@ export class PocketSettingTab extends PluginSettingTab {
     let { containerEl } = this;
     containerEl.empty();
     addAuthButton(this.plugin, containerEl);
-    addSyncButton(this.plugin, containerEl);
     addLogoutButton(this.plugin, containerEl);
+    addCreateItemNotesOnSyncOption(this.settingsManager, containerEl);
+    addSyncButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
-    addItemNoteTemplateSetting(this.settingsManager, containerEl);
-    addItemNotesLocationSetting(this.settingsManager, containerEl);
     addMultiWordTagConverterSetting(this.settingsManager, containerEl);
     addPocketSyncTagSetting(this.settingsManager, containerEl);
+    addItemNotesLocationSetting(this.settingsManager, containerEl);
+    addItemNoteTemplateSetting(this.settingsManager, containerEl);
     addFrontMatterURLKeySetting(this.settingsManager, containerEl);
   }
 }

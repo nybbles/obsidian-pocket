@@ -1,38 +1,68 @@
 # obsidian-pocket
 
+> :heavy_exclamation_mark: I (@nybbles) am looking for someone to take over as
+> the maintainer of `obsidian-pocket`. If you are interested, please reach out
+> (@nimalan on Twitter or nybbles on the Obsidian Discord). The transition would
+> start with the new maintainer taking on issues and contributing PRs.
+
 This plugin for [Obsidian](https://obsidian.md/) that allows you to sync your
 [Pocket](https://getpocket.com/) reading list into Obsidian, so that you can
 easily create Obsidian notes directly from your Pocket reading list.
 
 ![pocket-list](https://raw.githubusercontent.com/nybbles/obsidian-pocket/master/images/pocket-list.png)
 
-## Installation
-
-The plugin will soon be installable from the "Community plugins" settings tab
-in Obsidian, as described
-[here](https://help.obsidian.md/Advanced+topics/Third-party+plugins#Discover+and+install+community+plugins).
-
-## Usage
-
-### Settings
+## Initial setup
 
 After the plugin has been enabled, you will be able to see a "Pocket" option
-under the "Plugin options" section of the settings panel, as shown below.
+under the "Plugin options" section of the settings panel. Click on it to go to
+the obsidian-pocket settings tab, where you can connect your Pocket account and
+set up the obsidian-pocket plugin.
 
-![obsidian-pocket-settings](https://raw.githubusercontent.com/nybbles/obsidian-pocket/master/images/obsidian-pocket-settings.png)
-
-### Connecting your Pocket account and syncing Pocket items
+### Connect your Pocket account
 
 Click on "Connect your Pocket account" to begin the Pocket authorization flow by
 opening a web page on your default browser. You will be asked whether you want
 to give permission to this plugin to access your Pocket data. Then you will be
-redirected back to Obsidian.
+redirected back to Obsidian. Your Pocket account should now be connected.
 
-If you granted permission to this plugin to access Pocket data, you can click on
-"Sync Pocket items" to actually download and store your Pocket list locally
-within Obsidian.
+The "Disconnect your Pocket account" button can be used to remove the Pocket
+authorization that was just provided.
 
-You can also sync your Pocket items using an Obsidian command: "Sync Pocket list".
+### Specify settings
+
+The obsidian-pocket settings tab will contain a number of settings that affect
+how obsidian-pocket syncs Pocket items and creates Pocket item notes, as
+described below:
+
+| Setting                                 | Default value                      | What it does                                                                                                                                                                                             |
+| --------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create Pocket items on sync             | Enabled                            | Create Pocket item notes automatically when new Pocket items are synced                                                                                                                                  |
+| Multi-word Pocket tag converter options | Snake case                         | Specifies how to convert multi-word Pocket tags into Obsidian-compatible tags                                                                                                                            |
+| Pocket sync tag                         | Blank (sync all Pocket items)      | Specifies a Pocket tag so that only Pocket items with that tag will be synced                                                                                                                            |
+| Pocket item notes folder location       | Obsidian vault root folder         | Specifies the folder whether new Pocket item notes will be stored                                                                                                                                        |
+| Pocket item note template file location | Blank (use the default template)   | Specifies a custom template file to use to create new Pocket item notes                                                                                                                                  |
+| Front matter URL key                    | URL (matches the default template) | Specifies the [YAML front matter](https://help.obsidian.md/Advanced+topics/YAML+front+matter) key that will be used to find the Pocket item's URL, used to match Pocket items to their respective notes. |
+
+It is highly encouraged that you use the default Pocket item notes template and
+front matter URL key. If you decide to customize these option, please ensure
+that your Pocket item notes do end up having a valid front matter key for Pocket
+item URL.
+
+## Usage
+
+### Available commands
+
+| Command                      | What it does                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Open Pocket list             | Opens a list in Obsidian where you can see your synced Pocket items and go to the Pocket URL, the original URL or create/open a Pocket item note |
+| Sync Pocket list             | Syncs Pocket items from Pocket to Obsidian                                                                                                       |
+| Index all files by URL       | Find all Pocket item notes in the vault by checking whether a file has a URL front matter key that matches a synced Pocket item                  |
+| Create all Pocket item notes | Creates a Pocket item note for all Pocket items that lack one                                                                                    |
+
+### Syncing Pocket items
+
+You can sync your Pocket items using an Obsidian command: "Sync Pocket list", or
+the button in the obsidian-pocket settings tab.
 
 You can either sync all Pocket items or just Pocket items with a particular tag
 that you specify, using the "Pocket sync tag" setting. Leave it blank to sync
@@ -48,7 +78,7 @@ above.
 
 The Pocket list can be used to browse through the items you've saved to Pocket
 and to create a note for any Pocket item by clicking on its title. You can also
-go directly to the URL for the Pocket item. See below for more details.
+go directly to the URL for the Pocket item.
 
 ### Pocket tags in Obsidian
 
@@ -96,12 +126,18 @@ about all files that contain a frontmatter tag for URL, thereby allow it to
 match those notes to Pocket items. This index is maintained by `obsidian-pocket`
 automatically, so you should not need to run it.
 
-An Obsidian note can be matched to a Pocket item if it is in the Pocket item
-notes folder and has the same title as the Pocket item. This only happens as a
-fallback when there is no Obsidian note with a frontmatter tag for URL that
-matches the Pocket item.
+> :warning: As of version 0.8.0 of obsidian-pocket, Obsidian notes are matched to
+> Pocket items only using the front matter URL key, and no longer matched by
+> title. The last version to support matching by title was version 0.7.2. This
+> functionality was removed because it did not work correctly with Pocket items
+> that had the same title, but different URLs.
 
-## Using templates for Pocket notes
+## Using custom templates for Pocket notes
+
+> :warning: Please use the default template and front matter URL key, unless you
+> are confident that you can customize these settings while ensuring that the
+> Pocket item notes have valid frontmatter YAML and that the URL frontmatter key
+> matches what you have asked obsidian-pocket to look for.
 
 Templates for Pocket notes work similar to any other template in Obsidian, see
 [here](https://help.obsidian.md/Plugins/Templates), except that only the
@@ -111,25 +147,29 @@ following variables are supported:
 | ------------------ | ------------------------------------------------------- |
 | `{{title}}`        | The title of the Pocket item                            |
 | `{{url}}`          | The URL of the Pocket item                              |
+| `{{pocket-url}}`   | The URL to open the Pocket item in Pocket               |
 | `{{excerpt}}`      | The excerpt extracted by Pocket for the Pocket item     |
 | `{{tags-no-hash}}` | The Pocket tags for the Pocket item                     |
 | `{{tags}}`         | The Pocket tags for the Pocket item, with "#" prepended |
-| `{{pocket-url}}`   | The URL to open the Pocket item in Pocket               |
+| `{{image}}`        | The main image for the Pocket item                      |
 
-Here's an example template that will put this metadata into the [YAML
+This is the default template in obsidian-pocket. It will populate the [YAML
 frontmatter](https://help.obsidian.md/Advanced+topics/YAML+front+matter) of the
-note for the Pocket item:
+Pocket item note with all available metadata used in the correct places so that
+YAML frontmatter is valid, hashtags work correctly and the Pocket item's main
+image is displayed (if available):
 
 ```
 ---
 Title: "{{title}}"
 URL: {{url}}
-Tags: [{{tags-no-hash}}]
+Pocket URL: {{pocket-url}}
+Tags: [pocket, {{tags-no-hash}}]
 Excerpt: >
     {{excerpt}}
 ---
-{{url}}
 {{tags}}
+{{image}}
 ```
 
 If you had saved [this
@@ -142,11 +182,15 @@ template, your note would start off containing the following:
 ---
 Title: "Carbon removal hype is becoming a dangerous distraction"
 URL: https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/
-Tags: [carbon_removal]
-Excerpt: In February, oil giant Shell trumpeted a scenario in which the world pulls global warming back to 1.5 ˚C by 2100, even as natural gas, oil, and coal continue to generate huge shares of the world’s energy.
+Pocket URL: https://getpocket.com/read/1337
+Tags: [pocket, carbon_removal]
+Excerpt: >
+    In February, oil giant Shell trumpeted a scenario in which the world pulls
+    global warming back to 1.5 ˚C by 2100, even as natural gas, oil, and coal
+    continue to generate huge shares of the world’s energy.
 ---
-https://www.technologyreview.com/2021/07/08/1027908/carbon-removal-hype-is-a-dangerous-distraction-climate-change/
 #carbon_removal
+![image](http://via.placeholder.com/640x360)
 ```
 
 Note that in the example template, the title is quoted so that the YAML
@@ -159,12 +203,16 @@ https://github.com/nybbles/obsidian-pocket/issues for this. Please file feature
 requests under https://github.com/nybbles/obsidian-pocket/labels/enhancement, or
 comment in existing feature requests to indicate your interest.
 
+Please provide console logs if you are filing a bug report, so that it can be
+reproduced and fixed. You can copy/paste console logs from the Obsidian dev
+console, which can be opened by going to View > Toggle Developer Tools in
+Obsidian.
+
 ## Design overview and security considerations
 
-This plugin runs completely on your local desktop. The only external party it
-communicates with is Pocket, via the [Pocket
-API](https://getpocket.com/developer/). All of your data from Pocket and your
-Pocket access token are stored locally.
+This plugin runs completely locally. The only external party it communicates
+with is Pocket, via the [Pocket API](https://getpocket.com/developer/). All of
+your data from Pocket and your Pocket access token are stored locally.
 
 This plugin stores your Pocket data locally in Obsidian's IndexedDB.
 
