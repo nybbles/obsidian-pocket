@@ -252,14 +252,14 @@ export class PocketSettingTab extends PluginSettingTab {
     let { containerEl } = this;
     containerEl.empty();
     addAuthButton(this.plugin, containerEl);
-    addSyncButton(this.plugin, containerEl);
-    addCreateItemNotesOnSyncOption(this.settingsManager, containerEl);
     addLogoutButton(this.plugin, containerEl);
+    addCreateItemNotesOnSyncOption(this.settingsManager, containerEl);
+    addSyncButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
-    addItemNoteTemplateSetting(this.settingsManager, containerEl);
-    addItemNotesLocationSetting(this.settingsManager, containerEl);
     addMultiWordTagConverterSetting(this.settingsManager, containerEl);
     addPocketSyncTagSetting(this.settingsManager, containerEl);
+    addItemNotesLocationSetting(this.settingsManager, containerEl);
+    addItemNoteTemplateSetting(this.settingsManager, containerEl);
     addFrontMatterURLKeySetting(this.settingsManager, containerEl);
   }
 }
