@@ -47,12 +47,12 @@ item URL.
 
 ### Available commands
 
-| Command                              | What it does                                                                                                                                     |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Pocket: Open Pocket list             | Opens a list in Obsidian where you can see your synced Pocket items and go to the Pocket URL, the original URL or create/open a Pocket item note |
-| Pocket: Sync Pocket list             | Syncs Pocket items from Pocket to Obsidian                                                                                                       |
-| Pocket: Index all files by URL       | Find all Pocket item notes in the vault by checking whether a file has a URL front matter key that matches a synced Pocket item                  |
-| Pocket: Create all Pocket item notes | Creates a Pocket item note for all Pocket items that lack one                                                                                    |
+| Command                      | What it does                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Open Pocket list             | Opens a list in Obsidian where you can see your synced Pocket items and go to the Pocket URL, the original URL or create/open a Pocket item note |
+| Sync Pocket list             | Syncs Pocket items from Pocket to Obsidian                                                                                                       |
+| Index all files by URL       | Find all Pocket item notes in the vault by checking whether a file has a URL front matter key that matches a synced Pocket item                  |
+| Create all Pocket item notes | Creates a Pocket item note for all Pocket items that lack one                                                                                    |
 
 ### Syncing Pocket items
 
