@@ -1,5 +1,10 @@
 # obsidian-pocket
 
+> :heavy_exclamation_mark: I (@nybbles) am looking for someone to take over as
+> the maintainer of `obsidian-pocket`. If you are interested, please reach out
+> (@nimalan on Twitter or nybbles on the Obsidian Discord). The transition would
+> start with the new maintainer taking on issues and contributing PRs.
+
 This plugin for [Obsidian](https://obsidian.md/) that allows you to sync your
 [Pocket](https://getpocket.com/) reading list into Obsidian, so that you can
 easily create Obsidian notes directly from your Pocket reading list.
