@@ -124,8 +124,8 @@ automatically, so you should not need to run it.
 > :warning: As of version 0.8.0 of obsidian-pocket, Obsidian notes are matched to
 > Pocket items only using the front matter URL key, and no longer matched by
 > title. The last version to support matching by title was version 0.7.2. This
-> functionality was removed because it did not work well with Pocket items that
-> had the same title, but different URLs.
+> functionality was removed because it did not work correctly with Pocket items
+> that had the same title, but different URLs.
 
 ## Using custom templates for Pocket notes
 
