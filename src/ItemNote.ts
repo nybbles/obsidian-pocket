@@ -27,6 +27,13 @@ import { ensureFolderExists, getPocketItemPocketURL } from "./utils";
 
 const DEFAULT_ITEM_NOTES_FOLDER = "/";
 
+// Various OS and contexts allow at-most 255 characters for the file name (incl. extension).
+// Since Obsidian is often used on multiple platforms simultaneously, we restrict the filename length.
+// Those file names would be too long to be readable anyways, hence this restriction is acceptable.
+// We reduce this threshold by 8 to make space for the file extension ".md" and
+// the de-duplication suffix " XYZ".
+const MAXIMUM_TITLE_LENGTH = 255 - 8;
+
 const getItemNotesFolder = (settingsManager: SettingsManager) =>
   settingsManager.getSetting("item-notes-folder").replace(/\/+$/, "") ??
   DEFAULT_ITEM_NOTES_FOLDER;
@@ -41,7 +48,8 @@ export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
     ? item.resolved_title
     : item.resolved_url;
 };
-const sanitizeTitle = (title: String) => title.replace(/[\\/:"*?<>|]+/g, " ");
+const sanitizeTitle = (title: String) =>
+  title.replace(/[\\/:"*?<>|]+/g, " ").substring(0, MAXIMUM_TITLE_LENGTH);
 
 export const linkpathForSavedPocketItem = (item: SavedPocketItem) =>
   sanitizeTitle(displayTextForSavedPocketItem(item));
