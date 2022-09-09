@@ -150,6 +150,8 @@ following variables are supported:
 | `{{pocket-url}}`   | The URL to open the Pocket item in Pocket               |
 | `{{excerpt}}`      | The excerpt extracted by Pocket for the Pocket item     |
 | `{{tags-no-hash}}` | The Pocket tags for the Pocket item                     |
+| `{{tags}}`         | The Pocket tags for the Pocket item, with "#" prepended |
+| `{{image}}`        | The main image for the Pocket item                      |
 | `{{status}}`       | The status code: 0: unread, 1: archived, 2: deleted     |
 | `{{date-added}}`   | The date that item added to pocket, in YYYY-MM-DD       |
 | `{{date-updated}}` | The date that item last updated, in YYYY-MM-DD          |
