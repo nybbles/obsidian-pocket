@@ -182,6 +182,11 @@ const tagsToNoteContent = (
 // excerpt do not mess up front matter
 const normalizeTitle = (excerpt: String) =>
   excerpt.replace(/---./g, "").replace(/"/g, "'");
+
+const normalizedate = (dateinput:number) =>{
+  const date = new Date(dateinput*1000)
+  return date.toISOString().split("T")[0]
+}
 const normalizeExcerpt = (excerpt: String) =>
   `${excerpt.replace(/---./g, "")}`.replace(/\r?\n|\r/g, "\n    ");
 
@@ -212,6 +217,11 @@ const generateInitialItemNoteContents = (
     ["tags", (item) => hashtagSubstitutor(true)(item.tags)],
     ["tags-no-hash", (item) => hashtagSubstitutor(false)(item.tags)],
     ["pocket-url", (item) => getPocketItemPocketURL(item)],
+    ["status", (item) => String(item.status) ?? "no status"],
+    ["date-added", (item) => normalizedate(item.time_added) ?? "0"],
+    ["date-updated", (item) => normalizedate(item.time_updated) ?? "0"],
+    ["favorite",(item) => item.favorite],
+    
     [
       "image",
       (item) => {
