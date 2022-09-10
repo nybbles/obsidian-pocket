@@ -152,7 +152,7 @@ following variables are supported:
 | `{{tags-no-hash}}` | The Pocket tags for the Pocket item                     |
 | `{{tags}}`         | The Pocket tags for the Pocket item, with "#" prepended |
 | `{{image}}`        | The main image for the Pocket item                      |
-| `{{status}}`       | The status code: 0: unread, 1: archived, 2: deleted     |
+| `{{status}}`       | The status of the item: unread, archived or deleted     |
 | `{{date-added}}`   | The date that item added to pocket, in YYYY-MM-DD       |
 | `{{date-updated}}` | The date that item last updated, in YYYY-MM-DD          |
 | `{{favorite}}`     | The bool value whether the item is favorite             |

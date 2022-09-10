@@ -183,9 +183,18 @@ const tagsToNoteContent = (
 const normalizeTitle = (excerpt: String) =>
   excerpt.replace(/---./g, "").replace(/"/g, "'");
 
-const normalizedate = (dateinput:number) =>{
+// Pocket API returns time in seconds rather than milliseconds.
+// To transform the number to date, it should be transformed first to millisecond
+// by timing 1000 and format to specific form later. 
+const normalizeDate = (dateinput:number) =>{
   const date = new Date(dateinput*1000)
   return date.toISOString().split("T")[0]
+}
+
+// Transform status from number to readable scripts.
+const transformStatus = (status:number) => {
+  const status_panel = ["unread","archived","deleted"]
+  return status_panel[status]
 }
 const normalizeExcerpt = (excerpt: String) =>
   `${excerpt.replace(/---./g, "")}`.replace(/\r?\n|\r/g, "\n    ");
@@ -217,9 +226,9 @@ const generateInitialItemNoteContents = (
     ["tags", (item) => hashtagSubstitutor(true)(item.tags)],
     ["tags-no-hash", (item) => hashtagSubstitutor(false)(item.tags)],
     ["pocket-url", (item) => getPocketItemPocketURL(item)],
-    ["status", (item) => String(item.status) ?? "no status"],
-    ["date-added", (item) => normalizedate(item.time_added) ?? "0"],
-    ["date-updated", (item) => normalizedate(item.time_updated) ?? "0"],
+    ["status", (item) => transformStatus(item.status) ?? "no status"],
+    ["date-added", (item) => normalizeDate(item.time_added) ?? "0"],
+    ["date-updated", (item) => normalizeDate(item.time_updated) ?? "0"],
     ["favorite",(item) => item.favorite],
     
     [
