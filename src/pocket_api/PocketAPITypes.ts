@@ -38,6 +38,10 @@ export interface SavedPocketItem extends BasePocketItem {
   excerpt: string;
   tags: PocketTags;
   image?: Image;
+  time_added: number;
+  time_read: string;
+  time_updated: number;
+  favorite: string;
 }
 
 export const pocketTagsToPocketTagList = (tags: PocketTags): PocketTag[] =>
