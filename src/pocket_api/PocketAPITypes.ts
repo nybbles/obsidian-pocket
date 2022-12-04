@@ -31,6 +31,15 @@ export interface Image {
   src: string;
 }
 
+export interface Highlight {
+  annotation_id: string;
+  created_at: string;
+  item_id: string;
+  patch: string;
+  quote: string;
+  version: string;
+}
+
 export interface SavedPocketItem extends BasePocketItem {
   status: PocketItemStatus.Unread | PocketItemStatus.Archived;
   resolved_title: string;
@@ -38,6 +47,7 @@ export interface SavedPocketItem extends BasePocketItem {
   excerpt: string;
   tags: PocketTags;
   image?: Image;
+  annotations?: Highlight[];
 }
 
 export const pocketTagsToPocketTagList = (tags: PocketTags): PocketTag[] =>

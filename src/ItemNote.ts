@@ -13,6 +13,7 @@ import {
   URLToPocketItemNoteIndex,
 } from "./data/URLToPocketItemNoteIndex";
 import {
+  Highlight,
   PocketTags,
   pocketTagsToPocketTagList,
   SavedPocketItem,
@@ -205,6 +206,12 @@ const generateInitialItemNoteContents = (
       tags
     );
 
+  const normalizeHighlights = (highlights?: Highlight[]) => {
+    if (!highlights) return "No Highlights";
+
+    return `${highlights.map((h) => `- ${h.quote}`).join("\n")}`;
+  };
+
   const substitutions: Map<string, SubstitutionFn> = new Map([
     ["title", (item) => normalizeTitle(item.resolved_title) ?? "Untitled"],
     ["url", (item) => item.resolved_url ?? "Missing URL"],
@@ -219,6 +226,7 @@ const generateInitialItemNoteContents = (
         return image_src ? `![image](${image_src})` : "";
       },
     ],
+    ["highlights", (item) => normalizeHighlights(item.annotations)],
   ]);
 
   return Array.from(substitutions.entries()).reduce((acc, currentValue) => {
@@ -275,6 +283,9 @@ Excerpt: >
 ---
 {{tags}}
 {{image}}
+
+### Highlights
+{{highlights}}
 `;
 
 const loadTemplateContents = async (

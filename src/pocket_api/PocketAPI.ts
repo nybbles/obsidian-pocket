@@ -78,7 +78,7 @@ export const getRequestToken: GetRequestToken = async (authRedirectURI) => {
   const REQUEST_TOKEN_URL = "https://getpocket.com/v3/oauth/request";
 
   const responseBody = await doRequest(REQUEST_TOKEN_URL, {
-    consumer_key: CONSUMER_KEY,
+    consumer_key: "78809-9423d8c743a58f62b23ee85c",
     redirect_uri: authRedirectURI,
   });
 
@@ -99,7 +99,7 @@ export const getAccessToken: GetAccessToken = async () => {
   const ACCESS_TOKEN_URL = "https://getpocket.com/v3/oauth/authorize";
 
   const responseBody = await doRequest(ACCESS_TOKEN_URL, {
-    consumer_key: CONSUMER_KEY,
+    consumer_key: "78809-9423d8c743a58f62b23ee85c",
     code: storedRequestToken,
   });
 
@@ -128,13 +128,14 @@ export const getPocketItems: GetPocketItems = async (
   const nextTimestamp = Math.floor(Date.now() / 1000);
 
   const requestOptions = {
-    consumer_key: CONSUMER_KEY,
+    consumer_key: "78809-9423d8c743a58f62b23ee85c",
     access_token: accessToken,
     since: !!lastUpdateTimestamp
       ? new Number(lastUpdateTimestamp).toString()
       : null,
     detailType: "complete",
     tag: pocketSyncTag,
+    annotations: "1",
   };
 
   if (!!lastUpdateTimestamp) {
