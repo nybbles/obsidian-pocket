@@ -5,7 +5,7 @@ import {
   PocketAPI,
   RequestToken,
 } from "./PocketAPI";
-import { openBrowserWindow } from "../utils";
+import { openBrowserWindow } from "../Utils";
 
 export type AccessInfo = AccessTokenResponse;
 

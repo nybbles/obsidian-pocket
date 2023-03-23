@@ -3,7 +3,7 @@ import log from "loglevel";
 import { EventRef, MetadataCache, Vault } from "obsidian";
 import { CallbackId, CallbackRegistry } from "src/CallbackRegistry";
 import { SettingsManager } from "src/SettingsManager";
-import { getUniqueId } from "src/utils";
+import { getUniqueId } from "src/Utils";
 import {
   PocketIDB,
   PocketIDBUpgradeFn,
