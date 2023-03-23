@@ -35,7 +35,7 @@ const DEFAULT_ITEM_NOTES_FOLDER = "/";
 const MAXIMUM_TITLE_LENGTH = 255 - 8;
 
 const getItemNotesFolder = (settingsManager: SettingsManager) =>
-  settingsManager.getSetting("item-notes-folder").replace(/\/+$/, "") ??
+  settingsManager.getSetting("item-notes-folder")?.replace(/\/+$/, "") ??
   DEFAULT_ITEM_NOTES_FOLDER;
 
 export const displayTextForSavedPocketItem = (item: SavedPocketItem) => {
