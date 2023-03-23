@@ -23,7 +23,7 @@ import {
   MultiWordTagConversion,
   TagNormalizationFn,
 } from "./Tags";
-import { ensureFolderExists, getPocketItemPocketURL } from "./utils";
+import { ensureFolderExists, getPocketItemPocketURL } from "./Utils";
 
 const DEFAULT_ITEM_NOTES_FOLDER = "/";
 

@@ -8,7 +8,7 @@ import {
   PocketItemRecord,
   SavedPocketItem,
 } from "../pocket_api/PocketAPITypes";
-import { getUniqueId } from "../utils";
+import { getUniqueId } from "../Utils";
 import { ITEM_STORE_NAME, PocketIDB, PocketIDBUpgradeFn } from "./PocketIDB";
 
 export type OnChangeCallback = () => Promise<void>;

@@ -13,7 +13,7 @@ import {
   getPlatform,
   getPocketItemPocketURL,
   openBrowserWindow,
-} from "src/utils";
+} from "src/Utils";
 import {
   PocketTag,
   pocketTagsToPocketTagList,

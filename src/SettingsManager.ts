@@ -1,7 +1,7 @@
 import update from "immutability-helper";
 import { CallbackId, CallbackRegistry } from "./CallbackRegistry";
 import { MultiWordTagConversion } from "./Tags";
-import { getUniqueId } from "./utils";
+import { getUniqueId } from "./Utils";
 
 export interface PocketSettings {
   "item-note-template"?: string;
