@@ -58,5 +58,5 @@ export const getTagNormalizer = ({
   const multiWordTagConverter = multiWordTagConversions.get(
     multiWordTagConversion
   );
-  return (tag) => `${addHashtag ? "#" : ""}${multiWordTagConverter(tag.tag)}`;
+  return (tag) => `${addHashtag ? "#pocket/" : "pocket/"}${multiWordTagConverter(tag.tag)}`;
 };
