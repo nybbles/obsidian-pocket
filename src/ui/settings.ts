@@ -186,6 +186,30 @@ const addMultiWordTagConverterSetting = (
     });
 };
 
+const PREFIX_TAG_CTA = "Pocket item tag prefix";
+const PREFIX_TAG_DESC = `
+Specify a string to add prefix of tag
+`
+const addPrefixTagSetting = (
+  SettingsManager: SettingsManager,
+  containerEI: HTMLElement
+) => {
+  new Setting(containerEI)
+    .setName(PREFIX_TAG_CTA)
+    .setDesc(PREFIX_TAG_DESC)
+    .addText((text) => {
+      text.setPlaceholder("Specify a tag prefix");
+      text.setValue(SettingsManager.getSetting("tag-prefix"));
+      text.onChange(async (newValue) => {
+        if (newValue.length == 0){
+          newValue = null;
+        }
+        await SettingsManager.updateSetting("tag-prefix", newValue);
+      })
+
+    })
+}
+
 const SYNC_TAG_CTA = "Pocket sync tag";
 const SYNC_TAG_DESC = `Specify a Pocket tag to sync, e.g. adding 'obsidian' here
 will result in only Pocket items tagged with 'obsidian' being synced. If this
@@ -257,6 +281,7 @@ export class PocketSettingTab extends PluginSettingTab {
     addSyncButton(this.plugin, containerEl);
     addClearLocalPocketDataButton(this.plugin, containerEl);
     addMultiWordTagConverterSetting(this.settingsManager, containerEl);
+    addPrefixTagSetting(this.settingsManager, containerEl);
     addPocketSyncTagSetting(this.settingsManager, containerEl);
     addItemNotesLocationSetting(this.settingsManager, containerEl);
     addItemNoteTemplateSetting(this.settingsManager, containerEl);

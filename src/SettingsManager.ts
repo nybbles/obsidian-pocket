@@ -7,6 +7,7 @@ export interface PocketSettings {
   "item-note-template"?: string;
   "item-notes-folder"?: string;
   "multi-word-tag-converter"?: MultiWordTagConversion;
+  "tag-prefix"?: string;
   "pocket-sync-tag"?: string;
   "frontmatter-url-key"?: string;
   "create-item-notes-on-sync"?: boolean;
