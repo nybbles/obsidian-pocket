@@ -53,6 +53,13 @@ export const PocketItemList = ({
       ) as MultiWordTagConversion
     );
 
+  const [addTagPrefix, setAddTagPrefix] =
+    useState<string>(
+      settingsManager.getSetting(
+        "tag-prefix"
+      ) as string
+    );
+
   // Load all items and check item notes' existence on initial render
   useEffect(() => {
     var subscribed = true;
@@ -101,6 +108,16 @@ export const PocketItemList = ({
     return () => settingsManager.unsubscribeOnSettingsChange(setting, cbId);
   }, [settingsManager]);
 
+  useEffect(() => {
+    const setting: keyof PocketSettings = "tag-prefix";
+    const cbId = settingsManager.subscribeOnSettingsChange(setting, async () =>
+      setAddTagPrefix(
+        settingsManager.getSetting(setting) as string
+      )
+    );
+    return () => settingsManager.unsubscribeOnSettingsChange(setting, cbId);
+  }, [settingsManager]);
+
   if (items.length === 0) {
     return <>No items synced!</>;
   } else {
@@ -128,6 +145,7 @@ export const PocketItemList = ({
                 tagNormalizer={getTagNormalizer({
                   multiWordTagConversion: multiWordTagConversion,
                   addHashtag: true,
+                  addTagPrefix: addTagPrefix,
                 })}
                 createOrOpenItemNote={createOrOpen}
                 openSearchForTag={openSearchForTag(plugin.app)}

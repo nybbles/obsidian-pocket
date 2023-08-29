@@ -44,11 +44,13 @@ export type TagNormalizationFn = (tag: PocketTag) => string;
 export interface TagNormalizationChoiceParams {
   multiWordTagConversion: MultiWordTagConversion;
   addHashtag: boolean;
+  addTagPrefix: string;
 }
 
 export const getTagNormalizer = ({
   multiWordTagConversion,
   addHashtag,
+  addTagPrefix,
 }: TagNormalizationChoiceParams): TagNormalizationFn => {
   if (!multiWordTagConversionTypes.includes(multiWordTagConversion)) {
     throw new Error(
@@ -58,5 +60,5 @@ export const getTagNormalizer = ({
   const multiWordTagConverter = multiWordTagConversions.get(
     multiWordTagConversion
   );
-  return (tag) => `${addHashtag ? "#pocket/" : "pocket/"}${multiWordTagConverter(tag.tag)}`;
+  return (tag) => `${addHashtag ? "#" : ""}${addTagPrefix}${multiWordTagConverter(tag.tag)}`;
 };
