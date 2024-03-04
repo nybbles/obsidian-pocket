@@ -264,8 +264,7 @@ const openItemNote = async (workspace: Workspace, existingItemNote: TFile) => {
   await workspace.activeLeaf.openFile(existingItemNote);
 };
 
-const DEFAULT_TEMPLATE = `
----
+const DEFAULT_TEMPLATE = `---
 Title: "{{title}}"
 URL: {{url}}
 Pocket URL: {{pocket-url}}
