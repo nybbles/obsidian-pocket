@@ -1,9 +1,23 @@
 # obsidian-pocket
 
-> :heavy_exclamation_mark: I (@nybbles) am looking for someone to take over as
-> the maintainer of `obsidian-pocket`. If you are interested, please reach out
-> (@nimalan on Twitter or nybbles on the Obsidian Discord). The transition would
-> start with the new maintainer taking on issues and contributing PRs.
+> :heavy_exclamation_mark: This project was archived for a few reasons. Most
+> importantly, I (@nybbles) ran out of bandwidth for maintaining this plugin.
+> Also, I simply stopped using Pocket and came to the conclusion that the owner
+> of a commercial service should be developing a plugin for said service,
+> rather than by people in their spare time.
+>
+> There were better alternatives to Pocket, like Omnivore, but now that that
+> has been shut down, I simply use the Obsidian Web Clipper and manage my
+> reading backlog directly in Obsidian. It works great! I highly recommend it,
+> especially over using this plugin with Pocket.
+>
+> If you would like to take over the "obsidian-pocket" name in the
+> Obsidian plugins list, please reach out to me and I will do what is needed to
+> transfer it to you.
+>
+> Lastly, thank you everyone for your interest both using and contributing to
+> this plugin, and my sincere apologies for being unresponsive lately. It was
+> an honor to build some software that people found useful.
 
 This plugin for [Obsidian](https://obsidian.md/) that allows you to sync your
 [Pocket](https://getpocket.com/) reading list into Obsidian, so that you can
